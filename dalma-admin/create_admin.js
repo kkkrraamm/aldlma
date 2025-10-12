@@ -13,8 +13,8 @@ async function createAdminUser() {
   try {
     console.log('🔐 إنشاء مستخدم إداري افتراضي...');
     
-    // تشفير كلمة المرور
-    const hashedPassword = await bcrypt.hash('admin123', 12);
+    // تشفير كلمة المرور المعقدة
+    const hashedPassword = await bcrypt.hash('V^w*J)&<4uhzuEzq', 12);
     
     // إدراج المستخدم الإداري
     const { rows } = await pool.query(`
@@ -30,9 +30,10 @@ async function createAdminUser() {
     console.log('✅ تم إنشاء المستخدم الإداري بنجاح!');
     console.log('📋 بيانات الدخول:');
     console.log('   اسم المستخدم: admin');
-    console.log('   كلمة المرور: admin123');
+    console.log('   كلمة المرور: V^w*J)&<4uhzuEzq');
     console.log('   الدور: admin');
     console.log('   الحالة: مفعل');
+    console.log('   مستوى الأمان: عالي جداً (12 جولة تشفير)');
     
     // إنشاء إعدادات افتراضية
     await pool.query(`
