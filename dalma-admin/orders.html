@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الطلبات - دلما</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🌴 دلمــــا</h1>
+                <p>لوحة التحكم</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="icon">📊</span>
+                    <span>الرئيسية</span>
+                </a>
+                <a href="users.html" class="nav-item">
+                    <span class="icon">👥</span>
+                    <span>المستخدمين</span>
+                </a>
+                <a href="media-requests.html" class="nav-item">
+                    <span class="icon">📝</span>
+                    <span>طلبات الإعلاميين</span>
+                </a>
+                <a href="posts.html" class="nav-item">
+                    <span class="icon">📰</span>
+                    <span>المنشورات</span>
+                </a>
+                <a href="orders.html" class="nav-item active">
+                    <span class="icon">🛒</span>
+                    <span>الطلبات</span>
+                </a>
+                <a href="#" class="nav-item" onclick="logout()">
+                    <span class="icon">🚪</span>
+                    <span>تسجيل الخروج</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <p>مرحباً، <strong id="adminName">Admin</strong></p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h2>إدارة الطلبات</h2>
+                <div class="header-actions">
+                    <button class="btn-refresh" onclick="showToast('سيتم إضافة إدارة الطلبات قريباً')">🔄 تحديث</button>
+                </div>
+            </header>
+
+            <!-- Coming Soon -->
+            <section class="section">
+                <div style="text-align: center; padding: 80px 20px;">
+                    <div style="font-size: 80px; margin-bottom: 20px;">🛒</div>
+                    <h3 style="font-size: 24px; margin-bottom: 15px;">إدارة الطلبات</h3>
+                    <p style="color: #6B7280; font-size: 16px; margin-bottom: 30px;">
+                        ستتمكن من إدارة جميع طلبات المستخدمين من هنا
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 800px; margin: 0 auto;">
+                        <div style="background: #F3F4F6; padding: 20px; border-radius: 10px;">
+                            <p style="font-size: 28px; font-weight: 700; color: #059669; margin-bottom: 5px;">0</p>
+                            <p style="color: #6B7280; font-size: 14px;">طلبات جديدة</p>
+                        </div>
+                        <div style="background: #F3F4F6; padding: 20px; border-radius: 10px;">
+                            <p style="font-size: 28px; font-weight: 700; color: #059669; margin-bottom: 5px;">0</p>
+                            <p style="color: #6B7280; font-size: 14px;">قيد التنفيذ</p>
+                        </div>
+                        <div style="background: #F3F4F6; padding: 20px; border-radius: 10px;">
+                            <p style="font-size: 28px; font-weight: 700; color: #059669; margin-bottom: 5px;">0</p>
+                            <p style="color: #6B7280; font-size: 14px;">مكتملة</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/js/admin.js"></script>
+</body>
+</html>
+

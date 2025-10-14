@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المنشورات - دلما</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🌴 دلمــــا</h1>
+                <p>لوحة التحكم</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="icon">📊</span>
+                    <span>الرئيسية</span>
+                </a>
+                <a href="users.html" class="nav-item">
+                    <span class="icon">👥</span>
+                    <span>المستخدمين</span>
+                </a>
+                <a href="media-requests.html" class="nav-item">
+                    <span class="icon">📝</span>
+                    <span>طلبات الإعلاميين</span>
+                </a>
+                <a href="posts.html" class="nav-item active">
+                    <span class="icon">📰</span>
+                    <span>المنشورات</span>
+                </a>
+                <a href="orders.html" class="nav-item">
+                    <span class="icon">🛒</span>
+                    <span>الطلبات</span>
+                </a>
+                <a href="#" class="nav-item" onclick="logout()">
+                    <span class="icon">🚪</span>
+                    <span>تسجيل الخروج</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <p>مرحباً، <strong id="adminName">Admin</strong></p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h2>إدارة المنشورات</h2>
+                <div class="header-actions">
+                    <select id="approvedFilter" onchange="loadPosts()">
+                        <option value="">كل المنشورات</option>
+                        <option value="true">المعتمدة</option>
+                        <option value="false">غير المعتمدة</option>
+                    </select>
+                    <button class="btn-refresh" onclick="loadPosts()">🔄 تحديث</button>
+                </div>
+            </header>
+
+            <!-- Posts Grid -->
+            <section class="section">
+                <div id="postsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/js/admin.js"></script>
+    <script>
+        let currentPosts = [];
+
+        async function loadPosts() {
+            const approvedFilter = document.getElementById('approvedFilter').value;
+            const params = approvedFilter ? `?is_approved=${approvedFilter}` : '';
+            
+            try {
+                const response = await apiRequest(`/admin/posts${params}`);
+                const posts = await response.json();
+                
+                currentPosts = posts;
+                renderPosts(posts);
+            } catch (error) {
+                console.error('Error loading posts:', error);
+            }
+        }
+
+        function renderPosts(posts) {
+            const container = document.getElementById('postsGrid');
+            
+            if (posts.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px; color: #6B7280; grid-column: 1/-1;">لا توجد منشورات</p>';
+                return;
+            }
+            
+            container.innerHTML = posts.map(post => `
+                <div style="background: white; border: 2px solid ${post.is_approved ? '#10B981' : '#F59E0B'}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                        <div>
+                            <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 5px;">${post.title || 'بدون عنوان'}</h4>
+                            <p style="color: #6B7280; font-size: 13px;">بواسطة: ${post.author_name}</p>
+                        </div>
+                        <span class="badge ${post.is_approved ? 'badge-success' : 'badge-warning'}">
+                            ${post.is_approved ? '✅ معتمد' : '⏳ قيد المراجعة'}
+                        </span>
+                    </div>
+                    
+                    ${post.content ? `
+                        <p style="color: #374151; line-height: 1.6; margin-bottom: 15px; max-height: 100px; overflow: hidden;">${post.content}</p>
+                    ` : ''}
+                    
+                    ${post.media_url && post.media_type === 'image' ? `
+                        <img src="${post.media_url}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;" onerror="this.style.display='none'">
+                    ` : ''}
+                    
+                    ${post.media_url && post.media_type === 'video' ? `
+                        <div style="width: 100%; height: 200px; background: #F3F4F6; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                            <span style="font-size: 48px;">🎥</span>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px; padding-top: 15px; border-top: 1px solid #E5E7EB;">
+                        <div style="text-align: center;">
+                            <p style="font-size: 20px; font-weight: 700; color: #059669;">${post.likes_count || 0}</p>
+                            <p style="font-size: 12px; color: #6B7280;">إعجاب</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="font-size: 20px; font-weight: 700; color: #059669;">${post.views_count || 0}</p>
+                            <p style="font-size: 12px; color: #6B7280;">مشاهدة</p>
+                        </div>
+                    </div>
+                    
+                    <p style="font-size: 12px; color: #6B7280; margin-bottom: 15px;">${formatDate(post.created_at)}</p>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: auto;">
+                        ${!post.is_approved ? `
+                            <button onclick="approvePost(${post.id})" class="btn btn-success" style="flex: 1; padding: 8px;">✅ اعتماد</button>
+                        ` : `
+                            <button onclick="unapprovePost(${post.id})" class="btn btn-warning" style="flex: 1; padding: 8px;">⏸️ إلغاء الاعتماد</button>
+                        `}
+                        <button onclick="deletePost(${post.id})" class="btn btn-danger" style="padding: 8px 15px;">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function approvePost(postId) {
+            try {
+                const response = await apiRequest(`/admin/posts/${postId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ is_approved: true, is_active: true })
+                });
+                
+                if (response.ok) {
+                    showToast('تم اعتماد المنشور بنجاح');
+                    loadPosts();
+                } else {
+                    showToast('حدث خطأ', 'error');
+                }
+            } catch (error) {
+                showToast('حدث خطأ', 'error');
+            }
+        }
+
+        async function unapprovePost(postId) {
+            if (!confirmDialog('هل أنت متأكد من إلغاء اعتماد هذا المنشور؟')) return;
+            
+            try {
+                const response = await apiRequest(`/admin/posts/${postId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ is_approved: false })
+                });
+                
+                if (response.ok) {
+                    showToast('تم إلغاء اعتماد المنشور');
+                    loadPosts();
+                } else {
+                    showToast('حدث خطأ', 'error');
+                }
+            } catch (error) {
+                showToast('حدث خطأ', 'error');
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!confirmDialog('هل أنت متأكد من حذف هذا المنشور نهائياً؟')) return;
+            
+            try {
+                const response = await apiRequest(`/admin/posts/${postId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showToast('تم حذف المنشور بنجاح');
+                    loadPosts();
+                } else {
+                    showToast('حدث خطأ', 'error');
+                }
+            } catch (error) {
+                showToast('حدث خطأ', 'error');
+            }
+        }
+
+        // Load posts on page load
+        loadPosts();
+    </script>
+</body>
+</html>
+

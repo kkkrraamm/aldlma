@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل المستخدم - دلما</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🌴 دلمــــا</h1>
+                <p>لوحة التحكم</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="icon">📊</span>
+                    <span>الرئيسية</span>
+                </a>
+                <a href="users.html" class="nav-item active">
+                    <span class="icon">👥</span>
+                    <span>المستخدمين</span>
+                </a>
+                <a href="media-requests.html" class="nav-item">
+                    <span class="icon">📝</span>
+                    <span>طلبات الإعلاميين</span>
+                </a>
+                <a href="posts.html" class="nav-item">
+                    <span class="icon">📰</span>
+                    <span>المنشورات</span>
+                </a>
+                <a href="orders.html" class="nav-item">
+                    <span class="icon">🛒</span>
+                    <span>الطلبات</span>
+                </a>
+                <a href="#" class="nav-item" onclick="logout()">
+                    <span class="icon">🚪</span>
+                    <span>تسجيل الخروج</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <p>مرحباً، <strong id="adminName">Admin</strong></p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button onclick="window.history.back()" style="background: none; border: none; cursor: pointer; font-size: 24px;">←</button>
+                    <h2>تفاصيل المستخدم</h2>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-refresh" onclick="loadUserDetails()">🔄 تحديث</button>
+                </div>
+            </header>
+
+            <!-- Loading -->
+            <div id="loadingState" style="text-align: center; padding: 100px 20px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+                <p style="color: #6B7280;">جاري التحميل...</p>
+            </div>
+
+            <!-- User Details -->
+            <div id="userDetails" style="display: none;">
+                <!-- Basic Info Card -->
+                <section class="section">
+                    <h3 style="margin-bottom: 20px;">المعلومات الأساسية</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <div style="background: #F9FAFB; padding: 15px; border-radius: 10px;">
+                            <p style="color: #6B7280; font-size: 13px; margin-bottom: 5px;">الاسم</p>
+                            <p style="font-weight: 600; font-size: 16px;" id="userName">-</p>
+                        </div>
+                        <div style="background: #F9FAFB; padding: 15px; border-radius: 10px;">
+                            <p style="color: #6B7280; font-size: 13px; margin-bottom: 5px;">رقم الهاتف</p>
+                            <p style="font-weight: 600; font-size: 16px;" id="userPhone">-</p>
+                        </div>
+                        <div style="background: #F9FAFB; padding: 15px; border-radius: 10px;">
+                            <p style="color: #6B7280; font-size: 13px; margin-bottom: 5px;">الدور</p>
+                            <p style="font-weight: 600; font-size: 16px;" id="userRole">-</p>
+                        </div>
+                        <div style="background: #F9FAFB; padding: 15px; border-radius: 10px;">
+                            <p style="color: #6B7280; font-size: 13px; margin-bottom: 5px;">تاريخ التسجيل</p>
+                            <p style="font-weight: 600; font-size: 16px;" id="userCreatedAt">-</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Status Card -->
+                <section class="section">
+                    <h3 style="margin-bottom: 20px;">الحالة</h3>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-weight: 600;">معتمد:</span>
+                            <span id="userVerified">-</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-weight: 600;">نشط:</span>
+                            <span id="userActive">-</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-weight: 600;">محظور:</span>
+                            <span id="userBlocked">-</span>
+                        </div>
+                    </div>
+                    
+                    <div id="blockReasonSection" style="display: none; margin-top: 20px; padding: 15px; background: #FEE2E2; border-radius: 10px;">
+                        <p style="font-weight: 600; margin-bottom: 5px; color: #DC2626;">سبب الحظر:</p>
+                        <p id="blockReason" style="color: #991B1B;"></p>
+                        <p style="font-size: 13px; color: #6B7280; margin-top: 10px;">تاريخ الحظر: <span id="blockDate">-</span></p>
+                    </div>
+                </section>
+
+                <!-- Bio (if exists) -->
+                <section class="section" id="bioSection" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">النبذة التعريفية</h3>
+                    <p id="userBio" style="color: #374151; line-height: 1.6;"></p>
+                </section>
+
+                <!-- Media Stats (for media users) -->
+                <section class="section" id="mediaStats" style="display: none;">
+                    <h3 style="margin-bottom: 20px;">إحصائيات الإعلامي</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #DBEAFE;">📝</div>
+                            <div class="stat-content">
+                                <h3 id="mediaPosts">0</h3>
+                                <p>المنشورات</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #D1FAE5;">👥</div>
+                            <div class="stat-content">
+                                <h3 id="mediaFollowers">0</h3>
+                                <p>المتابعون</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #FCE7F3;">❤️</div>
+                            <div class="stat-content">
+                                <h3 id="mediaLikes">0</h3>
+                                <p>الإعجابات</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #FEF3C7;">👁️</div>
+                            <div class="stat-content">
+                                <h3 id="mediaViews">0</h3>
+                                <p>المشاهدات</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Media Posts (for media users) -->
+                <section class="section" id="mediaPostsSection" style="display: none;">
+                    <h3 style="margin-bottom: 20px;">منشورات الإعلامي</h3>
+                    <div id="mediaPostsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;"></div>
+                </section>
+
+                <!-- Provider Profile (for providers) -->
+                <section class="section" id="providerSection" style="display: none;">
+                    <h3 style="margin-bottom: 20px;">بروفايل مقدم الخدمة</h3>
+                    <div id="providerContent"></div>
+                </section>
+
+                <!-- Media Request (if exists) -->
+                <section class="section" id="mediaRequestSection" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">طلب التحويل إلى إعلامي</h3>
+                    <div id="mediaRequestContent"></div>
+                </section>
+
+                <!-- Actions -->
+                <section class="section">
+                    <h3 style="margin-bottom: 20px;">الإجراءات</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button onclick="showEditModal()" class="btn btn-primary">✏️ تعديل المعلومات</button>
+                        <button onclick="showBlockModal()" class="btn" id="blockBtn" style="background: #F59E0B;">🚫 حظر</button>
+                        <button onclick="deleteUser()" class="btn btn-danger">🗑️ حذف الحساب</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Block Modal -->
+    <div id="blockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px;">
+            <h3 style="margin-bottom: 20px;" id="blockModalTitle">حظر المستخدم</h3>
+            <form id="blockForm">
+                <input type="hidden" id="blockAction">
+                
+                <div id="reasonSection" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">سبب الحظر</label>
+                    <textarea id="blockReasonInput" rows="4" style="width: 100%; padding: 10px; border: 2px solid #E5E7EB; border-radius: 8px; font-family: Cairo; resize: vertical;"></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="closeBlockModal()" style="padding: 10px 20px; border: 2px solid #E5E7EB; background: white; border-radius: 8px; cursor: pointer; font-family: Cairo; font-weight: 600;">إلغاء</button>
+                    <button type="submit" class="btn" id="blockSubmitBtn">تأكيد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/admin.js"></script>
+    <script>
+        const userId = new URLSearchParams(window.location.search).get('id');
+        let currentUser = null;
+
+        async function loadUserDetails() {
+            if (!userId) {
+                window.location.href = 'users.html';
+                return;
+            }
+
+            try {
+                const response = await apiRequest(`/admin/users/${userId}`);
+                const data = await response.json();
+                
+                currentUser = data.user;
+                renderUserDetails(data);
+                
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('userDetails').style.display = 'block';
+            } catch (error) {
+                showToast('خطأ في تحميل البيانات', 'error');
+            }
+        }
+
+        function renderUserDetails(data) {
+            const user = data.user;
+            
+            // Basic Info
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userPhone').textContent = formatPhone(user.phone);
+            document.getElementById('userRole').textContent = 
+                user.role === 'media' ? 'إعلامي' : 
+                user.role === 'provider' ? 'مقدم خدمة' : 'مستخدم';
+            document.getElementById('userCreatedAt').textContent = formatDate(user.created_at);
+            
+            // Status
+            document.getElementById('userVerified').innerHTML = user.is_verified ? 
+                '<span style="color: #10B981;">✅ معتمد</span>' : 
+                '<span style="color: #6B7280;">❌ غير معتمد</span>';
+            document.getElementById('userActive').innerHTML = user.is_active ? 
+                '<span style="color: #10B981;">✅ نشط</span>' : 
+                '<span style="color: #DC2626;">❌ غير نشط</span>';
+            document.getElementById('userBlocked').innerHTML = user.is_blocked ? 
+                '<span style="color: #DC2626;">🚫 محظور</span>' : 
+                '<span style="color: #10B981;">✅ غير محظور</span>';
+            
+            // Block Reason
+            if (user.is_blocked && user.blocked_reason) {
+                document.getElementById('blockReasonSection').style.display = 'block';
+                document.getElementById('blockReason').textContent = user.blocked_reason;
+                document.getElementById('blockDate').textContent = formatDate(user.blocked_at);
+            }
+            
+            // Bio
+            if (user.bio) {
+                document.getElementById('bioSection').style.display = 'block';
+                document.getElementById('userBio').textContent = user.bio;
+            }
+            
+            // Media Stats & Posts
+            if (user.role === 'media' && data.stats) {
+                document.getElementById('mediaStats').style.display = 'block';
+                document.getElementById('mediaPosts').textContent = data.stats.posts?.total_posts || 0;
+                document.getElementById('mediaFollowers').textContent = data.stats.followers || 0;
+                document.getElementById('mediaLikes').textContent = data.stats.posts?.total_likes || 0;
+                document.getElementById('mediaViews').textContent = data.stats.posts?.total_views || 0;
+                
+                // Load media posts
+                loadMediaPosts();
+            }
+            
+            // Provider Profile
+            if (user.role === 'provider') {
+                loadProviderProfile();
+            }
+            
+            // Media Request
+            if (data.mediaRequest) {
+                document.getElementById('mediaRequestSection').style.display = 'block';
+                const req = data.mediaRequest;
+                document.getElementById('mediaRequestContent').innerHTML = `
+                    <div style="background: ${req.status === 'pending' ? '#FEF3C7' : req.status === 'approved' ? '#D1FAE5' : '#FEE2E2'}; padding: 15px; border-radius: 10px;">
+                        <p style="font-weight: 600; margin-bottom: 10px;">
+                            الحالة: ${req.status === 'pending' ? '⏳ قيد المراجعة' : req.status === 'approved' ? '✅ مقبول' : '❌ مرفوض'}
+                        </p>
+                        <p style="margin-bottom: 10px;"><strong>السبب:</strong> ${req.reason}</p>
+                        ${req.admin_notes ? `<p><strong>ملاحظات المشرف:</strong> ${req.admin_notes}</p>` : ''}
+                    </div>
+                `;
+            }
+            
+            // Update block button
+            const blockBtn = document.getElementById('blockBtn');
+            if (user.is_blocked) {
+                blockBtn.textContent = '✅ إلغاء الحظر';
+                blockBtn.style.background = '#10B981';
+            } else {
+                blockBtn.textContent = '🚫 حظر';
+                blockBtn.style.background = '#F59E0B';
+            }
+        }
+
+        async function loadMediaPosts() {
+            try {
+                const response = await apiRequest(`/admin/users/${userId}/posts`);
+                const posts = await response.json();
+                
+                if (posts && posts.length > 0) {
+                    document.getElementById('mediaPostsSection').style.display = 'block';
+                    renderMediaPosts(posts);
+                }
+            } catch (error) {
+                console.error('Error loading media posts:', error);
+            }
+        }
+
+        function renderMediaPosts(posts) {
+            const grid = document.getElementById('mediaPostsGrid');
+            
+            grid.innerHTML = posts.map(post => `
+                <div style="background: white; border: 2px solid #E5E7EB; border-radius: 12px; padding: 20px; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                        <div>
+                            <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 5px;">${post.title || 'بدون عنوان'}</h4>
+                            <p style="color: #6B7280; font-size: 13px;">${formatDate(post.created_at)}</p>
+                        </div>
+                        <span class="badge ${post.is_approved ? 'badge-success' : 'badge-warning'}">
+                            ${post.is_approved ? '✅ معتمد' : '⏳ قيد المراجعة'}
+                        </span>
+                    </div>
+                    
+                    ${post.content ? `
+                        <p style="color: #374151; line-height: 1.6; margin-bottom: 15px; max-height: 100px; overflow: hidden;">${post.content}</p>
+                    ` : ''}
+                    
+                    ${post.media_url && post.media_type === 'image' ? `
+                        <img src="${post.media_url}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;" onerror="this.style.display='none'">
+                    ` : ''}
+                    
+                    ${post.media_url && post.media_type === 'video' ? `
+                        <div style="width: 100%; height: 200px; background: #F3F4F6; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                            <span style="font-size: 48px;">🎥</span>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 20px; margin-top: auto; padding-top: 15px; border-top: 1px solid #E5E7EB;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span>❤️</span>
+                            <span style="font-weight: 600; color: #059669;">${post.likes_count || 0}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span>👁️</span>
+                            <span style="font-weight: 600; color: #059669;">${post.views_count || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadProviderProfile() {
+            document.getElementById('providerSection').style.display = 'block';
+            
+            // For now, show basic provider info
+            // In the future, we'll add services, ratings, etc.
+            document.getElementById('providerContent').innerHTML = `
+                <div style="background: #F9FAFB; padding: 20px; border-radius: 12px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #DBEAFE;">🏪</div>
+                            <div class="stat-content">
+                                <h3>قريباً</h3>
+                                <p>الخدمات</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #FEF3C7;">⭐</div>
+                            <div class="stat-content">
+                                <h3>قريباً</h3>
+                                <p>التقييم</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #D1FAE5;">🛒</div>
+                            <div class="stat-content">
+                                <h3>قريباً</h3>
+                                <p>الطلبات</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="text-align: center; color: #6B7280; margin-top: 20px;">
+                        سيتم إضافة نظام الخدمات والتقييمات قريباً
+                    </p>
+                </div>
+            `;
+        }
+
+        function showBlockModal() {
+            if (!currentUser) return;
+            
+            const isBlocked = currentUser.is_blocked;
+            document.getElementById('blockAction').value = isBlocked ? 'unblock' : 'block';
+            document.getElementById('blockModalTitle').textContent = isBlocked ? 'إلغاء حظر المستخدم' : 'حظر المستخدم';
+            document.getElementById('reasonSection').style.display = isBlocked ? 'none' : 'block';
+            document.getElementById('blockSubmitBtn').textContent = isBlocked ? 'إلغاء الحظر' : 'حظر';
+            document.getElementById('blockSubmitBtn').className = isBlocked ? 'btn btn-success' : 'btn btn-danger';
+            document.getElementById('blockReasonInput').value = '';
+            
+            document.getElementById('blockModal').style.display = 'flex';
+        }
+
+        function closeBlockModal() {
+            document.getElementById('blockModal').style.display = 'none';
+        }
+
+        document.getElementById('blockForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const action = document.getElementById('blockAction').value;
+            const reason = document.getElementById('blockReasonInput').value;
+            
+            if (action === 'block' && !reason.trim()) {
+                showToast('يرجى كتابة سبب الحظر', 'error');
+                return;
+            }
+            
+            try {
+                const response = await apiRequest(`/admin/users/${userId}/block`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        is_blocked: action === 'block',
+                        blocked_reason: action === 'block' ? reason : null
+                    })
+                });
+                
+                if (response.ok) {
+                    showToast(action === 'block' ? 'تم حظر المستخدم بنجاح' : 'تم إلغاء الحظر بنجاح');
+                    closeBlockModal();
+                    loadUserDetails();
+                } else {
+                    showToast('حدث خطأ', 'error');
+                }
+            } catch (error) {
+                showToast('حدث خطأ', 'error');
+            }
+        });
+
+        async function deleteUser() {
+            if (!confirmDialog(`هل أنت متأكد من حذف ${currentUser.name}؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) return;
+            
+            try {
+                const response = await apiRequest(`/admin/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showToast('تم حذف المستخدم بنجاح');
+                    setTimeout(() => window.location.href = 'users.html', 1500);
+                } else {
+                    showToast('حدث خطأ', 'error');
+                }
+            } catch (error) {
+                showToast('حدث خطأ', 'error');
+            }
+        }
+
+        function showEditModal() {
+            showToast('سيتم إضافة هذه الميزة قريباً');
+        }
+
+        // Load on page load
+        loadUserDetails();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المستخدمين - دلما</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🌴 دلمــــا</h1>
+                <p>لوحة التحكم</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="icon">📊</span>
+                    <span>الرئيسية</span>
+                </a>
+                <a href="users.html" class="nav-item active">
+                    <span class="icon">👥</span>
+                    <span>المستخدمين</span>
+                </a>
+                <a href="media-requests.html" class="nav-item">
+                    <span class="icon">📝</span>
+                    <span>طلبات الإعلاميين</span>
+                </a>
+                <a href="posts.html" class="nav-item">
+                    <span class="icon">📰</span>
+                    <span>المنشورات</span>
+                </a>
+                <a href="orders.html" class="nav-item">
+                    <span class="icon">🛒</span>
+                    <span>الطلبات</span>
+                </a>
+                <a href="#" class="nav-item" onclick="logout()">
+                    <span class="icon">🚪</span>
+                    <span>تسجيل الخروج</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <p>مرحباً، <strong id="adminName">Admin</strong></p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h2>إدارة المستخدمين</h2>
+                <div class="header-actions">
+                    <select id="roleFilter" onchange="loadUsers()">
+                        <option value="">كل الأدوار</option>
+                        <option value="user">مستخدم عادي</option>
+                        <option value="media">إعلامي</option>
+                        <option value="provider">مقدم خدمة</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="بحث..." onkeyup="loadUsers()">
+                    <button class="btn-refresh" onclick="loadUsers()">🔄 تحديث</button>
+                </div>
+            </header>
+
+            <!-- Users Table -->
+            <section class="section">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الرقم</th>
+                                <th>الاسم</th>
+                                <th>رقم الهاتف</th>
+                                <th>الدور</th>
+                                <th>الحالة</th>
+                                <th>تاريخ التسجيل</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center;">جاري التحميل...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px;">
+            <h3 style="margin-bottom: 20px;">تعديل المستخدم</h3>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">الاسم</label>
+                    <input type="text" id="editName" style="width: 100%; padding: 10px; border: 2px solid #E5E7EB; border-radius: 8px; font-family: Cairo;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">الدور</label>
+                    <select id="editRole" style="width: 100%; padding: 10px; border: 2px solid #E5E7EB; border-radius: 8px; font-family: Cairo;">
+                        <option value="user">مستخدم عادي</option>
+                        <option value="media">إعلامي</option>
+                        <option value="provider">مقدم خدمة</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px; display: flex; gap: 20px;">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="editVerified">
+                        <span>معتمد</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="editActive">
+                        <span>نشط</span>
+                    </label>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; border: 2px solid #E5E7EB; background: white; border-radius: 8px; cursor: pointer; font-family: Cairo; font-weight: 600;">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/admin.js"></script>
+    <script>
+        let currentUsers = [];
+
+        async function loadUsers() {
+            const roleFilter = document.getElementById('roleFilter').value;
+            const searchInput = document.getElementById('searchInput').value;
+            
+            const params = new URLSearchParams();
+            if (roleFilter) params.append('role', roleFilter);
+            if (searchInput) params.append('search', searchInput);
+            
+            try {
+                const response = await apiRequest(`/admin/users?${params.toString()}`);
+                const data = await response.json();
+                
+                currentUsers = data.users || [];
+                renderUsers(currentUsers);
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">لا توجد نتائج</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = users.map((user, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${user.name}</td>
+                    <td>${formatPhone(user.phone)}</td>
+                    <td>
+                        <span class="badge ${user.role === 'media' ? 'badge-success' : user.role === 'provider' ? 'badge-warning' : ''}">
+                            ${user.role === 'media' ? 'إعلامي' : user.role === 'provider' ? 'مقدم خدمة' : 'مستخدم'}
+                        </span>
+                    </td>
+                    <td>
+                        ${user.is_blocked ? '<span class="badge badge-danger">🚫 محظور</span>' : 
+                          !user.is_active ? '<span class="badge badge-warning">⏸️ غير نشط</span>' : 
+                          '<span class="badge badge-success">✅ نشط</span>'}
+                    </td>
+                    <td>${formatDate(user.created_at)}</td>
+                    <td>
+                        <button onclick="window.location.href='user-details.html?id=${user.id}'" class="btn" style="padding: 5px 12px; font-size: 12px; background: #6B7280;">👁️</button>
+                        <button onclick="blockUser(${user.id}, ${user.is_blocked})" class="btn ${user.is_blocked ? 'btn-success' : 'btn-warning'}" style="padding: 5px 12px; font-size: 12px;">${user.is_blocked ? '✅' : '🚫'}</button>
+                        <button onclick="deleteUser(${user.id})" class="btn btn-danger" style="padding: 5px 12px; font-size: 12px;">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editUser(userId) {
+            const user = currentUsers.find(u => u.id === userId);
+            if (!user) return;
+            
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editName').value = user.name;
+            document.getElementById('editRole').value = user.role;
+            document.getElementById('editVerified').checked = user.is_verified;
+            document.getElementById('editActive').checked = user.is_active;
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('editUserId').value;
+            const data = {
+                name: document.getElementById('editName').value,
+                role: document.getElementById('editRole').value,
+                is_verified: document.getElementById('editVerified').checked,
+                is_active: document.getElementById('editActive').checked
+            };
+            
+            try {
+                const response = await apiRequest(`/admin/users/${userId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showToast('تم تحديث المستخدم بنجاح');
+                    closeEditModal();
+                    loadUsers();
+                } else {
+                    showToast('حدث خطأ', 'error');
+                }
+            } catch (error) {
+                showToast('حدث خطأ', 'error');
+            }
+        });
+
+        async function blockUser(userId, isCurrentlyBlocked) {
+            if (isCurrentlyBlocked) {
+                if (!confirmDialog('هل تريد إلغاء حظر هذا المستخدم؟')) return;
+                
+                try {
+                    const response = await apiRequest(`/admin/users/${userId}/block`, {
+                        method: 'POST',
+                        body: JSON.stringify({ is_blocked: false })
+                    });
+                    
+                    if (response.ok) {
+                        showToast('تم إلغاء الحظر بنجاح');
+                        loadUsers();
+                    } else {
+                        showToast('حدث خطأ', 'error');
+                    }
+                } catch (error) {
+                    showToast('حدث خطأ', 'error');
+                }
+            } else {
+                const reason = prompt('سبب الحظر:');
+                if (!reason) return;
+                
+                try {
+                    const response = await apiRequest(`/admin/users/${userId}/block`, {
+                        method: 'POST',
+                        body: JSON.stringify({ 
+                            is_blocked: true,
+                            blocked_reason: reason
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        showToast('تم حظر المستخدم بنجاح');
+                        loadUsers();
+                    } else {
+                        showToast('حدث خطأ', 'error');
+                    }
+                } catch (error) {
+                    showToast('حدث خطأ', 'error');
+                }
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirmDialog('هل أنت متأكد من حذف هذا المستخدم؟')) return;
+            
+            try {
+                const response = await apiRequest(`/admin/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showToast('تم حذف المستخدم بنجاح');
+                    loadUsers();
+                } else {
+                    showToast('حدث خطأ', 'error');
+                }
+            } catch (error) {
+                showToast('حدث خطأ', 'error');
+            }
+        }
+
+        // Load users on page load
+        loadUsers();
+    </script>
+</body>
+</html>
+

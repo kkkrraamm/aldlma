@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - دلما</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🌴 دلمــــا</h1>
+                <p>لوحة التحكم</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item active">
+                    <span class="icon">📊</span>
+                    <span>الرئيسية</span>
+                </a>
+                <a href="users.html" class="nav-item">
+                    <span class="icon">👥</span>
+                    <span>المستخدمين</span>
+                </a>
+                <a href="media-requests.html" class="nav-item">
+                    <span class="icon">📝</span>
+                    <span>طلبات الإعلاميين</span>
+                    <span class="badge" id="pendingBadge">0</span>
+                </a>
+                <a href="posts.html" class="nav-item">
+                    <span class="icon">📰</span>
+                    <span>المنشورات</span>
+                </a>
+                <a href="orders.html" class="nav-item">
+                    <span class="icon">🛒</span>
+                    <span>الطلبات</span>
+                </a>
+                <a href="#" class="nav-item" onclick="logout()">
+                    <span class="icon">🚪</span>
+                    <span>تسجيل الخروج</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <p>مرحباً، <strong id="adminName">Admin</strong></p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h2>لوحة التحكم الرئيسية</h2>
+                <div class="header-actions">
+                    <button class="btn-refresh" onclick="loadStats()">🔄 تحديث</button>
+                </div>
+            </header>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #DBEAFE;">👥</div>
+                    <div class="stat-content">
+                        <h3 id="totalUsers">-</h3>
+                        <p>إجمالي المستخدمين</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #D1FAE5;">📰</div>
+                    <div class="stat-content">
+                        <h3 id="totalMedia">-</h3>
+                        <p>الإعلاميون</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #FEF3C7;">🏪</div>
+                    <div class="stat-content">
+                        <h3 id="totalProviders">-</h3>
+                        <p>مقدمو الخدمات</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #FCE7F3;">📝</div>
+                    <div class="stat-content">
+                        <h3 id="totalPosts">-</h3>
+                        <p>المنشورات</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #E0E7FF;">🛒</div>
+                    <div class="stat-content">
+                        <h3 id="totalOrders">-</h3>
+                        <p>الطلبات</p>
+                    </div>
+                </div>
+
+                <div class="stat-card highlight">
+                    <div class="stat-icon" style="background: #FEE2E2;">⏳</div>
+                    <div class="stat-content">
+                        <h3 id="pendingRequests">-</h3>
+                        <p>طلبات قيد المراجعة</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <section class="section">
+                <h3>إجراءات سريعة</h3>
+                <div class="actions-grid">
+                    <button class="action-card" onclick="window.location.href='users.html'">
+                        <span class="action-icon">➕</span>
+                        <span class="action-text">إضافة مستخدم</span>
+                    </button>
+                    <button class="action-card" onclick="window.location.href='media-requests.html'">
+                        <span class="action-icon">✅</span>
+                        <span class="action-text">مراجعة الطلبات</span>
+                    </button>
+                    <button class="action-card" onclick="window.location.href='posts.html'">
+                        <span class="action-icon">📋</span>
+                        <span class="action-text">إدارة المنشورات</span>
+                    </button>
+                    <button class="action-card" onclick="window.location.href='orders.html'">
+                        <span class="action-icon">📦</span>
+                        <span class="action-text">عرض الطلبات</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Recent Activity -->
+            <section class="section">
+                <h3>النشاط الأخير</h3>
+                <div class="activity-list" id="activityList">
+                    <div class="loading-spinner">جاري التحميل...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/js/admin.js"></script>
+    <script>
+        // Load stats on page load
+        loadStats();
+
+        async function loadStats() {
+            const token = localStorage.getItem('adminToken');
+            
+            try {
+                const response = await fetch(`${API_URL}/admin/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const stats = await response.json();
+                    
+                    document.getElementById('totalUsers').textContent = stats.total_users || 0;
+                    document.getElementById('totalMedia').textContent = stats.total_media || 0;
+                    document.getElementById('totalProviders').textContent = stats.total_providers || 0;
+                    document.getElementById('totalPosts').textContent = stats.total_posts || 0;
+                    document.getElementById('totalOrders').textContent = stats.total_orders || 0;
+                    document.getElementById('pendingRequests').textContent = stats.pending_media_requests || 0;
+                    
+                    // Update badge
+                    const badge = document.getElementById('pendingBadge');
+                    if (stats.pending_media_requests > 0) {
+                        badge.textContent = stats.pending_media_requests;
+                        badge.style.display = 'inline-block';
+                    }
+                } else if (response.status === 401) {
+                    logout();
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Simulate recent activity
+        setTimeout(() => {
+            const activityList = document.getElementById('activityList');
+            activityList.innerHTML = `
+                <div class="activity-item">
+                    <div class="activity-icon">👤</div>
+                    <div class="activity-content">
+                        <p><strong>مستخدم جديد</strong> انضم للمنصة</p>
+                        <span class="activity-time">منذ 5 دقائق</span>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">📝</div>
+                    <div class="activity-content">
+                        <p><strong>طلب إعلامي جديد</strong> في انتظار المراجعة</p>
+                        <span class="activity-time">منذ 15 دقيقة</span>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">📰</div>
+                    <div class="activity-content">
+                        <p><strong>منشور جديد</strong> تمت إضافته</p>
+                        <span class="activity-time">منذ 30 دقيقة</span>
+                    </div>
+                </div>
+            `;
+        }, 1000);
+    </script>
+</body>
+</html>
+
