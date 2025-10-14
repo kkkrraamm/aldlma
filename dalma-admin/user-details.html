@@ -371,36 +371,109 @@
         async function loadProviderProfile() {
             document.getElementById('providerSection').style.display = 'block';
             
-            // For now, show basic provider info
-            // In the future, we'll add services, ratings, etc.
+            try {
+                const response = await apiRequest(`/admin/users/${userId}/services`);
+                const services = await response.json();
+                
+                if (services && services.length > 0) {
+                    renderProviderServices(services);
+                } else {
+                    document.getElementById('providerContent').innerHTML = `
+                        <div style="text-align: center; padding: 40px; background: #F9FAFB; border-radius: 12px;">
+                            <div style="font-size: 48px; margin-bottom: 15px;">🏪</div>
+                            <p style="color: #6B7280; font-size: 16px;">لا توجد خدمات مضافة بعد</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading provider services:', error);
+                document.getElementById('providerContent').innerHTML = `
+                    <div style="text-align: center; padding: 40px; background: #FEE2E2; border-radius: 12px;">
+                        <p style="color: #DC2626;">خطأ في تحميل الخدمات</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderProviderServices(services) {
+            // حساب إجمالي الإحصائيات
+            const totalOrders = services.reduce((sum, s) => sum + (s.orders_count || 0), 0);
+            const avgRating = services.length > 0 
+                ? (services.reduce((sum, s) => sum + (parseFloat(s.rating) || 0), 0) / services.length).toFixed(1)
+                : 0;
+            const totalReviews = services.reduce((sum, s) => sum + (s.reviews_count || 0), 0);
+            
             document.getElementById('providerContent').innerHTML = `
-                <div style="background: #F9FAFB; padding: 20px; border-radius: 12px;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: #DBEAFE;">🏪</div>
-                            <div class="stat-content">
-                                <h3>قريباً</h3>
-                                <p>الخدمات</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: #FEF3C7;">⭐</div>
-                            <div class="stat-content">
-                                <h3>قريباً</h3>
-                                <p>التقييم</p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon" style="background: #D1FAE5;">🛒</div>
-                            <div class="stat-content">
-                                <h3>قريباً</h3>
-                                <p>الطلبات</p>
-                            </div>
+                <!-- إحصائيات -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #DBEAFE;">🏪</div>
+                        <div class="stat-content">
+                            <h3>${services.length}</h3>
+                            <p>الخدمات</p>
                         </div>
                     </div>
-                    <p style="text-align: center; color: #6B7280; margin-top: 20px;">
-                        سيتم إضافة نظام الخدمات والتقييمات قريباً
-                    </p>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #FEF3C7;">⭐</div>
+                        <div class="stat-content">
+                            <h3>${avgRating}</h3>
+                            <p>متوسط التقييم</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #D1FAE5;">🛒</div>
+                        <div class="stat-content">
+                            <h3>${totalOrders}</h3>
+                            <p>الطلبات</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #FCE7F3;">💬</div>
+                        <div class="stat-content">
+                            <h3>${totalReviews}</h3>
+                            <p>التقييمات</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- قائمة الخدمات -->
+                <h4 style="margin-bottom: 15px; font-weight: 700;">الخدمات المتوفرة:</h4>
+                <div style="display: grid; gap: 15px;">
+                    ${services.map(service => `
+                        <div style="background: white; border: 2px solid #E5E7EB; border-radius: 12px; padding: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                                <div style="flex: 1;">
+                                    <h5 style="font-size: 18px; font-weight: 700; margin-bottom: 5px;">${service.service_name}</h5>
+                                    ${service.category ? `<span class="badge" style="background: #E0E7FF; color: #3730A3;">${service.category}</span>` : ''}
+                                </div>
+                                <div style="text-align: left;">
+                                    <p style="font-size: 24px; font-weight: 700; color: #059669; margin-bottom: 5px;">${service.price || 0} ر.س</p>
+                                    <span class="badge ${service.is_active ? 'badge-success' : 'badge-warning'}">
+                                        ${service.is_active ? '✅ نشط' : '⏸️ غير نشط'}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            ${service.description ? `
+                                <p style="color: #374151; line-height: 1.6; margin-bottom: 15px;">${service.description}</p>
+                            ` : ''}
+                            
+                            <div style="display: flex; gap: 20px; padding-top: 15px; border-top: 1px solid #E5E7EB;">
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <span>🛒</span>
+                                    <span style="font-weight: 600; color: #059669;">${service.orders_count || 0} طلب</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <span>⭐</span>
+                                    <span style="font-weight: 600; color: #F59E0B;">${service.rating || 0}</span>
+                                    <span style="color: #6B7280; font-size: 13px;">(${service.reviews_count || 0} تقييم)</span>
+                                </div>
+                                <div style="margin-right: auto; color: #6B7280; font-size: 13px;">
+                                    ${formatDate(service.created_at)}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
             `;
         }
