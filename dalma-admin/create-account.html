@@ -200,9 +200,25 @@
             </div>
             <nav class="nav">
                 <a href="dashboard.html"><span class="icon">📊</span> الرئيسية</a>
-                <a href="users.html"><span class="icon">👥</span> المستخدمين</a>
-                <a href="create-account.html" class="active"><span class="icon">➕</span> إنشاء حساب</a>
+                
+                <!-- قائمة المستخدمين المنسدلة -->
+                <div class="nav-dropdown open">
+                    <a href="#" class="active" onclick="toggleDropdown(event, 'users-dropdown')">
+                        <span class="icon">👥</span> المستخدمين
+                        <span class="dropdown-arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu" id="users-dropdown" style="display: block;">
+                        <a href="users.html" class="dropdown-item">
+                            <span class="icon">👤</span> جميع المستخدمين
+                        </a>
+                        <a href="create-account.html" class="dropdown-item">
+                            <span class="icon">➕</span> إنشاء حساب جديد
+                        </a>
+                    </div>
+                </div>
+                
                 <a href="media-requests.html"><span class="icon">📝</span> طلبات الإعلاميين</a>
+                <a href="provider-requests.html"><span class="icon">🏪</span> طلبات مقدمي الخدمة</a>
                 <a href="posts.html"><span class="icon">📄</span> المنشورات</a>
                 <a href="orders.html"><span class="icon">🛒</span> الطلبات</a>
             </nav>

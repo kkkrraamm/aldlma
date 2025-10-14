@@ -127,6 +127,37 @@ function confirmDialog(message) {
     return confirm(message);
 }
 
+// Toggle Dropdown Menu
+function toggleDropdown(event, dropdownId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+    
+    const parent = dropdown.parentElement;
+    const isOpen = parent.classList.contains('open');
+    
+    // Close all other dropdowns
+    document.querySelectorAll('.nav-dropdown').forEach(d => {
+        d.classList.remove('open');
+    });
+    
+    // Toggle current dropdown
+    if (!isOpen) {
+        parent.classList.add('open');
+    }
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', (event) => {
+    if (!event.target.closest('.nav-dropdown')) {
+        document.querySelectorAll('.nav-dropdown').forEach(d => {
+            d.classList.remove('open');
+        });
+    }
+});
+
 // Initialize
 if (window.location.pathname.includes('dashboard.html') ||
     window.location.pathname.includes('users.html') ||
