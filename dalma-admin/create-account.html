@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب جديد - لوحة تحكم الدلما</title>
+    <link rel="stylesheet" href="assets/css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        .create-account-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .account-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .account-type-btn {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .account-type-btn:hover {
+            border-color: #2D6A4F;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(45, 106, 79, 0.1);
+        }
+
+        .account-type-btn.active {
+            border-color: #2D6A4F;
+            background: linear-gradient(135deg, #2D6A4F 0%, #40916C 100%);
+            color: white;
+        }
+
+        .account-type-btn .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .account-type-btn .title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .account-type-btn .description {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-section h3 {
+            color: #2D6A4F;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group label .required {
+            color: red;
+            margin-right: 3px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2D6A4F;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .submit-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #2D6A4F 0%, #40916C 100%);
+            color: white;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(45, 106, 79, 0.3);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .auto-generate-btn {
+            background: #6c757d;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        .auto-generate-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>🏛️ لوحة التحكم</h2>
+            </div>
+            <nav class="nav">
+                <a href="dashboard.html"><span class="icon">📊</span> الرئيسية</a>
+                <a href="users.html"><span class="icon">👥</span> المستخدمين</a>
+                <a href="create-account.html" class="active"><span class="icon">➕</span> إنشاء حساب</a>
+                <a href="media-requests.html"><span class="icon">📝</span> طلبات الإعلاميين</a>
+                <a href="posts.html"><span class="icon">📄</span> المنشورات</a>
+                <a href="orders.html"><span class="icon">🛒</span> الطلبات</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <h1>➕ إنشاء حساب جديد</h1>
+                <button onclick="logout()" class="btn-logout">تسجيل خروج</button>
+            </header>
+
+            <div class="create-account-container">
+                <!-- اختيار نوع الحساب -->
+                <div class="account-type-selector">
+                    <div class="account-type-btn active" data-type="user">
+                        <div class="icon">👤</div>
+                        <div class="title">مستخدم عادي</div>
+                        <div class="description">حساب للاستخدام العام</div>
+                    </div>
+                    <div class="account-type-btn" data-type="provider">
+                        <div class="icon">🏪</div>
+                        <div class="title">مقدم خدمة</div>
+                        <div class="description">حساب تجاري</div>
+                    </div>
+                    <div class="account-type-btn" data-type="media">
+                        <div class="icon">📺</div>
+                        <div class="title">إعلامي</div>
+                        <div class="description">حساب إعلامي</div>
+                    </div>
+                </div>
+
+                <!-- نموذج إنشاء الحساب -->
+                <div class="form-container">
+                    <form id="createAccountForm">
+                        <!-- معلومات أساسية (لجميع الأنواع) -->
+                        <div class="form-section">
+                            <h3>📋 المعلومات الأساسية</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label><span class="required">*</span> الاسم</label>
+                                    <input type="text" id="name" name="name" required>
+                                    <button type="button" class="auto-generate-btn" onclick="generateName()">توليد تلقائي</button>
+                                </div>
+                                <div class="form-group">
+                                    <label><span class="required">*</span> رقم الجوال</label>
+                                    <input type="tel" id="phone" name="phone" placeholder="05XXXXXXXX" required>
+                                    <button type="button" class="auto-generate-btn" onclick="generatePhone()">توليد تلقائي</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label><span class="required">*</span> كلمة المرور</label>
+                                <input type="text" id="password" name="password" required>
+                                <button type="button" class="auto-generate-btn" onclick="generatePassword()">توليد تلقائي</button>
+                            </div>
+                        </div>
+
+                        <!-- معلومات مقدم الخدمة (مخفي افتراضياً) -->
+                        <div class="form-section hidden provider-fields">
+                            <h3>🏪 معلومات النشاط التجاري</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>اسم النشاط التجاري</label>
+                                    <input type="text" id="business_name" name="business_name">
+                                </div>
+                                <div class="form-group">
+                                    <label>نوع النشاط</label>
+                                    <select id="business_category" name="business_category">
+                                        <option value="">اختر...</option>
+                                        <option value="مطاعم">مطاعم</option>
+                                        <option value="صيانة">صيانة</option>
+                                        <option value="تنظيف">تنظيف</option>
+                                        <option value="تصميم">تصميم</option>
+                                        <option value="نقل">نقل</option>
+                                        <option value="أخرى">أخرى</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>العنوان</label>
+                                <input type="text" id="location_address" name="location_address" placeholder="الرياض، حي...">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>واتساب</label>
+                                    <input type="tel" id="whatsapp_number" name="whatsapp_number" placeholder="05XXXXXXXX">
+                                </div>
+                                <div class="form-group">
+                                    <label>البريد الإلكتروني</label>
+                                    <input type="email" id="email" name="email" placeholder="example@domain.com">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- معلومات الإعلامي (مخفي افتراضياً) -->
+                        <div class="form-section hidden media-fields">
+                            <h3>📺 معلومات الإعلامي</h3>
+                            <div class="form-group">
+                                <label>النبذة التعريفية</label>
+                                <textarea id="bio" name="bio" placeholder="نبذة مختصرة عن الإعلامي..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="is_verified" name="is_verified">
+                                    حساب موثق
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- زر الإرسال -->
+                        <div class="submit-section">
+                            <button type="submit" class="btn-submit" id="submitBtn">
+                                <span id="submitText">✨ إنشاء الحساب</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- رسائل النجاح والخطأ -->
+                    <div class="success-message" id="successMessage"></div>
+                    <div class="error-message" id="errorMessage"></div>
+                </div>
+
+                <!-- زر تعبئة تلقائي كامل -->
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="auto-generate-btn" style="padding: 12px 30px; font-size: 14px;" onclick="autoFillForm()">
+                        🎲 تعبئة تلقائية كاملة
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/admin.js"></script>
+    <script>
+        const API_URL = 'https://dalma-api.onrender.com';
+        let selectedAccountType = 'user';
+
+        // تحديد نوع الحساب
+        document.querySelectorAll('.account-type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.account-type-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedAccountType = this.dataset.type;
+                updateFormFields();
+            });
+        });
+
+        // تحديث الحقول المرئية حسب نوع الحساب
+        function updateFormFields() {
+            document.querySelectorAll('.provider-fields, .media-fields').forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            if (selectedAccountType === 'provider') {
+                document.querySelectorAll('.provider-fields').forEach(el => {
+                    el.classList.remove('hidden');
+                });
+            } else if (selectedAccountType === 'media') {
+                document.querySelectorAll('.media-fields').forEach(el => {
+                    el.classList.remove('hidden');
+                });
+            }
+        }
+
+        // توليد اسم عشوائي
+        function generateName() {
+            const firstNames = ['محمد', 'أحمد', 'خالد', 'عبدالله', 'سعود', 'فهد', 'سلطان', 'عمر', 'علي', 'يوسف'];
+            const lastNames = ['العتيبي', 'الدوسري', 'القحطاني', 'الشمري', 'العنزي', 'المطيري', 'الحربي', 'الزهراني', 'الغامدي', 'الشهري'];
+            const name = `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
+            document.getElementById('name').value = name;
+            
+            // تحديث اسم النشاط إذا كان مقدم خدمة
+            if (selectedAccountType === 'provider' && !document.getElementById('business_name').value) {
+                document.getElementById('business_name').value = `مؤسسة ${name}`;
+            }
+        }
+
+        // توليد رقم جوال عشوائي
+        function generatePhone() {
+            const phone = '05' + Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
+            document.getElementById('phone').value = phone;
+            
+            // تحديث واتساب إذا كان مقدم خدمة
+            if (selectedAccountType === 'provider' && !document.getElementById('whatsapp_number').value) {
+                document.getElementById('whatsapp_number').value = phone;
+            }
+        }
+
+        // توليد كلمة مرور عشوائية
+        function generatePassword() {
+            const password = 'Pass' + Math.floor(Math.random() * 10000);
+            document.getElementById('password').value = password;
+        }
+
+        // تعبئة تلقائية كاملة
+        function autoFillForm() {
+            generateName();
+            generatePhone();
+            generatePassword();
+
+            if (selectedAccountType === 'provider') {
+                const categories = ['مطاعم', 'صيانة', 'تنظيف', 'تصميم', 'نقل'];
+                document.getElementById('business_category').value = categories[Math.floor(Math.random() * categories.length)];
+                document.getElementById('location_address').value = 'الرياض، حي النخيل';
+                document.getElementById('email').value = `provider${Math.floor(Math.random() * 1000)}@test.com`;
+            } else if (selectedAccountType === 'media') {
+                document.getElementById('bio').value = 'إعلامي متخصص في المحتوى الرقمي والتواصل الاجتماعي';
+                document.getElementById('is_verified').checked = true;
+            }
+
+            showToast('✅ تم التعبئة التلقائية بنجاح');
+        }
+
+        // إرسال النموذج
+        document.getElementById('createAccountForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            submitBtn.disabled = true;
+            submitText.textContent = '⏳ جاري الإنشاء...';
+
+            // جمع البيانات
+            const formData = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                password: document.getElementById('password').value,
+                role: selectedAccountType
+            };
+
+            // إضافة بيانات مقدم الخدمة
+            if (selectedAccountType === 'provider') {
+                formData.business_name = document.getElementById('business_name').value || formData.name;
+                formData.business_category = document.getElementById('business_category').value;
+                formData.location_address = document.getElementById('location_address').value;
+                formData.whatsapp_number = document.getElementById('whatsapp_number').value;
+                formData.email = document.getElementById('email').value;
+            }
+
+            // إضافة بيانات الإعلامي
+            if (selectedAccountType === 'media') {
+                formData.bio = document.getElementById('bio').value;
+                formData.is_verified = document.getElementById('is_verified').checked;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('successMessage').style.display = 'block';
+                    document.getElementById('successMessage').innerHTML = `
+                        ✅ <strong>تم إنشاء الحساب بنجاح!</strong><br>
+                        الاسم: ${formData.name}<br>
+                        الجوال: ${formData.phone}<br>
+                        كلمة المرور: ${formData.password}<br>
+                        النوع: ${selectedAccountType === 'user' ? 'مستخدم عادي' : selectedAccountType === 'provider' ? 'مقدم خدمة' : 'إعلامي'}
+                    `;
+                    document.getElementById('errorMessage').style.display = 'none';
+                    document.getElementById('createAccountForm').reset();
+                    
+                    setTimeout(() => {
+                        document.getElementById('successMessage').style.display = 'none';
+                    }, 10000);
+                } else {
+                    throw new Error(data.error || 'فشل إنشاء الحساب');
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorMessage').textContent = '❌ ' + error.message;
+                document.getElementById('successMessage').style.display = 'none';
+            } finally {
+                submitBtn.disabled = false;
+                submitText.textContent = '✨ إنشاء الحساب';
+            }
+        });
+
+        // Toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #2D6A4F;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // تحقق من تسجيل الدخول
+        if (!checkAuth()) {
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
+
