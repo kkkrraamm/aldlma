@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إنشاء حساب جديد - لوحة تحكم الدلما</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>إنشاء حساب جديد - لوحة تحكم الدلما v2.0</title>
     <link rel="stylesheet" href="assets/css/admin.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -381,12 +384,16 @@
 
     <script src="assets/js/admin.js"></script>
     <script>
+        console.log('🚀 بدء تحميل JavaScript - الإصدار 2.0');
         const API_URL = 'https://dalma-api.onrender.com';
         let selectedAccountType = 'user';
 
         // انتظار تحميل DOM
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('✅ تم تحميل الصفحة');
+            console.log('✅ تم تحميل الصفحة - الإصدار 2.0');
+            console.log('🔍 البحث عن أزرار نوع الحساب...');
+            const buttons = document.querySelectorAll('.account-type-btn');
+            console.log('📊 عدد الأزرار الموجودة:', buttons.length);
             
             // تحديد نوع الحساب
             document.querySelectorAll('.account-type-btn').forEach(btn => {
