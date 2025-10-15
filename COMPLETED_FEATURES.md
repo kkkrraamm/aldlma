@@ -114,7 +114,7 @@ GET    /api/media-request/status         جلب حالة الطلب
 ```
 فتح login.html
   ↓
-تسجيل دخول (admin / Dalma@2025!)
+تسجيل دخول (admin / [محفوظة في ADMIN_PASSWORD])
   ↓
 Dashboard: رؤية عدد الطلبات المعلقة
   ↓
@@ -201,7 +201,7 @@ open dalma-admin/login.html
 ### 2. تسجيل الدخول:
 ```
 اسم المستخدم: admin
-كلمة المرور: Dalma@2025!
+كلمة المرور: [محفوظة في ADMIN_PASSWORD]
 ```
 
 ### 3. التطبيق:

@@ -91,7 +91,7 @@ file:///Users/kimaalanzi/Desktop/aaldma/dalma-admin/login.html
 
 ```
 اسم المستخدم: admin
-كلمة المرور: Dalma@2025!
+كلمة المرور: [محفوظة في ADMIN_PASSWORD]
 ```
 
 > ⚠️ **مهم جداً:** غيّر كلمة المرور في Render Dashboard!
