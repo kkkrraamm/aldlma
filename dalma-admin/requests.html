@@ -361,26 +361,64 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="logo">
-            <h2>🌴 Dalma Admin</h2>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>🌴 دلمــــا</h1>
+            <p>لوحة التحكم</p>
         </div>
-        <ul class="menu">
-            <li><a href="index.html">📊 لوحة التحكم</a></li>
-            <li>
-                <a href="#" class="has-submenu">👥 المستخدمين</a>
-                <ul class="submenu">
-                    <li><a href="users.html">قائمة المستخدمين</a></li>
-                    <li><a href="create-account.html">إنشاء حساب</a></li>
-                </ul>
-            </li>
-            <li class="active"><a href="requests.html">📋 جميع الطلبات</a></li>
-            <li><a href="provider-requests.html">🏪 طلبات مقدمي الخدمة</a></li>
-            <li><a href="#">📦 الطلبات</a></li>
-            <li><a href="#">⚙️ الإعدادات</a></li>
-            <li><a href="login.html" class="logout">🚪 تسجيل خروج</a></li>
-        </ul>
-    </div>
+        
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <span class="icon">📊</span>
+                <span>الرئيسية</span>
+            </a>
+            
+            <!-- قائمة المستخدمين المنسدلة -->
+            <div class="nav-dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(event, 'users-dropdown')">
+                    <span class="icon">👥</span>
+                    <span>المستخدمين</span>
+                    <span class="dropdown-arrow">▼</span>
+                </a>
+                <div class="dropdown-menu" id="users-dropdown">
+                    <a href="users.html" class="dropdown-item">
+                        <span class="icon">👤</span>
+                        <span>جميع المستخدمين</span>
+                    </a>
+                    <a href="create-account.html" class="dropdown-item">
+                        <span class="icon">➕</span>
+                        <span>إنشاء حساب جديد</span>
+                    </a>
+                </div>
+            </div>
+            
+            <a href="requests.html" class="nav-item active">
+                <span class="icon">📋</span>
+                <span>جميع الطلبات</span>
+                <span class="badge" id="allRequestsBadge">0</span>
+            </a>
+            <a href="provider-requests.html" class="nav-item">
+                <span class="icon">🏪</span>
+                <span>طلبات مقدمي الخدمة</span>
+            </a>
+            <a href="posts.html" class="nav-item">
+                <span class="icon">📰</span>
+                <span>المنشورات</span>
+            </a>
+            <a href="orders.html" class="nav-item">
+                <span class="icon">🛒</span>
+                <span>الطلبات</span>
+            </a>
+            <a href="#" class="nav-item" onclick="logout()">
+                <span class="icon">🚪</span>
+                <span>تسجيل الخروج</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <p>مرحباً، <strong id="adminName">Admin</strong></p>
+        </div>
+    </aside>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -1017,6 +1055,30 @@
             loadProviderRequests();
             loadMediaRequests();
         }, 30000);
+
+        // Toggle dropdown menu
+        function toggleDropdown(event, dropdownId) {
+            event.preventDefault();
+            const dropdown = document.getElementById(dropdownId);
+            const isActive = dropdown.classList.contains('show');
+            
+            // Close all dropdowns first
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            
+            // Toggle current dropdown
+            if (!isActive) {
+                dropdown.classList.add('show');
+            }
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm('هل تريد تسجيل الخروج؟')) {
+                window.location.href = 'login.html';
+            }
+        }
     </script>
 </body>
 </html>
