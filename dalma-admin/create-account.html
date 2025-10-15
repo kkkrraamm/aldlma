@@ -305,6 +305,10 @@
                                 <input type="text" id="password" name="password" required>
                                 <button type="button" class="auto-generate-btn" onclick="generatePassword()">توليد تلقائي</button>
                             </div>
+                            <div class="form-group">
+                                <label><span class="required">*</span> تاريخ الميلاد</label>
+                                <input type="date" id="birth_date" name="birth_date" required>
+                            </div>
                         </div>
 
                         <!-- معلومات مقدم الخدمة (مخفي افتراضياً) -->
@@ -463,6 +467,16 @@
             generateName();
             generatePhone();
             generatePassword();
+            
+            // توليد تاريخ ميلاد عشوائي (بين 18-60 سنة)
+            const today = new Date();
+            const minAge = 18;
+            const maxAge = 60;
+            const randomAge = Math.floor(Math.random() * (maxAge - minAge + 1)) + minAge;
+            const birthYear = today.getFullYear() - randomAge;
+            const birthMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+            const birthDay = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+            document.getElementById('birth_date').value = `${birthYear}-${birthMonth}-${birthDay}`;
 
             if (selectedAccountType === 'provider') {
                 const categories = ['مطاعم', 'صيانة', 'تنظيف', 'تصميم', 'نقل'];
@@ -491,6 +505,7 @@
                 name: document.getElementById('name').value,
                 phone: document.getElementById('phone').value,
                 password: document.getElementById('password').value,
+                birth_date: document.getElementById('birth_date').value,
                 role: selectedAccountType
             };
 
