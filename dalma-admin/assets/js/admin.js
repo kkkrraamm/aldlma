@@ -161,7 +161,6 @@ document.addEventListener('click', (event) => {
 // Initialize
 if (window.location.pathname.includes('dashboard.html') ||
     window.location.pathname.includes('users.html') ||
-    window.location.pathname.includes('media-requests.html') ||
     window.location.pathname.includes('posts.html') ||
     window.location.pathname.includes('orders.html')) {
     checkAuth();
