@@ -515,8 +515,8 @@
                                 <th>رقم الطلب</th>
                                 <th>الاسم</th>
                                 <th>رقم الهاتف</th>
-                                <th>البريد الإلكتروني</th>
-                                <th>نوع المحتوى</th>
+                                <th>رابط الأعمال</th>
+                                <th>الخبرة</th>
                                 <th>الحالة</th>
                                 <th>تاريخ الطلب</th>
                                 <th>الإجراءات</th>
@@ -682,10 +682,10 @@
             tbody.innerHTML = filteredRequests.map(request => `
                 <tr>
                     <td>#${request.id}</td>
-                    <td><strong>${request.user_name || 'غير محدد'}</strong></td>
-                    <td>${request.user_phone || 'غير محدد'}</td>
-                    <td>${request.email || 'غير محدد'}</td>
-                    <td>${request.content_type || 'غير محدد'}</td>
+                    <td><strong>${request.name || request.user_name || 'غير محدد'}</strong></td>
+                    <td>${request.phone || request.user_phone || 'غير محدد'}</td>
+                    <td>${request.portfolio_url ? `<a href="${request.portfolio_url}" target="_blank" style="color: #2D6A4F; text-decoration: none;">رابط الأعمال</a>` : 'غير محدد'}</td>
+                    <td>${request.experience ? request.experience.substring(0, 30) + '...' : 'غير محدد'}</td>
                     <td><span class="status-badge ${request.status}">${getStatusText(request.status)}</span></td>
                     <td>${formatDate(request.created_at)}</td>
                     <td>
