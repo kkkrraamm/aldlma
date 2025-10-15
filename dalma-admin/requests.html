@@ -602,7 +602,8 @@
             try {
                 const response = await fetch(`${API_URL}/admin/media-requests`);
                 const data = await response.json();
-                mediaRequests = data.requests || [];
+                // API returns array directly, not {requests: [...]}
+                mediaRequests = Array.isArray(data) ? data : (data.requests || []);
                 renderMediaRequests();
                 updateStats();
             } catch (error) {
@@ -708,6 +709,21 @@
 
             document.getElementById('modalTitle').textContent = `تفاصيل طلب مقدم خدمة #${id}`;
             document.getElementById('modalBody').innerHTML = `
+                <h4 style="color: #2D6A4F; margin-bottom: 15px; border-bottom: 2px solid #2D6A4F; padding-bottom: 10px;">👤 معلومات المستخدم</h4>
+                <div class="detail-row">
+                    <div class="detail-label">الاسم:</div>
+                    <div class="detail-value"><strong>${request.user_name || 'غير محدد'}</strong></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">رقم الجوال:</div>
+                    <div class="detail-value">${request.user_phone || 'غير محدد'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">الدور الحالي:</div>
+                    <div class="detail-value"><span class="status-badge pending">${request.current_role === 'user' ? 'مستخدم عادي' : request.current_role === 'media' ? 'إعلامي' : 'مقدم خدمة'}</span></div>
+                </div>
+                
+                <h4 style="color: #2D6A4F; margin: 20px 0 15px; border-bottom: 2px solid #2D6A4F; padding-bottom: 10px;">🏪 معلومات النشاط التجاري</h4>
                 <div class="detail-row">
                     <div class="detail-label">اسم النشاط:</div>
                     <div class="detail-value"><strong>${request.business_name}</strong></div>
@@ -728,6 +744,8 @@
                     <div class="detail-label">العنوان:</div>
                     <div class="detail-value">${request.location_address}</div>
                 </div>
+                
+                <h4 style="color: #2D6A4F; margin: 20px 0 15px; border-bottom: 2px solid #2D6A4F; padding-bottom: 10px;">📋 حالة الطلب</h4>
                 <div class="detail-row">
                     <div class="detail-label">الحالة:</div>
                     <div class="detail-value"><span class="status-badge ${request.status}">${getStatusText(request.status)}</span></div>
@@ -762,22 +780,35 @@
 
             document.getElementById('modalTitle').textContent = `تفاصيل طلب إعلامي #${id}`;
             document.getElementById('modalBody').innerHTML = `
+                <h4 style="color: #2D6A4F; margin-bottom: 15px; border-bottom: 2px solid #2D6A4F; padding-bottom: 10px;">👤 معلومات المستخدم</h4>
                 <div class="detail-row">
                     <div class="detail-label">الاسم:</div>
-                    <div class="detail-value"><strong>${request.user_name || 'غير محدد'}</strong></div>
+                    <div class="detail-value"><strong>${request.name || request.user_name || 'غير محدد'}</strong></div>
                 </div>
                 <div class="detail-row">
-                    <div class="detail-label">رقم الهاتف:</div>
-                    <div class="detail-value">${request.user_phone || 'غير محدد'}</div>
+                    <div class="detail-label">رقم الجوال:</div>
+                    <div class="detail-value">${request.phone || request.user_phone || 'غير محدد'}</div>
                 </div>
                 <div class="detail-row">
-                    <div class="detail-label">البريد الإلكتروني:</div>
-                    <div class="detail-value">${request.email || 'غير محدد'}</div>
+                    <div class="detail-label">الدور الحالي:</div>
+                    <div class="detail-value"><span class="status-badge pending">${request.current_role === 'user' ? 'مستخدم عادي' : request.current_role === 'media' ? 'إعلامي' : 'مقدم خدمة'}</span></div>
+                </div>
+                
+                <h4 style="color: #2D6A4F; margin: 20px 0 15px; border-bottom: 2px solid #2D6A4F; padding-bottom: 10px;">📺 معلومات الطلب</h4>
+                <div class="detail-row">
+                    <div class="detail-label">السبب:</div>
+                    <div class="detail-value">${request.reason || 'غير محدد'}</div>
                 </div>
                 <div class="detail-row">
-                    <div class="detail-label">نوع المحتوى:</div>
-                    <div class="detail-value">${request.content_type || 'غير محدد'}</div>
+                    <div class="detail-label">رابط الأعمال:</div>
+                    <div class="detail-value">${request.portfolio_url ? `<a href="${request.portfolio_url}" target="_blank" style="color: #2D6A4F;">${request.portfolio_url}</a>` : 'غير محدد'}</div>
                 </div>
+                <div class="detail-row">
+                    <div class="detail-label">الخبرة:</div>
+                    <div class="detail-value">${request.experience || 'غير محدد'}</div>
+                </div>
+                
+                <h4 style="color: #2D6A4F; margin: 20px 0 15px; border-bottom: 2px solid #2D6A4F; padding-bottom: 10px;">📋 حالة الطلب</h4>
                 <div class="detail-row">
                     <div class="detail-label">الحالة:</div>
                     <div class="detail-value"><span class="status-badge ${request.status}">${getStatusText(request.status)}</span></div>
@@ -786,10 +817,10 @@
                     <div class="detail-label">تاريخ الطلب:</div>
                     <div class="detail-value">${formatDate(request.created_at)}</div>
                 </div>
-                ${request.rejected_reason ? `
+                ${request.admin_notes ? `
                     <div class="detail-row">
-                        <div class="detail-label">سبب الرفض:</div>
-                        <div class="detail-value" style="color: #DC2626;">${request.rejected_reason}</div>
+                        <div class="detail-label">ملاحظات الإدارة:</div>
+                        <div class="detail-value" style="color: #DC2626;">${request.admin_notes}</div>
                     </div>
                 ` : ''}
             `;
@@ -1082,4 +1113,5 @@
     </script>
 </body>
 </html>
+
 
