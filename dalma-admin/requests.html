@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الطلبات - Dalma Admin</title>
+    <link rel="stylesheet" href="assets/css/admin.css">
+    <style>
+        .requests-container {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .requests-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #2D6A4F;
+        }
+
+        .requests-header h1 {
+            color: #1E3A2E;
+            font-size: 32px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #2D6A4F;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin: 0 0 10px 0;
+            font-weight: normal;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1E3A2E;
+        }
+
+        .stat-card.pending { border-left-color: #F59E0B; }
+        .stat-card.approved { border-left-color: #10B981; }
+        .stat-card.rejected { border-left-color: #EF4444; }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-header h2 {
+            color: #1E3A2E;
+            font-size: 24px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .filter-tab:hover {
+            border-color: #2D6A4F;
+            color: #2D6A4F;
+        }
+
+        .filter-tab.active {
+            background: #2D6A4F;
+            color: white;
+            border-color: #2D6A4F;
+        }
+
+        .requests-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .requests-table thead {
+            background: #f8f9fa;
+        }
+
+        .requests-table th {
+            padding: 15px;
+            text-align: right;
+            font-weight: 600;
+            color: #1E3A2E;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .requests-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        .requests-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-badge.pending {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+
+        .status-badge.approved {
+            background: #D1FAE5;
+            color: #059669;
+        }
+
+        .status-badge.rejected {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-approve {
+            background: #10B981;
+            color: white;
+        }
+
+        .btn-approve:hover {
+            background: #059669;
+        }
+
+        .btn-reject {
+            background: #EF4444;
+            color: white;
+        }
+
+        .btn-reject:hover {
+            background: #DC2626;
+        }
+
+        .btn-view {
+            background: #3B82F6;
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: #2563EB;
+        }
+
+        .btn-delete {
+            background: #6B7280;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #4B5563;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #1E3A2E;
+            font-size: 24px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            width: 150px;
+            flex-shrink: 0;
+        }
+
+        .detail-value {
+            color: #333;
+            flex: 1;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .reject-reason {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            margin-top: 15px;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2D6A4F;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .search-box {
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 300px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #2D6A4F;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>🌴 Dalma Admin</h2>
+        </div>
+        <ul class="menu">
+            <li><a href="index.html">📊 لوحة التحكم</a></li>
+            <li>
+                <a href="#" class="has-submenu">👥 المستخدمين</a>
+                <ul class="submenu">
+                    <li><a href="users.html">قائمة المستخدمين</a></li>
+                    <li><a href="create-account.html">إنشاء حساب</a></li>
+                </ul>
+            </li>
+            <li class="active"><a href="requests.html">📋 الطلبات</a></li>
+            <li><a href="media-requests.html">📺 طلبات الإعلاميين</a></li>
+            <li><a href="provider-requests.html">🏪 طلبات مقدمي الخدمة</a></li>
+            <li><a href="#">📦 الطلبات</a></li>
+            <li><a href="#">⚙️ الإعدادات</a></li>
+            <li><a href="login.html" class="logout">🚪 تسجيل خروج</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="requests-container">
+            <!-- Header -->
+            <div class="requests-header">
+                <h1>
+                    📋 إدارة جميع الطلبات
+                </h1>
+                <input type="text" class="search-box" id="searchBox" placeholder="🔍 البحث في الطلبات...">
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-cards">
+                <div class="stat-card pending">
+                    <h3>قيد الانتظار</h3>
+                    <div class="number" id="pendingCount">0</div>
+                </div>
+                <div class="stat-card approved">
+                    <h3>تم القبول</h3>
+                    <div class="number" id="approvedCount">0</div>
+                </div>
+                <div class="stat-card rejected">
+                    <h3>تم الرفض</h3>
+                    <div class="number" id="rejectedCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>إجمالي الطلبات</h3>
+                    <div class="number" id="totalCount">0</div>
+                </div>
+            </div>
+
+            <!-- Provider Requests Section -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>🏪 طلبات مقدمي الخدمة</h2>
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all" data-type="provider">الكل</button>
+                        <button class="filter-tab" data-filter="pending" data-type="provider">قيد الانتظار</button>
+                        <button class="filter-tab" data-filter="approved" data-type="provider">مقبولة</button>
+                        <button class="filter-tab" data-filter="rejected" data-type="provider">مرفوضة</button>
+                    </div>
+                </div>
+                <div id="providerRequestsLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p>جاري تحميل الطلبات...</p>
+                </div>
+                <div id="providerRequestsContent" style="display: none;">
+                    <table class="requests-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>اسم النشاط</th>
+                                <th>النوع</th>
+                                <th>رقم الهاتف</th>
+                                <th>العنوان</th>
+                                <th>الحالة</th>
+                                <th>تاريخ الطلب</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="providerRequestsTable">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="providerRequestsEmpty" class="empty-state" style="display: none;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h3>لا توجد طلبات مقدمي خدمة</h3>
+                    <p>سيتم عرض الطلبات هنا عندما يتم إنشاؤها</p>
+                </div>
+            </div>
+
+            <!-- Media Requests Section -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>📺 طلبات الإعلاميين</h2>
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all" data-type="media">الكل</button>
+                        <button class="filter-tab" data-filter="pending" data-type="media">قيد الانتظار</button>
+                        <button class="filter-tab" data-filter="approved" data-type="media">مقبولة</button>
+                        <button class="filter-tab" data-filter="rejected" data-type="media">مرفوضة</button>
+                    </div>
+                </div>
+                <div id="mediaRequestsLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p>جاري تحميل الطلبات...</p>
+                </div>
+                <div id="mediaRequestsContent" style="display: none;">
+                    <table class="requests-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>الاسم</th>
+                                <th>رقم الهاتف</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>نوع المحتوى</th>
+                                <th>الحالة</th>
+                                <th>تاريخ الطلب</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mediaRequestsTable">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="mediaRequestsEmpty" class="empty-state" style="display: none;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    <h3>لا توجد طلبات إعلاميين</h3>
+                    <p>سيتم عرض الطلبات هنا عندما يتم إنشاؤها</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Details Modal -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">تفاصيل الطلب</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody"></div>
+            <div class="modal-actions" id="modalActions"></div>
+        </div>
+    </div>
+
+    <!-- Reject Reason Modal -->
+    <div class="modal" id="rejectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>سبب الرفض</h3>
+                <button class="close-modal" onclick="closeRejectModal()">&times;</button>
+            </div>
+            <p style="color: #666; margin-bottom: 15px;">يرجى إدخال سبب رفض الطلب:</p>
+            <textarea class="reject-reason" id="rejectReason" placeholder="اكتب سبب الرفض هنا..."></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-reject" onclick="confirmReject()">تأكيد الرفض</button>
+                <button class="btn btn-delete" onclick="closeRejectModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/admin.js"></script>
+    <script>
+        const API_URL = 'https://dalma-api.onrender.com';
+        let currentRequestId = null;
+        let currentRequestType = null;
+        let providerRequests = [];
+        let mediaRequests = [];
+        let currentProviderFilter = 'all';
+        let currentMediaFilter = 'all';
+
+        // Load requests on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProviderRequests();
+            loadMediaRequests();
+            setupFilterTabs();
+            setupSearch();
+        });
+
+        // Load provider requests
+        async function loadProviderRequests() {
+            try {
+                const response = await fetch(`${API_URL}/admin/provider-requests`);
+                const data = await response.json();
+                providerRequests = data.requests || [];
+                renderProviderRequests();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading provider requests:', error);
+                showError('providerRequestsLoading', 'فشل تحميل طلبات مقدمي الخدمة');
+            }
+        }
+
+        // Load media requests
+        async function loadMediaRequests() {
+            try {
+                const response = await fetch(`${API_URL}/admin/media-requests`);
+                const data = await response.json();
+                mediaRequests = data.requests || [];
+                renderMediaRequests();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading media requests:', error);
+                showError('mediaRequestsLoading', 'فشل تحميل طلبات الإعلاميين');
+            }
+        }
+
+        // Render provider requests
+        function renderProviderRequests() {
+            const loading = document.getElementById('providerRequestsLoading');
+            const content = document.getElementById('providerRequestsContent');
+            const empty = document.getElementById('providerRequestsEmpty');
+            const tbody = document.getElementById('providerRequestsTable');
+
+            loading.style.display = 'none';
+
+            const filteredRequests = currentProviderFilter === 'all' 
+                ? providerRequests 
+                : providerRequests.filter(r => r.status === currentProviderFilter);
+
+            if (filteredRequests.length === 0) {
+                content.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            content.style.display = 'block';
+            empty.style.display = 'none';
+
+            tbody.innerHTML = filteredRequests.map(request => `
+                <tr>
+                    <td>#${request.id}</td>
+                    <td><strong>${request.business_name}</strong></td>
+                    <td>${request.business_category}</td>
+                    <td>${request.whatsapp_number}</td>
+                    <td>${request.location_address}</td>
+                    <td><span class="status-badge ${request.status}">${getStatusText(request.status)}</span></td>
+                    <td>${formatDate(request.created_at)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-view" onclick="viewProviderRequest(${request.id})">عرض</button>
+                            ${request.status === 'pending' ? `
+                                <button class="btn btn-approve" onclick="approveProviderRequest(${request.id})">قبول</button>
+                                <button class="btn btn-reject" onclick="startRejectRequest(${request.id}, 'provider')">رفض</button>
+                            ` : ''}
+                            <button class="btn btn-delete" onclick="deleteProviderRequest(${request.id})">حذف</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Render media requests
+        function renderMediaRequests() {
+            const loading = document.getElementById('mediaRequestsLoading');
+            const content = document.getElementById('mediaRequestsContent');
+            const empty = document.getElementById('mediaRequestsEmpty');
+            const tbody = document.getElementById('mediaRequestsTable');
+
+            loading.style.display = 'none';
+
+            const filteredRequests = currentMediaFilter === 'all' 
+                ? mediaRequests 
+                : mediaRequests.filter(r => r.status === currentMediaFilter);
+
+            if (filteredRequests.length === 0) {
+                content.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            content.style.display = 'block';
+            empty.style.display = 'none';
+
+            tbody.innerHTML = filteredRequests.map(request => `
+                <tr>
+                    <td>#${request.id}</td>
+                    <td><strong>${request.user_name || 'غير محدد'}</strong></td>
+                    <td>${request.user_phone || 'غير محدد'}</td>
+                    <td>${request.email || 'غير محدد'}</td>
+                    <td>${request.content_type || 'غير محدد'}</td>
+                    <td><span class="status-badge ${request.status}">${getStatusText(request.status)}</span></td>
+                    <td>${formatDate(request.created_at)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-view" onclick="viewMediaRequest(${request.id})">عرض</button>
+                            ${request.status === 'pending' ? `
+                                <button class="btn btn-approve" onclick="approveMediaRequest(${request.id})">قبول</button>
+                                <button class="btn btn-reject" onclick="startRejectRequest(${request.id}, 'media')">رفض</button>
+                            ` : ''}
+                            <button class="btn btn-delete" onclick="deleteMediaRequest(${request.id})">حذف</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // View provider request details
+        function viewProviderRequest(id) {
+            const request = providerRequests.find(r => r.id === id);
+            if (!request) return;
+
+            document.getElementById('modalTitle').textContent = `تفاصيل طلب مقدم خدمة #${id}`;
+            document.getElementById('modalBody').innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">اسم النشاط:</div>
+                    <div class="detail-value"><strong>${request.business_name}</strong></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">نوع النشاط:</div>
+                    <div class="detail-value">${request.business_category}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">رقم الواتساب:</div>
+                    <div class="detail-value">${request.whatsapp_number}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">البريد الإلكتروني:</div>
+                    <div class="detail-value">${request.email || 'غير محدد'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">العنوان:</div>
+                    <div class="detail-value">${request.location_address}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">الحالة:</div>
+                    <div class="detail-value"><span class="status-badge ${request.status}">${getStatusText(request.status)}</span></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">تاريخ الطلب:</div>
+                    <div class="detail-value">${formatDate(request.created_at)}</div>
+                </div>
+                ${request.rejected_reason ? `
+                    <div class="detail-row">
+                        <div class="detail-label">سبب الرفض:</div>
+                        <div class="detail-value" style="color: #DC2626;">${request.rejected_reason}</div>
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('modalActions').innerHTML = request.status === 'pending' ? `
+                <button class="btn btn-approve" onclick="approveProviderRequest(${id}); closeModal();">قبول الطلب</button>
+                <button class="btn btn-reject" onclick="startRejectRequest(${id}, 'provider'); closeModal();">رفض الطلب</button>
+                <button class="btn btn-delete" onclick="closeModal()">إغلاق</button>
+            ` : `
+                <button class="btn btn-delete" onclick="closeModal()">إغلاق</button>
+            `;
+
+            document.getElementById('detailsModal').classList.add('active');
+        }
+
+        // View media request details
+        function viewMediaRequest(id) {
+            const request = mediaRequests.find(r => r.id === id);
+            if (!request) return;
+
+            document.getElementById('modalTitle').textContent = `تفاصيل طلب إعلامي #${id}`;
+            document.getElementById('modalBody').innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">الاسم:</div>
+                    <div class="detail-value"><strong>${request.user_name || 'غير محدد'}</strong></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">رقم الهاتف:</div>
+                    <div class="detail-value">${request.user_phone || 'غير محدد'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">البريد الإلكتروني:</div>
+                    <div class="detail-value">${request.email || 'غير محدد'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">نوع المحتوى:</div>
+                    <div class="detail-value">${request.content_type || 'غير محدد'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">الحالة:</div>
+                    <div class="detail-value"><span class="status-badge ${request.status}">${getStatusText(request.status)}</span></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">تاريخ الطلب:</div>
+                    <div class="detail-value">${formatDate(request.created_at)}</div>
+                </div>
+                ${request.rejected_reason ? `
+                    <div class="detail-row">
+                        <div class="detail-label">سبب الرفض:</div>
+                        <div class="detail-value" style="color: #DC2626;">${request.rejected_reason}</div>
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('modalActions').innerHTML = request.status === 'pending' ? `
+                <button class="btn btn-approve" onclick="approveMediaRequest(${id}); closeModal();">قبول الطلب</button>
+                <button class="btn btn-reject" onclick="startRejectRequest(${id}, 'media'); closeModal();">رفض الطلب</button>
+                <button class="btn btn-delete" onclick="closeModal()">إغلاق</button>
+            ` : `
+                <button class="btn btn-delete" onclick="closeModal()">إغلاق</button>
+            `;
+
+            document.getElementById('detailsModal').classList.add('active');
+        }
+
+        // Approve provider request
+        async function approveProviderRequest(id) {
+            if (!confirm('هل أنت متأكد من قبول هذا الطلب؟')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/admin/provider-requests/${id}/approve`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    alert('تم قبول الطلب بنجاح!');
+                    loadProviderRequests();
+                } else {
+                    alert('فشل قبول الطلب');
+                }
+            } catch (error) {
+                console.error('Error approving request:', error);
+                alert('حدث خطأ أثناء قبول الطلب');
+            }
+        }
+
+        // Approve media request
+        async function approveMediaRequest(id) {
+            if (!confirm('هل أنت متأكد من قبول هذا الطلب؟')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/admin/media-requests/${id}/approve`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    alert('تم قبول الطلب بنجاح!');
+                    loadMediaRequests();
+                } else {
+                    alert('فشل قبول الطلب');
+                }
+            } catch (error) {
+                console.error('Error approving request:', error);
+                alert('حدث خطأ أثناء قبول الطلب');
+            }
+        }
+
+        // Start reject request
+        function startRejectRequest(id, type) {
+            currentRequestId = id;
+            currentRequestType = type;
+            document.getElementById('rejectReason').value = '';
+            document.getElementById('rejectModal').classList.add('active');
+        }
+
+        // Confirm reject
+        async function confirmReject() {
+            const reason = document.getElementById('rejectReason').value.trim();
+            
+            if (!reason) {
+                alert('يرجى إدخال سبب الرفض');
+                return;
+            }
+
+            try {
+                const endpoint = currentRequestType === 'provider' 
+                    ? `/admin/provider-requests/${currentRequestId}/reject`
+                    : `/admin/media-requests/${currentRequestId}/reject`;
+
+                const response = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason })
+                });
+
+                if (response.ok) {
+                    alert('تم رفض الطلب');
+                    closeRejectModal();
+                    
+                    if (currentRequestType === 'provider') {
+                        loadProviderRequests();
+                    } else {
+                        loadMediaRequests();
+                    }
+                } else {
+                    alert('فشل رفض الطلب');
+                }
+            } catch (error) {
+                console.error('Error rejecting request:', error);
+                alert('حدث خطأ أثناء رفض الطلب');
+            }
+        }
+
+        // Delete provider request
+        async function deleteProviderRequest(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/admin/provider-requests/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('تم حذف الطلب بنجاح');
+                    loadProviderRequests();
+                } else {
+                    alert('فشل حذف الطلب');
+                }
+            } catch (error) {
+                console.error('Error deleting request:', error);
+                alert('حدث خطأ أثناء حذف الطلب');
+            }
+        }
+
+        // Delete media request
+        async function deleteMediaRequest(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/admin/media-requests/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('تم حذف الطلب بنجاح');
+                    loadMediaRequests();
+                } else {
+                    alert('فشل حذف الطلب');
+                }
+            } catch (error) {
+                console.error('Error deleting request:', error);
+                alert('حدث خطأ أثناء حذف الطلب');
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const allRequests = [...providerRequests, ...mediaRequests];
+            
+            document.getElementById('totalCount').textContent = allRequests.length;
+            document.getElementById('pendingCount').textContent = allRequests.filter(r => r.status === 'pending').length;
+            document.getElementById('approvedCount').textContent = allRequests.filter(r => r.status === 'approved').length;
+            document.getElementById('rejectedCount').textContent = allRequests.filter(r => r.status === 'rejected').length;
+        }
+
+        // Setup filter tabs
+        function setupFilterTabs() {
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const filter = tab.dataset.filter;
+                    const type = tab.dataset.type;
+                    
+                    // Update active tab
+                    tab.parentElement.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Update filter and re-render
+                    if (type === 'provider') {
+                        currentProviderFilter = filter;
+                        renderProviderRequests();
+                    } else {
+                        currentMediaFilter = filter;
+                        renderMediaRequests();
+                    }
+                });
+            });
+        }
+
+        // Setup search
+        function setupSearch() {
+            const searchBox = document.getElementById('searchBox');
+            searchBox.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                
+                // Filter provider requests
+                const filteredProvider = providerRequests.filter(r => 
+                    r.business_name.toLowerCase().includes(query) ||
+                    r.business_category.toLowerCase().includes(query) ||
+                    r.whatsapp_number.includes(query) ||
+                    r.location_address.toLowerCase().includes(query)
+                );
+                
+                // Filter media requests
+                const filteredMedia = mediaRequests.filter(r => 
+                    (r.user_name || '').toLowerCase().includes(query) ||
+                    (r.user_phone || '').includes(query) ||
+                    (r.email || '').toLowerCase().includes(query) ||
+                    (r.content_type || '').toLowerCase().includes(query)
+                );
+                
+                // Temporarily override the arrays
+                const originalProvider = providerRequests;
+                const originalMedia = mediaRequests;
+                
+                providerRequests = filteredProvider;
+                mediaRequests = filteredMedia;
+                
+                renderProviderRequests();
+                renderMediaRequests();
+                
+                // Restore original arrays
+                if (query === '') {
+                    providerRequests = originalProvider;
+                    mediaRequests = originalMedia;
+                }
+            });
+        }
+
+        // Utility functions
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'قيد الانتظار',
+                'approved': 'مقبول',
+                'rejected': 'مرفوض'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ar-SA', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('detailsModal').classList.remove('active');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').classList.remove('active');
+            currentRequestId = null;
+            currentRequestType = null;
+        }
+
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div style="color: #DC2626; padding: 40px; text-align: center;">
+                    <p style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">❌ حدث خطأ</p>
+                    <p>${message}</p>
+                    <button class="btn btn-view" onclick="location.reload()" style="margin-top: 20px;">إعادة المحاولة</button>
+                </div>
+            `;
+        }
+
+        // Auto refresh every 30 seconds
+        setInterval(() => {
+            loadProviderRequests();
+            loadMediaRequests();
+        }, 30000);
+    </script>
+</body>
+</html>
+
