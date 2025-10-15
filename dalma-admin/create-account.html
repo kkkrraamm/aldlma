@@ -384,35 +384,45 @@
         const API_URL = 'https://dalma-api.onrender.com';
         let selectedAccountType = 'user';
 
-        // تحديد نوع الحساب
-        document.querySelectorAll('.account-type-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.account-type-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                selectedAccountType = this.dataset.type;
-                updateFormFields();
-            });
-        });
-
-        // تحديث الحقول المرئية حسب نوع الحساب
-        function updateFormFields() {
-            document.querySelectorAll('.provider-fields, .media-fields').forEach(el => {
-                el.classList.add('hidden');
-            });
-
-            if (selectedAccountType === 'provider') {
-                document.querySelectorAll('.provider-fields').forEach(el => {
-                    el.classList.remove('hidden');
+        // انتظار تحميل DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ تم تحميل الصفحة');
+            
+            // تحديد نوع الحساب
+            document.querySelectorAll('.account-type-btn').forEach(btn => {
+                console.log('✅ تم إضافة event listener للزر:', btn.dataset.type);
+                btn.addEventListener('click', function() {
+                    console.log('🔘 تم الضغط على زر:', this.dataset.type);
+                    document.querySelectorAll('.account-type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedAccountType = this.dataset.type;
+                    console.log('📝 نوع الحساب المختار:', selectedAccountType);
+                    updateFormFields();
                 });
-            } else if (selectedAccountType === 'media') {
-                document.querySelectorAll('.media-fields').forEach(el => {
-                    el.classList.remove('hidden');
+            });
+
+            // تحديث الحقول المرئية حسب نوع الحساب
+            window.updateFormFields = function() {
+                console.log('🔄 تحديث الحقول للنوع:', selectedAccountType);
+                document.querySelectorAll('.provider-fields, .media-fields').forEach(el => {
+                    el.classList.add('hidden');
                 });
+
+                if (selectedAccountType === 'provider') {
+                    document.querySelectorAll('.provider-fields').forEach(el => {
+                        el.classList.remove('hidden');
+                    });
+                    console.log('✅ تم إظهار حقول مقدم الخدمة');
+                } else if (selectedAccountType === 'media') {
+                    document.querySelectorAll('.media-fields').forEach(el => {
+                        el.classList.remove('hidden');
+                    });
+                    console.log('✅ تم إظهار حقول الإعلامي');
+                }
             }
-        }
 
-        // توليد اسم عشوائي
-        function generateName() {
+            // توليد اسم عشوائي
+            window.generateName = function() {
             const firstNames = ['محمد', 'أحمد', 'خالد', 'عبدالله', 'سعود', 'فهد', 'سلطان', 'عمر', 'علي', 'يوسف'];
             const lastNames = ['العتيبي', 'الدوسري', 'القحطاني', 'الشمري', 'العنزي', 'المطيري', 'الحربي', 'الزهراني', 'الغامدي', 'الشهري'];
             const name = `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
@@ -424,8 +434,8 @@
             }
         }
 
-        // توليد رقم جوال عشوائي
-        function generatePhone() {
+            // توليد رقم جوال عشوائي
+            window.generatePhone = function() {
             const phone = '05' + Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
             document.getElementById('phone').value = phone;
             
@@ -435,14 +445,14 @@
             }
         }
 
-        // توليد كلمة مرور عشوائية
-        function generatePassword() {
+            // توليد كلمة مرور عشوائية
+            window.generatePassword = function() {
             const password = 'Pass' + Math.floor(Math.random() * 10000);
             document.getElementById('password').value = password;
         }
 
-        // تعبئة تلقائية كاملة
-        function autoFillForm() {
+            // تعبئة تلقائية كاملة
+            window.autoFillForm = function() {
             generateName();
             generatePhone();
             generatePassword();
@@ -460,8 +470,8 @@
             showToast('✅ تم التعبئة التلقائية بنجاح');
         }
 
-        // إرسال النموذج
-        document.getElementById('createAccountForm').addEventListener('submit', async function(e) {
+            // إرسال النموذج
+            document.getElementById('createAccountForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const submitBtn = document.getElementById('submitBtn');
@@ -531,8 +541,8 @@
             }
         });
 
-        // Toast notification
-        function showToast(message) {
+            // Toast notification
+            window.showToast = function(message) {
             const toast = document.createElement('div');
             toast.style.cssText = `
                 position: fixed;
@@ -555,12 +565,13 @@
             }, 3000);
         }
 
-        // تحقق من تسجيل الدخول
-        if (!checkAuth()) {
-            window.location.href = 'login.html';
-        }
+            // تحقق من تسجيل الدخول
+            if (!checkAuth()) {
+                window.location.href = 'login.html';
+            }
+        }); // نهاية DOMContentLoaded
 
-        // Toggle dropdown menu
+        // Toggle dropdown menu (خارج DOMContentLoaded لأنها تُستدعى من HTML)
         function toggleDropdown(event, dropdownId) {
             event.preventDefault();
             const dropdown = document.getElementById(dropdownId);
