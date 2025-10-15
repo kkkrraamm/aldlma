@@ -3,6 +3,9 @@
 
 const API_URL = 'https://dalma-api.onrender.com';
 
+// 🔒 Security: API Key
+const API_KEY = 'FKSOE445DFLCD$%CD##g48d#d3OL5&%kdkf&5gdOdKeKKDS';
+
 // التحقق من تسجيل الدخول
 function checkAuth() {
     const token = localStorage.getItem('adminToken');
@@ -74,7 +77,9 @@ function getAuthHeaders() {
     const token = localStorage.getItem('adminToken');
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
+        'Authorization': token ? `Bearer ${token}` : '',
+        'X-API-Key': API_KEY,
+        'X-Device-ID': 'admin-dashboard'
     };
 }
 
@@ -88,10 +93,12 @@ async function authenticatedFetch(url, options = {}) {
         return;
     }
     
-    // إضافة Authorization header
+    // إضافة Authorization header + Security Headers
     options.headers = {
         ...options.headers,
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'X-API-Key': API_KEY,
+        'X-Device-ID': 'admin-dashboard'
     };
     
     // إضافة Content-Type إذا كان هناك body
