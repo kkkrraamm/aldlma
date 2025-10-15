@@ -247,12 +247,11 @@
             btnLoading.style.display = 'inline-block';
 
             try {
+                // تسجيل الدخول بدون API Key (سيتم الحصول عليه بعد المصادقة)
                 const response = await fetch(`${API_URL}/admin/login`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Key': 'FKSOE445DFLCD$%CD##g48d#d3OL5&%kdkf&5gdOdKeKKDS',
-                        'X-Device-ID': 'admin-dashboard'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ username, password })
                 });
@@ -260,9 +259,12 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    // Save token
+                    // Save token, username, and API Key
                     localStorage.setItem('adminToken', data.token);
                     localStorage.setItem('adminUsername', data.username);
+                    localStorage.setItem('apiKey', data.apiKey); // حفظ API Key من السيرفر
+                    
+                    console.log('✅ تم تسجيل الدخول وحفظ API Key بشكل آمن');
                     
                     showSuccess('تم تسجيل الدخول بنجاح!');
                     
@@ -271,7 +273,11 @@
                         window.location.href = 'dashboard.html';
                     }, 1000);
                 } else {
-                    showError(data.error || 'فشل تسجيل الدخول');
+                    if (response.status === 403) {
+                        showError('غير مسموح - يمكن الوصول من جهاز المطور فقط');
+                    } else {
+                        showError(data.error || 'فشل تسجيل الدخول');
+                    }
                     loginBtn.disabled = false;
                     btnText.style.display = 'inline';
                     btnLoading.style.display = 'none';

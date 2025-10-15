@@ -3,8 +3,22 @@
 
 const API_URL = 'https://dalma-api.onrender.com';
 
-// 🔒 Security: API Key
-const API_KEY = 'FKSOE445DFLCD$%CD##g48d#d3OL5&%kdkf&5gdOdKeKKDS';
+// 🔒 Security: API Key (يتم الحصول عليه من السيرفر بعد تسجيل الدخول)
+let API_KEY = null;
+
+// الحصول على API Key من localStorage
+function getApiKey() {
+    if (!API_KEY) {
+        API_KEY = localStorage.getItem('apiKey');
+    }
+    return API_KEY;
+}
+
+// حفظ API Key
+function setApiKey(key) {
+    API_KEY = key;
+    localStorage.setItem('apiKey', key);
+}
 
 // التحقق من تسجيل الدخول
 function checkAuth() {
@@ -69,16 +83,19 @@ function parseJwt(token) {
 function logout() {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminUsername');
+    localStorage.removeItem('apiKey');
+    API_KEY = null;
     window.location.href = 'login.html';
 }
 
 // إضافة Token إلى جميع الطلبات
 function getAuthHeaders() {
     const token = localStorage.getItem('adminToken');
+    const apiKey = getApiKey();
     return {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : '',
-        'X-API-Key': API_KEY,
+        'X-API-Key': apiKey || '',
         'X-Device-ID': 'admin-dashboard'
     };
 }
@@ -94,10 +111,11 @@ async function authenticatedFetch(url, options = {}) {
     }
     
     // إضافة Authorization header + Security Headers
+    const apiKey = getApiKey();
     options.headers = {
         ...options.headers,
         'Authorization': `Bearer ${token}`,
-        'X-API-Key': API_KEY,
+        'X-API-Key': apiKey || '',
         'X-Device-ID': 'admin-dashboard'
     };
     
