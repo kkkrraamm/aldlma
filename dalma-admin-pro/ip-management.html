@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة IPs المسموحة - Dalma Admin Pro</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .ip-header {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .ip-header h1 {
+            color: var(--text-primary);
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .ip-header p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .current-ip-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .current-ip-banner .icon {
+            font-size: 32px;
+            opacity: 0.9;
+        }
+
+        .current-ip-banner .content {
+            flex: 1;
+        }
+
+        .current-ip-banner .content h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .current-ip-banner .content .ip-value {
+            font-size: 24px;
+            font-weight: 800;
+            font-family: 'Courier New', monospace;
+        }
+
+        .add-ip-section {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .add-ip-section h2 {
+            color: var(--text-primary);
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .add-ip-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-color-light);
+        }
+
+        .btn-add {
+            padding: 12px 30px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover {
+            background: var(--primary-color-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-add:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .ip-list-section {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .ip-list-section h2 {
+            color: var(--text-primary);
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ip-count-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .ip-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ip-item {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .ip-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateX(-5px);
+        }
+
+        .ip-item.current-ip {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-color: #667eea;
+        }
+
+        .ip-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .ip-icon {
+            width: 45px;
+            height: 45px;
+            background: var(--primary-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .ip-item.current-ip .ip-icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .ip-details {
+            flex: 1;
+        }
+
+        .ip-address {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            margin: 0 0 5px 0;
+        }
+
+        .ip-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .current-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-delete {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-delete:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-delete:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin: 0 0 10px 0;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            animation: slideDown 0.3s ease;
+        }
+
+        .alert i {
+            font-size: 18px;
+        }
+
+        .alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .alert.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .add-ip-form {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-add {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .ip-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .btn-delete {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <img src="assets/images/logo.png" alt="Dalma Logo">
+            <span>Dalma Admin</span>
+        </div>
+        
+        <nav class="nav-menu">
+            <a href="index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>لوحة التحكم</span>
+            </a>
+            <a href="ip-management.html" class="nav-item active">
+                <i class="fas fa-network-wired"></i>
+                <span>إدارة IPs</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-shield-alt"></i>
+                <span>الأمان</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>المستخدمين</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-file-alt"></i>
+                <span>الطلبات</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="admin-info">
+                <i class="fas fa-user-shield"></i>
+                <span id="adminName">Admin</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="header-right">
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Page Header -->
+            <div class="ip-header">
+                <h1><i class="fas fa-network-wired"></i> إدارة IPs المسموحة</h1>
+                <p>إدارة عناوين IP المصرح لها بالوصول إلى لوحة تحكم المشرف</p>
+            </div>
+
+            <!-- Alert Container -->
+            <div id="alertContainer"></div>
+
+            <!-- Current IP Banner -->
+            <div class="current-ip-banner">
+                <div class="icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="content">
+                    <h3>عنوان IP الحالي الخاص بك</h3>
+                    <div class="ip-value" id="currentIPDisplay">جاري التحميل...</div>
+                </div>
+            </div>
+
+            <!-- Add IP Section -->
+            <div class="add-ip-section">
+                <h2>
+                    <i class="fas fa-plus-circle"></i>
+                    إضافة IP جديد
+                </h2>
+                <form class="add-ip-form" id="addIPForm">
+                    <div class="form-group">
+                        <label for="newIP">عنوان IP</label>
+                        <input 
+                            type="text" 
+                            id="newIP" 
+                            placeholder="مثال: 192.168.1.1" 
+                            pattern="^(\d{1,3}\.){3}\d{1,3}$"
+                            required
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="ipDescription">وصف (اختياري)</label>
+                        <input 
+                            type="text" 
+                            id="ipDescription" 
+                            placeholder="مثال: مكتب الرياض"
+                        >
+                    </div>
+                    <button type="submit" class="btn-add" id="btnAddIP">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة IP</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- IP List Section -->
+            <div class="ip-list-section">
+                <h2>
+                    <span>
+                        <i class="fas fa-list"></i>
+                        قائمة IPs المسموحة
+                    </span>
+                    <span class="ip-count-badge" id="ipCountBadge">0</span>
+                </h2>
+                <div class="ip-list" id="ipList">
+                    <!-- IPs will be loaded here -->
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <h3>جاري التحميل...</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        const API_URL = 'https://dalma-api.onrender.com';
+        let currentIP = '';
+
+        // Show alert message
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${type}`;
+            
+            const iconMap = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            alertDiv.innerHTML = `
+                <i class="fas ${iconMap[type]}"></i>
+                <span>${message}</span>
+            `;
+            
+            alertContainer.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.style.opacity = '0';
+                alertDiv.style.transform = 'translateY(-20px)';
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 5000);
+        }
+
+        // Load IPs list
+        async function loadIPs() {
+            try {
+                console.log('📋 جلب قائمة IPs...');
+                
+                const data = await apiRequest('/api/admin/allowed-ips');
+                
+                console.log('✅ تم جلب البيانات:', data);
+                
+                currentIP = data.currentIP;
+                document.getElementById('currentIPDisplay').textContent = currentIP;
+                document.getElementById('ipCountBadge').textContent = data.count;
+                
+                const ipList = document.getElementById('ipList');
+                
+                if (data.allowedIPs.length === 0) {
+                    ipList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>لا توجد IPs مسموحة</h3>
+                            <p>أضف IP جديد باستخدام النموذج أعلاه</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                ipList.innerHTML = data.allowedIPs.map(ip => {
+                    const isCurrentIP = ip === currentIP;
+                    return `
+                        <div class="ip-item ${isCurrentIP ? 'current-ip' : ''}" data-ip="${ip}">
+                            <div class="ip-info">
+                                <div class="ip-icon">
+                                    <i class="fas ${isCurrentIP ? 'fa-star' : 'fa-network-wired'}"></i>
+                                </div>
+                                <div class="ip-details">
+                                    <div class="ip-address">${ip}</div>
+                                    <div class="ip-label">
+                                        ${isCurrentIP ? 'IP الحالي الخاص بك' : 'IP مصرح به'}
+                                    </div>
+                                </div>
+                                ${isCurrentIP ? '<span class="current-badge"><i class="fas fa-check"></i> نشط الآن</span>' : ''}
+                            </div>
+                            <button 
+                                class="btn-delete" 
+                                onclick="deleteIP('${ip}')"
+                                ${isCurrentIP ? 'disabled' : ''}
+                            >
+                                <i class="fas fa-trash"></i>
+                                <span>حذف</span>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('❌ خطأ في جلب IPs:', error);
+                showAlert('فشل تحميل قائمة IPs', 'error');
+                
+                document.getElementById('ipList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>فشل التحميل</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Add new IP
+        document.getElementById('addIPForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const newIP = document.getElementById('newIP').value.trim();
+            const description = document.getElementById('ipDescription').value.trim();
+            const btnAddIP = document.getElementById('btnAddIP');
+            
+            // Validate IP format
+            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipRegex.test(newIP)) {
+                showAlert('صيغة IP غير صحيحة. يجب أن يكون بالصيغة: 192.168.1.1', 'error');
+                return;
+            }
+            
+            btnAddIP.disabled = true;
+            btnAddIP.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>جاري الإضافة...</span>';
+            
+            try {
+                console.log('➕ إضافة IP:', newIP);
+                
+                const data = await apiRequest('/api/admin/allowed-ips', {
+                    method: 'POST',
+                    body: JSON.stringify({ ip: newIP, description })
+                });
+                
+                console.log('✅ تم إضافة IP بنجاح');
+                showAlert('تم إضافة IP بنجاح! ✨', 'success');
+                showAlert('⚠️ يجب تحديث ADMIN_ALLOWED_IPS في Render Environment: ' + data.newIPsList, 'warning');
+                
+                // Reset form
+                document.getElementById('newIP').value = '';
+                document.getElementById('ipDescription').value = '';
+                
+                // Reload list
+                await loadIPs();
+                
+            } catch (error) {
+                console.error('❌ خطأ في إضافة IP:', error);
+                showAlert(error.message || 'فشل إضافة IP', 'error');
+            } finally {
+                btnAddIP.disabled = false;
+                btnAddIP.innerHTML = '<i class="fas fa-plus"></i><span>إضافة IP</span>';
+            }
+        });
+
+        // Delete IP
+        async function deleteIP(ip) {
+            if (!confirm(`هل أنت متأكد من حذف IP: ${ip}؟`)) {
+                return;
+            }
+            
+            try {
+                console.log('🗑️ حذف IP:', ip);
+                
+                const data = await apiRequest(`/api/admin/allowed-ips/${ip}`, {
+                    method: 'DELETE'
+                });
+                
+                console.log('✅ تم حذف IP بنجاح');
+                showAlert('تم حذف IP بنجاح! 🗑️', 'success');
+                showAlert('⚠️ يجب تحديث ADMIN_ALLOWED_IPS في Render Environment: ' + data.newIPsList, 'warning');
+                
+                // Reload list
+                await loadIPs();
+                
+            } catch (error) {
+                console.error('❌ خطأ في حذف IP:', error);
+                showAlert(error.message || 'فشل حذف IP', 'error');
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            const username = localStorage.getItem('admin_username');
+            if (username) {
+                document.getElementById('adminName').textContent = username;
+            }
+            
+            loadIPs();
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dalma Admin Pro Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>Dalma Admin Pro</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <div class="nav-section">
+                <span class="nav-section-title">الرئيسية</span>
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>لوحة التحكم</span>
+                </a>
+            </div>
+
+            <!-- Security -->
+            <div class="nav-section">
+                <span class="nav-section-title">الأمن السيبراني</span>
+                <a href="ip-management.html" class="nav-item">
+                    <i class="fas fa-network-wired"></i>
+                    <span>إدارة IPs</span>
+                </a>
+                <a href="#" class="nav-item" data-page="security">
+                    <i class="fas fa-shield-virus"></i>
+                    <span>مراقبة الأمان</span>
+                </a>
+                <a href="#" class="nav-item" data-page="logs">
+                    <i class="fas fa-file-alt"></i>
+                    <span>السجلات</span>
+                </a>
+                <a href="#" class="nav-item" data-page="threats">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>التهديدات</span>
+                    <span class="badge badge-danger">3</span>
+                </a>
+            </div>
+
+            <!-- Users -->
+            <div class="nav-section">
+                <span class="nav-section-title">المستخدمين</span>
+                <a href="#" class="nav-item" data-page="users">
+                    <i class="fas fa-users"></i>
+                    <span>جميع المستخدمين</span>
+                </a>
+                <a href="#" class="nav-item" data-page="media">
+                    <i class="fas fa-camera"></i>
+                    <span>الإعلاميين</span>
+                </a>
+                <a href="#" class="nav-item" data-page="providers">
+                    <i class="fas fa-store"></i>
+                    <span>مقدمي الخدمات</span>
+                </a>
+            </div>
+
+            <!-- Requests -->
+            <div class="nav-section">
+                <span class="nav-section-title">الطلبات</span>
+                <a href="#" class="nav-item" data-page="requests-media">
+                    <i class="fas fa-film"></i>
+                    <span>طلبات الإعلاميين</span>
+                    <span class="badge badge-warning">5</span>
+                </a>
+                <a href="#" class="nav-item" data-page="requests-providers">
+                    <i class="fas fa-briefcase"></i>
+                    <span>طلبات مقدمي الخدمات</span>
+                    <span class="badge badge-info">3</span>
+                </a>
+            </div>
+
+            <!-- Finance -->
+            <div class="nav-section">
+                <span class="nav-section-title">المالية</span>
+                <a href="#" class="nav-item" data-page="finance">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>الرقابة المالية</span>
+                </a>
+                <a href="#" class="nav-item" data-page="api-costs">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>تكاليف API</span>
+                </a>
+            </div>
+
+            <!-- Marketing -->
+            <div class="nav-section">
+                <span class="nav-section-title">التسويق</span>
+                <a href="#" class="nav-item" data-page="ads">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>إدارة الإعلانات</span>
+                </a>
+                <a href="#" class="nav-item" data-page="partners">
+                    <i class="fas fa-handshake"></i>
+                    <span>إدارة الشركاء</span>
+                </a>
+            </div>
+
+            <!-- App Settings -->
+            <div class="nav-section">
+                <span class="nav-section-title">التطبيق</span>
+                <a href="#" class="nav-item" data-page="categories">
+                    <i class="fas fa-tags"></i>
+                    <span>إدارة الفئات</span>
+                </a>
+                <a href="#" class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>الإعدادات العامة</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="adminName">المشرف العام</div>
+                    <div class="user-role">Super Admin</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="btn-icon" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="بحث...">
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <button class="btn-icon" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn-icon" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">4</span>
+                </button>
+                <button class="btn-icon">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content" id="pageContent">
+            <!-- Content will be loaded here by JavaScript -->
+        </div>
+    </main>
+
+    <!-- Notification Panel -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-header">
+            <h3>الإشعارات</h3>
+            <button class="btn-close" onclick="closeNotifications()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="notification-list">
+            <div class="notification-item warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <strong>تنبيه أمني</strong>
+                    <p>محاولة دخول غير مصرح بها</p>
+                    <span class="time">منذ 5 دقائق</span>
+                </div>
+            </div>
+            <div class="notification-item info">
+                <i class="fas fa-file-alt"></i>
+                <div>
+                    <strong>طلب جديد</strong>
+                    <p>طلب تحويل إلى إعلامي من سلطان القحطاني</p>
+                    <span class="time">منذ 15 دقيقة</span>
+                </div>
+            </div>
+            <div class="notification-item success">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                    <strong>تحديث ناجح</strong>
+                    <p>تم تحديث النظام بنجاح</p>
+                    <span class="time">منذ ساعة</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/requests.js"></script>
+    
+    <script>
+        // Check authentication on load
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🔍 [INDEX] فحص حالة تسجيل الدخول...');
+            
+            const token = localStorage.getItem('admin_token');
+            const username = localStorage.getItem('admin_username');
+            const apiKey = localStorage.getItem('admin_apiKey');
+            
+            console.log('🔍 [INDEX] Token:', token ? 'موجود ✅' : 'غير موجود ❌');
+            console.log('🔍 [INDEX] Username:', username || 'غير موجود');
+            console.log('🔍 [INDEX] API Key:', apiKey ? 'موجود ✅' : 'غير موجود ❌');
+            
+            if (!token) {
+                console.log('❌ غير مسجل دخول، تحويل إلى صفحة تسجيل الدخول...');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Display admin name
+            if (username) {
+                document.getElementById('adminName').textContent = username;
+            }
+            
+            console.log('✅ Admin مسجل دخول:', username);
+        });
+    </script>
+</body>
+</html>
