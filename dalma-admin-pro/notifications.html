@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الإشعارات - Dalma Admin Pro</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>Dalma Admin Pro</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <div class="nav-section">
+                <span class="nav-section-title">الرئيسية</span>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>لوحة التحكم</span>
+                </a>
+            </div>
+
+            <!-- Security -->
+            <div class="nav-section">
+                <span class="nav-section-title">الأمن السيبراني</span>
+                <a href="ip-management.html" class="nav-item">
+                    <i class="fas fa-network-wired"></i>
+                    <span>إدارة IPs</span>
+                </a>
+                <a href="security-monitoring.html" class="nav-item">
+                    <i class="fas fa-shield-virus"></i>
+                    <span>مراقبة الأمان</span>
+                </a>
+            </div>
+
+            <!-- Users -->
+            <div class="nav-section">
+                <span class="nav-section-title">المستخدمين</span>
+                <a href="users-management.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>جميع المستخدمين</span>
+                </a>
+                <a href="roles-management.html" class="nav-item">
+                    <i class="fas fa-user-shield"></i>
+                    <span>الأدوار والصلاحيات</span>
+                </a>
+            </div>
+
+            <!-- Requests -->
+            <div class="nav-section">
+                <span class="nav-section-title">الطلبات</span>
+                <a href="requests-management.html" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>إدارة الطلبات</span>
+                </a>
+            </div>
+
+            <!-- Finance -->
+            <div class="nav-section">
+                <span class="nav-section-title">المالية</span>
+                <a href="finance-monitoring.html" class="nav-item">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>الرقابة المالية</span>
+                </a>
+            </div>
+
+            <!-- Content -->
+            <div class="nav-section">
+                <span class="nav-section-title">المحتوى</span>
+                <a href="content-management.html" class="nav-item">
+                    <i class="fas fa-layer-group"></i>
+                    <span>إدارة المحتوى</span>
+                </a>
+                <a href="notifications.html" class="nav-item active">
+                    <i class="fas fa-bell"></i>
+                    <span>الإشعارات</span>
+                </a>
+            </div>
+
+            <!-- Advanced -->
+            <div class="nav-section">
+                <span class="nav-section-title">متقدم</span>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>التقارير</span>
+                </a>
+                <a href="ai-analytics.html" class="nav-item">
+                    <i class="fas fa-brain"></i>
+                    <span>الذكاء الاصطناعي</span>
+                </a>
+                <a href="settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>الإعدادات</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="adminName">المشرف العام</div>
+                    <div class="user-role">Super Admin</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="btn-icon" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>📧 إدارة الإشعارات</h1>
+            </div>
+            <div class="topbar-right">
+                <button class="btn-icon" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn-icon">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3 id="totalSent">0</h3>
+                        <p>إشعارات مرسلة</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3 id="todaySent">0</h3>
+                        <p>اليوم</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3 id="successRate">0%</h3>
+                        <p>معدل النجاح</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3 id="totalRecipients">0</h3>
+                        <p>مستلمين</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Send Notification Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-paper-plane"></i> إرسال إشعار جديد</h2>
+                </div>
+                <div class="card-body">
+                    <form id="notificationForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="notifTitle">عنوان الإشعار *</label>
+                                <input type="text" id="notifTitle" class="form-control" required placeholder="مثال: عرض خاص!">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="notifBody">محتوى الإشعار *</label>
+                                <textarea id="notifBody" class="form-control" rows="4" required placeholder="اكتب محتوى الإشعار هنا..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="notifTarget">الفئة المستهدفة *</label>
+                                <select id="notifTarget" class="form-control" required>
+                                    <option value="all">الجميع</option>
+                                    <option value="users">المستخدمين العاديين</option>
+                                    <option value="media">الإعلاميين</option>
+                                    <option value="providers">مقدمي الخدمات</option>
+                                    <option value="single">مستخدم واحد</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="userIdGroup" style="display: none;">
+                                <label for="userId">معرف المستخدم</label>
+                                <input type="text" id="userId" class="form-control" placeholder="مثال: 123">
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="loadTemplate()">
+                                <i class="fas fa-file-alt"></i> قالب جاهز
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> إرسال الإشعار
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Notification History -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-history"></i> سجل الإشعارات</h2>
+                    <button class="btn btn-primary" onclick="refreshHistory()">
+                        <i class="fas fa-sync"></i> تحديث
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>العنوان</th>
+                                    <th>المحتوى</th>
+                                    <th>الفئة المستهدفة</th>
+                                    <th>المستلمين</th>
+                                    <th>النجاح</th>
+                                    <th>الفشل</th>
+                                    <th>التاريخ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center">جاري التحميل...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+    <script src="js/notifications.js"></script>
+    
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('admin_token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            const username = localStorage.getItem('admin_username');
+            if (username) {
+                document.getElementById('adminName').textContent = username;
+            }
+        });
+    </script>
+</body>
+</html>
+
