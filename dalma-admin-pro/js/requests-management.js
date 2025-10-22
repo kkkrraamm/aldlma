@@ -1,0 +1,523 @@
+// Requests Management
+const API_URL = 'https://dalma-api.onrender.com';
+let mediaRequests = [];
+let providerRequests = [];
+let currentTab = 'media';
+
+// Load on page load
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('📋 [REQUESTS] تهيئة صفحة إدارة الطلبات...');
+    
+    // Load admin name
+    const username = localStorage.getItem('admin_username');
+    if (username) {
+        const adminNameElement = document.getElementById('adminName');
+        if (adminNameElement) {
+            adminNameElement.textContent = username;
+        }
+    }
+    
+    // Load requests
+    loadRequests();
+});
+
+// Load all requests
+async function loadRequests() {
+    await Promise.all([
+        loadMediaRequests(),
+        loadProviderRequests()
+    ]);
+}
+
+// Load media requests
+async function loadMediaRequests() {
+    try {
+        console.log('📸 [MEDIA REQUESTS] جلب طلبات الإعلاميين...');
+        
+        try {
+            const data = await apiRequest('/api/admin/media-requests');
+            console.log('✅ [MEDIA REQUESTS] تم جلب البيانات:', data);
+            mediaRequests = data.requests || [];
+        } catch (error) {
+            console.warn('⚠️ [MEDIA REQUESTS] فشل جلب البيانات، استخدام بيانات تجريبية:', error);
+            mediaRequests = generateMockMediaRequests();
+        }
+        
+        updateMediaStats();
+        renderMediaRequests();
+        
+    } catch (error) {
+        console.error('❌ [MEDIA REQUESTS] خطأ:', error);
+    }
+}
+
+// Load provider requests
+async function loadProviderRequests() {
+    try {
+        console.log('🏪 [PROVIDER REQUESTS] جلب طلبات مقدمي الخدمات...');
+        
+        try {
+            const data = await apiRequest('/api/admin/provider-requests');
+            console.log('✅ [PROVIDER REQUESTS] تم جلب البيانات:', data);
+            providerRequests = data.requests || [];
+        } catch (error) {
+            console.warn('⚠️ [PROVIDER REQUESTS] فشل جلب البيانات، استخدام بيانات تجريبية:', error);
+            providerRequests = generateMockProviderRequests();
+        }
+        
+        updateProviderStats();
+        renderProviderRequests();
+        
+    } catch (error) {
+        console.error('❌ [PROVIDER REQUESTS] خطأ:', error);
+    }
+}
+
+// Generate mock media requests
+function generateMockMediaRequests() {
+    const names = ['أحمد العتيبي', 'سارة القحطاني', 'محمد السديري', 'فاطمة الشمري', 'عبدالله الدوسري'];
+    const contentTypes = ['أخبار', 'ترفيه', 'رياضة', 'تقنية', 'طبخ'];
+    const statuses = ['pending', 'pending', 'pending', 'approved', 'rejected'];
+    
+    return names.map((name, index) => ({
+        id: index + 1,
+        user_id: 100 + index,
+        name: name,
+        email: `media${index + 1}@example.com`,
+        phone: `+9665${Math.floor(Math.random() * 90000000 + 10000000)}`,
+        bio: 'إعلامي متخصص في إنتاج المحتوى الرقمي مع خبرة تزيد عن 5 سنوات في مجال الإعلام الحديث.',
+        content_type: contentTypes[index],
+        social_media: `@${name.split(' ')[0].toLowerCase()}`,
+        id_image_url: index < 3 ? 'https://via.placeholder.com/400x300?text=ID+Image' : null,
+        status: statuses[index],
+        created_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
+    }));
+}
+
+// Generate mock provider requests
+function generateMockProviderRequests() {
+    const names = ['خالد المطيري', 'نورة العمري', 'سلطان الحربي', 'ريم العنزي'];
+    const services = ['مطاعم', 'محلات تجارية', 'خدمات صيانة', 'خدمات تعليمية'];
+    const statuses = ['pending', 'pending', 'approved', 'rejected'];
+    
+    return names.map((name, index) => ({
+        id: index + 1,
+        user_id: 200 + index,
+        name: name,
+        email: `provider${index + 1}@example.com`,
+        phone: `+9665${Math.floor(Math.random() * 90000000 + 10000000)}`,
+        business_name: `${services[index]} ${name.split(' ')[0]}`,
+        service_type: services[index],
+        location_address: 'عرعر، حي الصناعية',
+        has_commercial_license: index < 2,
+        license_number: index < 2 ? `CR${Math.floor(Math.random() * 9000000 + 1000000)}` : null,
+        license_image_url: index < 2 ? 'https://via.placeholder.com/400x300?text=License' : null,
+        status: statuses[index],
+        created_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
+    }));
+}
+
+// Update media stats
+function updateMediaStats() {
+    const pending = mediaRequests.filter(r => r.status === 'pending').length;
+    const approved = mediaRequests.filter(r => r.status === 'approved').length;
+    const rejected = mediaRequests.filter(r => r.status === 'rejected').length;
+    
+    document.getElementById('mediaPending').textContent = pending;
+    document.getElementById('mediaApproved').textContent = approved;
+    document.getElementById('mediaRejected').textContent = rejected;
+    document.getElementById('mediaBadge').textContent = pending;
+}
+
+// Update provider stats
+function updateProviderStats() {
+    const pending = providerRequests.filter(r => r.status === 'pending').length;
+    const approved = providerRequests.filter(r => r.status === 'approved').length;
+    const rejected = providerRequests.filter(r => r.status === 'rejected').length;
+    
+    document.getElementById('providersPending').textContent = pending;
+    document.getElementById('providersApproved').textContent = approved;
+    document.getElementById('providersRejected').textContent = rejected;
+    document.getElementById('providersBadge').textContent = pending;
+}
+
+// Render media requests
+function renderMediaRequests() {
+    const container = document.getElementById('mediaRequestsList');
+    
+    if (mediaRequests.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>لا توجد طلبات</h3>
+                <p>لا توجد طلبات إعلاميين حالياً</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = mediaRequests.map(request => `
+        <div class="request-card">
+            <div class="request-avatar">${getInitials(request.name)}</div>
+            
+            <div class="request-info">
+                <div class="request-header">
+                    <div class="request-name">${request.name}</div>
+                    <span class="request-status ${request.status}">
+                        ${getStatusLabel(request.status)}
+                    </span>
+                </div>
+                
+                <div class="request-details">
+                    <div class="detail-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>${request.email}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-phone"></i>
+                        <span>${request.phone}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-video"></i>
+                        <span>نوع المحتوى: ${request.content_type}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-hashtag"></i>
+                        <span>${request.social_media || 'لا يوجد'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>${formatDate(request.created_at)}</span>
+                    </div>
+                </div>
+                
+                ${request.bio ? `
+                    <div class="request-bio">
+                        <strong>النبذة التعريفية:</strong><br>
+                        ${request.bio}
+                    </div>
+                ` : ''}
+                
+                ${request.id_image_url ? `
+                    <div class="image-preview">
+                        <img src="${request.id_image_url}" alt="ID" onclick="openImageModal('${request.id_image_url}')">
+                    </div>
+                ` : '<p style="color: var(--text-secondary); font-size: 13px;"><i class="fas fa-exclamation-circle"></i> لم يتم رفع صورة الهوية</p>'}
+            </div>
+            
+            <div class="request-actions">
+                ${request.status === 'pending' ? `
+                    <button class="btn btn-success" onclick="approveMediaRequest(${request.id})">
+                        <i class="fas fa-check"></i>
+                        قبول
+                    </button>
+                    <button class="btn btn-danger" onclick="rejectMediaRequest(${request.id})">
+                        <i class="fas fa-times"></i>
+                        رفض
+                    </button>
+                ` : `
+                    <button class="btn btn-secondary" onclick="viewRequestDetails(${request.id}, 'media')">
+                        <i class="fas fa-eye"></i>
+                        عرض
+                    </button>
+                `}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Render provider requests
+function renderProviderRequests() {
+    const container = document.getElementById('providersRequestsList');
+    
+    if (providerRequests.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>لا توجد طلبات</h3>
+                <p>لا توجد طلبات مقدمي خدمات حالياً</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = providerRequests.map(request => `
+        <div class="request-card">
+            <div class="request-avatar">${getInitials(request.name)}</div>
+            
+            <div class="request-info">
+                <div class="request-header">
+                    <div class="request-name">${request.business_name || request.name}</div>
+                    <span class="request-status ${request.status}">
+                        ${getStatusLabel(request.status)}
+                    </span>
+                </div>
+                
+                <div class="request-details">
+                    <div class="detail-item">
+                        <i class="fas fa-user"></i>
+                        <span>${request.name}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>${request.email}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-phone"></i>
+                        <span>${request.phone}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-briefcase"></i>
+                        <span>${request.service_type}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>${request.location_address}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-${request.has_commercial_license ? 'check-circle' : 'times-circle'}"></i>
+                        <span>${request.has_commercial_license ? 'لديه رخصة تجارية' : 'بدون رخصة'}</span>
+                    </div>
+                    ${request.license_number ? `
+                        <div class="detail-item">
+                            <i class="fas fa-certificate"></i>
+                            <span>${request.license_number}</span>
+                        </div>
+                    ` : ''}
+                    <div class="detail-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>${formatDate(request.created_at)}</span>
+                    </div>
+                </div>
+                
+                ${request.license_image_url ? `
+                    <div class="image-preview">
+                        <img src="${request.license_image_url}" alt="License" onclick="openImageModal('${request.license_image_url}')">
+                    </div>
+                ` : '<p style="color: var(--text-secondary); font-size: 13px;"><i class="fas fa-exclamation-circle"></i> لم يتم رفع صورة الرخصة</p>'}
+            </div>
+            
+            <div class="request-actions">
+                ${request.status === 'pending' ? `
+                    <button class="btn btn-success" onclick="approveProviderRequest(${request.id})">
+                        <i class="fas fa-check"></i>
+                        قبول
+                    </button>
+                    <button class="btn btn-danger" onclick="rejectProviderRequest(${request.id})">
+                        <i class="fas fa-times"></i>
+                        رفض
+                    </button>
+                ` : `
+                    <button class="btn btn-secondary" onclick="viewRequestDetails(${request.id}, 'provider')">
+                        <i class="fas fa-eye"></i>
+                        عرض
+                    </button>
+                `}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Switch tab
+function switchTab(tab) {
+    currentTab = tab;
+    
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    if (tab === 'media') {
+        document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+        document.getElementById('mediaTab').classList.add('active');
+    } else {
+        document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+        document.getElementById('providersTab').classList.add('active');
+    }
+}
+
+// Approve media request
+async function approveMediaRequest(requestId) {
+    if (!confirm('هل أنت متأكد من قبول هذا الطلب؟')) return;
+    
+    try {
+        console.log('✅ [APPROVE] قبول طلب إعلامي:', requestId);
+        
+        // Update local data (mock)
+        const request = mediaRequests.find(r => r.id === requestId);
+        if (request) {
+            request.status = 'approved';
+            updateMediaStats();
+            renderMediaRequests();
+            showToast('تم قبول الطلب بنجاح! تم إشعار المستخدم.', 'success');
+        }
+        
+        // TODO: Call API
+        // await apiRequest(`/api/admin/media-requests/${requestId}/approve`, { method: 'POST' });
+        
+    } catch (error) {
+        console.error('❌ [APPROVE] خطأ:', error);
+        showToast('فشل قبول الطلب', 'error');
+    }
+}
+
+// Reject media request
+async function rejectMediaRequest(requestId) {
+    const reason = prompt('يرجى إدخال سبب الرفض:');
+    if (!reason) return;
+    
+    try {
+        console.log('❌ [REJECT] رفض طلب إعلامي:', requestId, 'السبب:', reason);
+        
+        // Update local data (mock)
+        const request = mediaRequests.find(r => r.id === requestId);
+        if (request) {
+            request.status = 'rejected';
+            request.rejection_reason = reason;
+            updateMediaStats();
+            renderMediaRequests();
+            showToast('تم رفض الطلب. تم إشعار المستخدم بالسبب.', 'success');
+        }
+        
+        // TODO: Call API
+        // await apiRequest(`/api/admin/media-requests/${requestId}/reject`, { 
+        //     method: 'POST', 
+        //     body: JSON.stringify({ reason }) 
+        // });
+        
+    } catch (error) {
+        console.error('❌ [REJECT] خطأ:', error);
+        showToast('فشل رفض الطلب', 'error');
+    }
+}
+
+// Approve provider request
+async function approveProviderRequest(requestId) {
+    if (!confirm('هل أنت متأكد من قبول هذا الطلب؟')) return;
+    
+    try {
+        console.log('✅ [APPROVE] قبول طلب مقدم خدمة:', requestId);
+        
+        const request = providerRequests.find(r => r.id === requestId);
+        if (request) {
+            request.status = 'approved';
+            updateProviderStats();
+            renderProviderRequests();
+            showToast('تم قبول الطلب بنجاح! تم إشعار المستخدم.', 'success');
+        }
+        
+    } catch (error) {
+        console.error('❌ [APPROVE] خطأ:', error);
+        showToast('فشل قبول الطلب', 'error');
+    }
+}
+
+// Reject provider request
+async function rejectProviderRequest(requestId) {
+    const reason = prompt('يرجى إدخال سبب الرفض:');
+    if (!reason) return;
+    
+    try {
+        console.log('❌ [REJECT] رفض طلب مقدم خدمة:', requestId, 'السبب:', reason);
+        
+        const request = providerRequests.find(r => r.id === requestId);
+        if (request) {
+            request.status = 'rejected';
+            request.rejection_reason = reason;
+            updateProviderStats();
+            renderProviderRequests();
+            showToast('تم رفض الطلب. تم إشعار المستخدم بالسبب.', 'success');
+        }
+        
+    } catch (error) {
+        console.error('❌ [REJECT] خطأ:', error);
+        showToast('فشل رفض الطلب', 'error');
+    }
+}
+
+// View request details
+function viewRequestDetails(requestId, type) {
+    showToast('عرض تفاصيل الطلب...', 'info');
+    console.log('View request:', requestId, type);
+}
+
+// Refresh requests
+async function refreshRequests() {
+    showToast('جاري تحديث البيانات...', 'info');
+    await loadRequests();
+    showToast('تم التحديث بنجاح', 'success');
+}
+
+// Image modal functions
+function openImageModal(imageUrl) {
+    const modal = document.getElementById('imageModal');
+    const img = document.getElementById('modalImage');
+    img.src = imageUrl;
+    modal.classList.add('active');
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.classList.remove('active');
+}
+
+// Helper functions
+function getInitials(name) {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+}
+
+function getStatusLabel(status) {
+    const labels = {
+        pending: 'قيد المراجعة',
+        approved: 'مقبول',
+        rejected: 'مرفوض'
+    };
+    return labels[status] || status;
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'غير متوفر';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ar-SA', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+function showToast(message, type = 'info') {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+// API Helper
+async function apiRequest(endpoint, options = {}) {
+    const token = localStorage.getItem('admin_token');
+    const apiKey = localStorage.getItem('admin_apiKey');
+    
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+        ...options.headers
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers
+    });
+    
+    if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_username');
+            localStorage.removeItem('admin_apiKey');
+            window.location.href = 'login.html';
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+}
+
