@@ -616,3 +616,21 @@ function changeChartPeriod(chartId, period) {
     showToast(`جاري تحديث البيانات لفترة ${period}...`, 'info');
 }
 
+// Auto-load dashboard on index.html
+if (document.getElementById('pageContent')) {
+    document.addEventListener('DOMContentLoaded', async () => {
+        console.log('📊 [DASHBOARD] تحميل لوحة التحكم...');
+        const pageContent = document.getElementById('pageContent');
+        if (pageContent && window.location.pathname.includes('index.html')) {
+            try {
+                const content = await loadDashboard();
+                pageContent.innerHTML = content;
+                console.log('✅ [DASHBOARD] تم تحميل المحتوى بنجاح');
+            } catch (error) {
+                console.error('❌ [DASHBOARD] خطأ في التحميل:', error);
+                pageContent.innerHTML = '<div class="error">حدث خطأ في تحميل لوحة التحكم</div>';
+            }
+        }
+    });
+}
+
