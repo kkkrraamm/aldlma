@@ -1,10 +1,12 @@
 // Dashboard Page
+let dashboardCharts = {}; // Store chart instances
+
 async function loadDashboard() {
     try {
         // Fetch dashboard data
         const stats = await fetchDashboardStats();
         
-        return `
+        const result = `
             <div class="dashboard">
                 <div class="page-header">
                     <h1 class="page-title">
@@ -68,6 +70,70 @@ async function loadDashboard() {
                     </div>
                 </div>
 
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <!-- Users Growth Chart -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-chart-line"></i>
+                                نمو المستخدمين
+                            </h2>
+                            <select onchange="changeChartPeriod('usersChart', this.value)" class="period-select">
+                                <option value="7d">آخر 7 أيام</option>
+                                <option value="30d" selected>آخر 30 يوم</option>
+                                <option value="90d">آخر 90 يوم</option>
+                                <option value="1y">السنة الماضية</option>
+                            </select>
+                        </div>
+                        <div class="card-body">
+                            <div id="usersChart" style="min-height: 350px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- User Types Distribution Chart -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-chart-pie"></i>
+                                توزيع أنواع المستخدمين
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="userTypesChart" style="min-height: 350px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Second Charts Row -->
+                <div class="charts-row">
+                    <!-- API Costs Chart -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-dollar-sign"></i>
+                                تكاليف API الشهرية
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="apiCostsChart" style="min-height: 350px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Requests Timeline Chart -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-chart-area"></i>
+                                الطلبات اليومية
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="requestsChart" style="min-height: 350px;"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Financial Overview -->
                 <div class="card">
                     <div class="card-header">
@@ -125,6 +191,11 @@ async function loadDashboard() {
                 </div>
             </div>
         `;
+        
+        // Initialize charts after rendering
+        initializeDashboardCharts(stats);
+        
+        return result;
     } catch (error) {
         console.error('Error loading dashboard:', error);
         return '<div class="error">فشل تحميل لوحة التحكم</div>';
@@ -231,5 +302,304 @@ async function refreshDashboard() {
     showToast('جاري تحديث البيانات...', 'info');
     await loadPage('dashboard');
     showToast('تم التحديث بنجاح', 'success');
+}
+
+// Initialize Charts after DOM is ready
+function initializeDashboardCharts(stats) {
+    // Wait for DOM to be ready
+    setTimeout(() => {
+        initUsersGrowthChart(stats);
+        initUserTypesChart(stats);
+        initApiCostsChart(stats);
+        initRequestsChart(stats);
+    }, 100);
+}
+
+// Users Growth Chart
+function initUsersGrowthChart(stats) {
+    const element = document.getElementById('usersChart');
+    if (!element) return;
+
+    // Destroy existing chart
+    if (dashboardCharts.usersChart) {
+        dashboardCharts.usersChart.destroy();
+    }
+
+    // Generate mock data for 30 days
+    const dates = [];
+    const usersData = [];
+    const mediaData = [];
+    const providersData = [];
+    
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        dates.push(date.toISOString().split('T')[0]);
+        
+        // Mock growth data
+        const baseUsers = stats.totalUsers - (stats.newUsersPercent / 100 * stats.totalUsers);
+        usersData.push(Math.floor(baseUsers + (Math.random() * 20 + i * 2)));
+        mediaData.push(Math.floor(stats.totalMedia * 0.7 + (Math.random() * 2 + i * 0.2)));
+        providersData.push(Math.floor(stats.totalProviders * 0.6 + (Math.random() * 3 + i * 0.4)));
+    }
+
+    const options = {
+        series: [{
+            name: 'المستخدمين',
+            data: usersData
+        }, {
+            name: 'الإعلاميين',
+            data: mediaData
+        }, {
+            name: 'مقدمي الخدمات',
+            data: providersData
+        }],
+        chart: {
+            type: 'area',
+            height: 350,
+            fontFamily: 'Cairo, sans-serif',
+            toolbar: {
+                show: true,
+                tools: {
+                    download: true,
+                    zoom: true,
+                    zoomin: true,
+                    zoomout: true,
+                    pan: true,
+                    reset: true
+                }
+            }
+        },
+        colors: ['#6366f1', '#8b5cf6', '#f59e0b'],
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 2
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                opacityFrom: 0.6,
+                opacityTo: 0.1
+            }
+        },
+        xaxis: {
+            categories: dates,
+            labels: {
+                formatter: function(value) {
+                    const date = new Date(value);
+                    return date.getDate() + '/' + (date.getMonth() + 1);
+                }
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'العدد'
+            }
+        },
+        legend: {
+            position: 'top',
+            horizontalAlign: 'right'
+        },
+        tooltip: {
+            x: {
+                format: 'dd/MM/yyyy'
+            }
+        }
+    };
+
+    dashboardCharts.usersChart = new ApexCharts(element, options);
+    dashboardCharts.usersChart.render();
+}
+
+// User Types Distribution Chart
+function initUserTypesChart(stats) {
+    const element = document.getElementById('userTypesChart');
+    if (!element) return;
+
+    if (dashboardCharts.userTypesChart) {
+        dashboardCharts.userTypesChart.destroy();
+    }
+
+    const options = {
+        series: [stats.totalUsers || 0, stats.totalMedia || 0, stats.totalProviders || 0],
+        chart: {
+            type: 'donut',
+            height: 350,
+            fontFamily: 'Cairo, sans-serif'
+        },
+        labels: ['مستخدمين عاديين', 'إعلاميين', 'مقدمي خدمات'],
+        colors: ['#6366f1', '#8b5cf6', '#f59e0b'],
+        legend: {
+            position: 'bottom'
+        },
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '65%',
+                    labels: {
+                        show: true,
+                        total: {
+                            show: true,
+                            label: 'المجموع',
+                            formatter: function (w) {
+                                return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            formatter: function(val, opts) {
+                return opts.w.config.series[opts.seriesIndex];
+            }
+        }
+    };
+
+    dashboardCharts.userTypesChart = new ApexCharts(element, options);
+    dashboardCharts.userTypesChart.render();
+}
+
+// API Costs Chart
+function initApiCostsChart(stats) {
+    const element = document.getElementById('apiCostsChart');
+    if (!element) return;
+
+    if (dashboardCharts.apiCostsChart) {
+        dashboardCharts.apiCostsChart.destroy();
+    }
+
+    // Generate mock monthly data
+    const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر'];
+    const costs = [];
+    
+    for (let i = 0; i < 10; i++) {
+        costs.push((Math.random() * 200 + 300).toFixed(2));
+    }
+
+    const options = {
+        series: [{
+            name: 'التكلفة ($)',
+            data: costs
+        }],
+        chart: {
+            type: 'bar',
+            height: 350,
+            fontFamily: 'Cairo, sans-serif'
+        },
+        colors: ['#10b981'],
+        plotOptions: {
+            bar: {
+                borderRadius: 8,
+                dataLabels: {
+                    position: 'top'
+                }
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            formatter: function (val) {
+                return "$" + val;
+            },
+            offsetY: -20,
+            style: {
+                fontSize: '12px',
+                colors: ["#304758"]
+            }
+        },
+        xaxis: {
+            categories: months,
+            position: 'bottom'
+        },
+        yaxis: {
+            title: {
+                text: 'التكلفة ($)'
+            }
+        }
+    };
+
+    dashboardCharts.apiCostsChart = new ApexCharts(element, options);
+    dashboardCharts.apiCostsChart.render();
+}
+
+// Requests Timeline Chart
+function initRequestsChart(stats) {
+    const element = document.getElementById('requestsChart');
+    if (!element) return;
+
+    if (dashboardCharts.requestsChart) {
+        dashboardCharts.requestsChart.destroy();
+    }
+
+    // Generate data for last 14 days
+    const dates = [];
+    const requestsData = [];
+    
+    for (let i = 13; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        dates.push(date.toISOString().split('T')[0]);
+        requestsData.push(Math.floor(Math.random() * 5000 + 8000));
+    }
+
+    const options = {
+        series: [{
+            name: 'الطلبات',
+            data: requestsData
+        }],
+        chart: {
+            type: 'area',
+            height: 350,
+            fontFamily: 'Cairo, sans-serif',
+            sparkline: {
+                enabled: false
+            }
+        },
+        colors: ['#ef4444'],
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                opacityFrom: 0.7,
+                opacityTo: 0.2
+            }
+        },
+        xaxis: {
+            categories: dates,
+            labels: {
+                formatter: function(value) {
+                    const date = new Date(value);
+                    return date.getDate() + '/' + (date.getMonth() + 1);
+                }
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'عدد الطلبات'
+            }
+        },
+        tooltip: {
+            x: {
+                format: 'dd/MM/yyyy'
+            }
+        }
+    };
+
+    dashboardCharts.requestsChart = new ApexCharts(element, options);
+    dashboardCharts.requestsChart.render();
+}
+
+// Change chart period
+function changeChartPeriod(chartId, period) {
+    console.log(`تغيير فترة ${chartId} إلى ${period}`);
+    // يمكن إضافة منطق لتحديث البيانات حسب الفترة المختارة
+    showToast(`جاري تحديث البيانات لفترة ${period}...`, 'info');
 }
 

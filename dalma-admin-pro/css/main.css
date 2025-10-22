@@ -736,3 +736,115 @@ tbody tr:hover {
     background: var(--text-tertiary);
 }
 
+/* ==================== CHARTS STYLES ==================== */
+
+.charts-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 1200px) {
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.chart-card {
+    background: var(--bg-secondary);
+    border-radius: 15px;
+    box-shadow: 0 2px 8px var(--shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    box-shadow: 0 8px 20px var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.chart-card .card-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chart-card .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.chart-card .card-title i {
+    font-size: 20px;
+    color: var(--primary);
+}
+
+.chart-card .card-body {
+    padding: 25px;
+}
+
+.period-select {
+    padding: 8px 15px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.period-select:hover {
+    border-color: var(--primary);
+}
+
+.period-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* ApexCharts Dark Mode Compatibility */
+[data-theme="dark"] .apexcharts-svg {
+    background: transparent;
+}
+
+[data-theme="dark"] .apexcharts-text {
+    fill: var(--text-secondary);
+}
+
+[data-theme="dark"] .apexcharts-gridline {
+    stroke: var(--border);
+}
+
+[data-theme="dark"] .apexcharts-tooltip {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .apexcharts-tooltip-title {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .apexcharts-xaxis-label,
+[data-theme="dark"] .apexcharts-yaxis-label {
+    fill: var(--text-secondary);
+}
+
+[data-theme="dark"] .apexcharts-legend-text {
+    color: var(--text-secondary) !important;
+}
+
