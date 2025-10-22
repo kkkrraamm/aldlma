@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إدارة IPs المسموحة - Dalma Admin Pro</title>
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/unified-sidebar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         .ip-header {
@@ -390,43 +391,8 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="logo">
-            <img src="assets/images/logo.png" alt="Dalma Logo">
-            <span>Dalma Admin</span>
-        </div>
-        
-        <nav class="nav-menu">
-            <a href="index.html" class="nav-item">
-                <i class="fas fa-home"></i>
-                <span>لوحة التحكم</span>
-            </a>
-            <a href="ip-management.html" class="nav-item active">
-                <i class="fas fa-network-wired"></i>
-                <span>إدارة IPs</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-shield-alt"></i>
-                <span>الأمان</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-users"></i>
-                <span>المستخدمين</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-file-alt"></i>
-                <span>الطلبات</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="admin-info">
-                <i class="fas fa-user-shield"></i>
-                <span id="adminName">Admin</span>
-            </div>
-        </div>
-    </aside>
+    <!-- Unified Sidebar (loaded dynamically) -->
+    <div id="sidebarContainer"></div>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -516,9 +482,10 @@
         </div>
     </main>
 
+    <script src="js/sidebar.js"></script>
     <script src="js/main.js"></script>
     <script>
-        const API_URL = 'https://dalma-api.onrender.com';
+        // API_URL is already defined in main.js
         let currentIP = '';
 
         // Show alert message

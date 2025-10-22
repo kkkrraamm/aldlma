@@ -24,10 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeSidebar();
     initializeNavigation();
     
-    // Only load dashboard if token exists
-    if (adminToken) {
-        loadDashboard();
-    }
+    // Note: Dashboard loads its own content via dashboard.js
     // checkAuth(); // Disabled - will check on API calls instead
 });
 
