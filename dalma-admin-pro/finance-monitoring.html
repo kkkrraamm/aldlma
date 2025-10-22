@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرقابة المالية - Dalma Admin Pro</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-shield-halved"></i>
+                <span>Dalma Admin</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <div class="nav-section">
+                <span class="nav-section-title">لوحة التحكم</span>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>الرئيسية</span>
+                </a>
+            </div>
+
+            <!-- Security -->
+            <div class="nav-section">
+                <span class="nav-section-title">الأمن السيبراني</span>
+                <a href="ip-management.html" class="nav-item">
+                    <i class="fas fa-network-wired"></i>
+                    <span>إدارة IPs</span>
+                </a>
+            </div>
+
+            <!-- Users -->
+            <div class="nav-section">
+                <span class="nav-section-title">المستخدمين</span>
+                <a href="users-management.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>جميع المستخدمين</span>
+                </a>
+            </div>
+
+            <!-- Requests -->
+            <div class="nav-section">
+                <span class="nav-section-title">الطلبات</span>
+                <a href="requests-management.html" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>إدارة الطلبات</span>
+                </a>
+            </div>
+
+            <!-- Finance -->
+            <div class="nav-section">
+                <span class="nav-section-title">المالية</span>
+                <a href="finance-monitoring.html" class="nav-item active">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>الرقابة المالية</span>
+                </a>
+            </div>
+
+            <!-- Content -->
+            <div class="nav-section">
+                <span class="nav-section-title">المحتوى</span>
+                <a href="content-management.html" class="nav-item">
+                    <i class="fas fa-layer-group"></i>
+                    <span>إدارة المحتوى</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-danger btn-block" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="header-left">
+                <button class="btn btn-icon" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>💰 الرقابة المالية</h1>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-icon" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="user-menu">
+                    <span id="adminName">Admin</span>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Finance Dashboard -->
+        <div class="finance-container">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card primary">
+                    <div class="stat-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">إجمالي التكاليف (الشهر)</p>
+                        <h3 class="stat-value" id="totalCost">$0.00</h3>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-down"></i>
+                            <span id="costChange">-12%</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card success">
+                    <div class="stat-icon">
+                        <i class="fas fa-plug"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">استدعاءات API</p>
+                        <h3 class="stat-value" id="apiCalls">0</h3>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span id="callsChange">+8%</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">تكلفة Dalma AI</p>
+                        <h3 class="stat-value" id="aiCost">$0.00</h3>
+                        <span class="stat-change negative">
+                            <i class="fas fa-arrow-up"></i>
+                            <span id="aiChange">+15%</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card info">
+                    <div class="stat-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">تكلفة Database</p>
+                        <h3 class="stat-value" id="dbCost">$0.00</h3>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-down"></i>
+                            <span id="dbChange">-5%</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row 1 -->
+            <div class="charts-row">
+                <!-- Cost Trends Chart -->
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            اتجاهات التكاليف
+                        </h2>
+                        <select onchange="changeCostPeriod(this.value)" class="period-select">
+                            <option value="7d">آخر 7 أيام</option>
+                            <option value="30d" selected>آخر 30 يوم</option>
+                            <option value="90d">آخر 90 يوم</option>
+                            <option value="1y">السنة الماضية</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <div id="costTrendsChart" style="min-height: 350px;"></div>
+                    </div>
+                </div>
+
+                <!-- Cost Breakdown Chart -->
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            توزيع التكاليف
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="costBreakdownChart" style="min-height: 350px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed API Costs -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-code"></i>
+                        تكاليف API حسب Endpoint
+                    </h2>
+                    <button class="btn btn-primary" onclick="exportApiCosts()">
+                        <i class="fas fa-download"></i>
+                        تصدير
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Endpoint</th>
+                                    <th>الاستدعاءات</th>
+                                    <th>متوسط الوقت</th>
+                                    <th>التكلفة/استدعاء</th>
+                                    <th>الإجمالي</th>
+                                    <th>الاتجاه</th>
+                                </tr>
+                            </thead>
+                            <tbody id="apiCostsTable">
+                                <!-- Will be populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Alerts -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-bell"></i>
+                        تنبيهات الميزانية
+                    </h2>
+                    <button class="btn btn-outline" onclick="configureBudget()">
+                        <i class="fas fa-cog"></i>
+                        إعدادات
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="budgetAlerts">
+                        <!-- Will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost Predictions -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-crystal-ball"></i>
+                        توقعات التكاليف (AI-Powered)
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div id="costPredictionsChart" style="min-height: 300px;"></div>
+                    <div class="predictions-summary" id="predictionsSummary">
+                        <!-- Will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Budget Configuration Modal -->
+    <div class="modal" id="budgetModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-cog"></i>
+                    إعدادات الميزانية
+                </h2>
+                <button class="btn btn-icon" onclick="closeBudgetModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="monthlyBudget">الميزانية الشهرية ($)</label>
+                    <input type="number" id="monthlyBudget" class="form-control" placeholder="5000">
+                </div>
+                <div class="form-group">
+                    <label for="warningThreshold">نسبة التحذير (%)</label>
+                    <input type="number" id="warningThreshold" class="form-control" value="80">
+                </div>
+                <div class="form-group">
+                    <label for="criticalThreshold">نسبة حرجة (%)</label>
+                    <input type="number" id="criticalThreshold" class="form-control" value="95">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="emailAlerts">
+                        إرسال تنبيهات البريد الإلكتروني
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeBudgetModal()">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveBudgetConfig()">
+                    <i class="fas fa-save"></i>
+                    حفظ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+    <script src="js/finance-monitoring.js"></script>
+    
+    <script>
+        // Check authentication
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('admin_token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const username = localStorage.getItem('admin_username');
+            if (username) {
+                document.getElementById('adminName').textContent = username;
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -30,11 +30,20 @@ function logout() {
 // API Request Helper
 async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('adminToken');
+    const apiKey = localStorage.getItem('apiKey');
+    
+    console.log('🔑 [API Request]', {
+        endpoint,
+        hasToken: !!token,
+        hasApiKey: !!apiKey,
+        apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'MISSING'
+    });
     
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'X-API-Key': apiKey || ''
         }
     };
     

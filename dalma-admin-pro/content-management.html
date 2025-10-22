@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المحتوى - Dalma Admin Pro</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    
+    <!-- SortableJS for Drag & Drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-shield-halved"></i>
+                <span>Dalma Admin</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <div class="nav-section">
+                <span class="nav-section-title">لوحة التحكم</span>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>الرئيسية</span>
+                </a>
+            </div>
+
+            <!-- Security -->
+            <div class="nav-section">
+                <span class="nav-section-title">الأمن السيبراني</span>
+                <a href="ip-management.html" class="nav-item">
+                    <i class="fas fa-network-wired"></i>
+                    <span>إدارة IPs</span>
+                </a>
+            </div>
+
+            <!-- Users -->
+            <div class="nav-section">
+                <span class="nav-section-title">المستخدمين</span>
+                <a href="users-management.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>جميع المستخدمين</span>
+                </a>
+            </div>
+
+            <!-- Requests -->
+            <div class="nav-section">
+                <span class="nav-section-title">الطلبات</span>
+                <a href="requests-management.html" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>إدارة الطلبات</span>
+                </a>
+            </div>
+
+            <!-- Finance -->
+            <div class="nav-section">
+                <span class="nav-section-title">المالية</span>
+                <a href="finance-monitoring.html" class="nav-item">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>الرقابة المالية</span>
+                </a>
+            </div>
+
+            <!-- Content -->
+            <div class="nav-section">
+                <span class="nav-section-title">المحتوى</span>
+                <a href="content-management.html" class="nav-item active">
+                    <i class="fas fa-layer-group"></i>
+                    <span>إدارة المحتوى</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-danger btn-block" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="header-left">
+                <button class="btn btn-icon" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>📦 إدارة المحتوى</h1>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-icon" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="user-menu">
+                    <span id="adminName">Admin</span>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Management Tabs -->
+        <div class="content-container">
+            <!-- Tabs Navigation -->
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="ads" onclick="switchContentTab('ads')">
+                    <i class="fas fa-ad"></i>
+                    الإعلانات
+                    <span class="badge badge-primary" id="adsCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="partners" onclick="switchContentTab('partners')">
+                    <i class="fas fa-handshake"></i>
+                    الشركاء
+                    <span class="badge badge-success" id="partnersCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="categories" onclick="switchContentTab('categories')">
+                    <i class="fas fa-tags"></i>
+                    الفئات
+                    <span class="badge badge-warning" id="categoriesCount">0</span>
+                </button>
+            </div>
+
+            <!-- Ads Tab -->
+            <div class="tab-content active" id="adsTab">
+                <div class="tab-header">
+                    <h2>
+                        <i class="fas fa-ad"></i>
+                        إدارة الإعلانات
+                    </h2>
+                    <button class="btn btn-primary" onclick="openAddAdModal()">
+                        <i class="fas fa-plus"></i>
+                        إضافة إعلان جديد
+                    </button>
+                </div>
+
+                <!-- Ads Grid -->
+                <div class="ads-grid" id="adsGrid">
+                    <!-- Will be populated by JS -->
+                </div>
+            </div>
+
+            <!-- Partners Tab -->
+            <div class="tab-content" id="partnersTab">
+                <div class="tab-header">
+                    <h2>
+                        <i class="fas fa-handshake"></i>
+                        إدارة الشركاء
+                    </h2>
+                    <button class="btn btn-primary" onclick="openAddPartnerModal()">
+                        <i class="fas fa-plus"></i>
+                        إضافة شريك جديد
+                    </button>
+                </div>
+
+                <div class="partners-instructions">
+                    <i class="fas fa-info-circle"></i>
+                    <span>يمكنك سحب وإفلات الشركاء لإعادة ترتيبهم</span>
+                </div>
+
+                <!-- Partners List (Drag & Drop) -->
+                <div class="partners-list" id="partnersList">
+                    <!-- Will be populated by JS -->
+                </div>
+            </div>
+
+            <!-- Categories Tab -->
+            <div class="tab-content" id="categoriesTab">
+                <div class="tab-header">
+                    <h2>
+                        <i class="fas fa-tags"></i>
+                        إدارة الفئات
+                    </h2>
+                    <button class="btn btn-primary" onclick="openAddCategoryModal()">
+                        <i class="fas fa-plus"></i>
+                        إضافة فئة جديدة
+                    </button>
+                </div>
+
+                <div class="categories-instructions">
+                    <i class="fas fa-info-circle"></i>
+                    <span>يمكنك سحب وإفلات الفئات لإعادة ترتيبهم</span>
+                </div>
+
+                <!-- Categories List (Drag & Drop) -->
+                <div class="categories-list" id="categoriesList">
+                    <!-- Will be populated by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Ad Modal -->
+    <div class="modal" id="addAdModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-ad"></i>
+                    <span id="adModalTitle">إضافة إعلان جديد</span>
+                </h2>
+                <button class="btn btn-icon" onclick="closeAddAdModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="adTitle">عنوان الإعلان</label>
+                        <input type="text" id="adTitle" class="form-control" placeholder="أدخل عنوان الإعلان">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adPage">الصفحة</label>
+                        <select id="adPage" class="form-control">
+                            <option value="">اختر الصفحة</option>
+                            <option value="home">الرئيسية (Home)</option>
+                            <option value="services">الخدمات (Services)</option>
+                            <option value="trends">الترندات (Trends)</option>
+                            <option value="prayer">الصلاة (Prayer)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adPosition">الموقع في الصفحة</label>
+                        <select id="adPosition" class="form-control">
+                            <option value="">اختر الموقع</option>
+                            <option value="top">أعلى الصفحة</option>
+                            <option value="middle">منتصف الصفحة</option>
+                            <option value="bottom">أسفل الصفحة</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adLink">رابط الإعلان (URL)</label>
+                        <input type="url" id="adLink" class="form-control" placeholder="https://example.com">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="adImage">صورة الإعلان</label>
+                        <div class="file-upload">
+                            <input type="file" id="adImage" accept="image/*" onchange="previewAdImage(event)">
+                            <label for="adImage" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>اضغط لرفع صورة أو اسحبها هنا</span>
+                            </label>
+                        </div>
+                        <div id="adImagePreview" class="image-preview"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adStartDate">تاريخ البداية</label>
+                        <input type="date" id="adStartDate" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adEndDate">تاريخ النهاية</label>
+                        <input type="date" id="adEndDate" class="form-control">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAddAdModal()">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveAd()">
+                    <i class="fas fa-save"></i>
+                    حفظ الإعلان
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Partner Modal -->
+    <div class="modal" id="addPartnerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-handshake"></i>
+                    <span id="partnerModalTitle">إضافة شريك جديد</span>
+                </h2>
+                <button class="btn btn-icon" onclick="closeAddPartnerModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="partnerName">اسم الشريك</label>
+                    <input type="text" id="partnerName" class="form-control" placeholder="أدخل اسم الشريك">
+                </div>
+
+                <div class="form-group">
+                    <label for="partnerWebsite">الموقع الإلكتروني (اختياري)</label>
+                    <input type="url" id="partnerWebsite" class="form-control" placeholder="https://example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="partnerLogo">شعار الشريك</label>
+                    <div class="file-upload">
+                        <input type="file" id="partnerLogo" accept="image/*" onchange="previewPartnerLogo(event)">
+                        <label for="partnerLogo" class="file-upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>اضغط لرفع شعار أو اسحبه هنا</span>
+                        </label>
+                    </div>
+                    <div id="partnerLogoPreview" class="image-preview"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAddPartnerModal()">إلغاء</button>
+                <button class="btn btn-primary" onclick="savePartner()">
+                    <i class="fas fa-save"></i>
+                    حفظ الشريك
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="modal" id="addCategoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-tags"></i>
+                    <span id="categoryModalTitle">إضافة فئة جديدة</span>
+                </h2>
+                <button class="btn btn-icon" onclick="closeAddCategoryModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="categoryNameAr">الاسم بالعربية</label>
+                    <input type="text" id="categoryNameAr" class="form-control" placeholder="أدخل اسم الفئة بالعربية">
+                </div>
+
+                <div class="form-group">
+                    <label for="categoryNameEn">الاسم بالإنجليزية</label>
+                    <input type="text" id="categoryNameEn" class="form-control" placeholder="Enter category name in English">
+                </div>
+
+                <div class="form-group">
+                    <label for="categoryEmoji">الرمز التعبيري (Emoji)</label>
+                    <div class="emoji-selector">
+                        <input type="text" id="categoryEmoji" class="form-control emoji-input" placeholder="اختر رمز" readonly>
+                        <button type="button" class="btn btn-outline" onclick="openEmojiPicker()">
+                            <i class="fas fa-smile"></i>
+                            اختر
+                        </button>
+                    </div>
+                    <div id="emojiPicker" class="emoji-picker-container" style="display: none;">
+                        <!-- Popular emojis -->
+                        <div class="emoji-grid">
+                            ${['🍔', '🍕', '🍗', '🏠', '🚗', '💼', '📚', '⚽', '🎮', '🎨', '💻', '📱', '🏥', '🏪', '🎓', '✈️', '🏨', '🎭', '💪', '🔧'].map(e => `<button type="button" class="emoji-btn" onclick="selectEmoji('${e}')">${e}</button>`).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="categoryColor">اللون</label>
+                    <div class="color-selector">
+                        <input type="color" id="categoryColor" class="form-control color-input" value="#6366f1">
+                        <span id="categoryColorPreview" class="color-preview" style="background: #6366f1;"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="categoryDescription">الوصف (اختياري)</label>
+                    <textarea id="categoryDescription" class="form-control" rows="3" placeholder="أدخل وصف مختصر للفئة"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAddCategoryModal()">إلغاء</button>
+                <button class="btn btn-primary" onclick="saveCategory()">
+                    <i class="fas fa-save"></i>
+                    حفظ الفئة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+    <script src="js/content-management.js"></script>
+    
+    <script>
+        // Check authentication
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('admin_token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const username = localStorage.getItem('admin_username');
+            if (username) {
+                document.getElementById('adminName').textContent = username;
+            }
+        });
+
+        // Color picker live preview
+        document.addEventListener('DOMContentLoaded', () => {
+            const colorInput = document.getElementById('categoryColor');
+            if (colorInput) {
+                colorInput.addEventListener('input', (e) => {
+                    document.getElementById('categoryColorPreview').style.background = e.target.value;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+

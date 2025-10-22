@@ -341,17 +341,26 @@
             }
 
             try {
-                const response = await fetch(`${API_URL}/user`, {
+                console.log('📤 إرسال طلب إنشاء حساب:', {
+                    accountType: selectedAccountType,
+                    name: formData.name,
+                    phone: formData.phone
+                });
+                
+                // استخدام apiRequest من admin.js للحصول على الـ headers الصحيحة
+                const response = await apiRequest('/admin/create-account', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(formData)
                 });
 
-                const data = await response.json();
+                if (!response) {
+                    throw new Error('فشل الاتصال بالسيرفر');
+                }
 
-                if (response.ok) {
+                const data = await response.json();
+                console.log('📥 رد السيرفر:', data);
+
+                if (response.ok && data.success) {
                     document.getElementById('successMessage').style.display = 'block';
                     document.getElementById('successMessage').innerHTML = `
                         ✅ <strong>تم إنشاء الحساب بنجاح!</strong><br>
@@ -370,6 +379,7 @@
                     throw new Error(data.error || 'فشل إنشاء الحساب');
                 }
             } catch (error) {
+                console.error('❌ خطأ في إنشاء الحساب:', error);
                 document.getElementById('errorMessage').style.display = 'block';
                 document.getElementById('errorMessage').textContent = '❌ ' + error.message;
                 document.getElementById('successMessage').style.display = 'none';
