@@ -80,92 +80,26 @@ function initializeNavigation() {
     
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
+            // Allow default navigation for links with href
+            const href = item.getAttribute('href');
+            if (href && href !== '#') {
+                // Let the browser navigate normally
+                return;
+            }
+            
+            // Only prevent default for # links
             e.preventDefault();
-            const page = item.getAttribute('data-page');
-            if (page) {
-                loadPage(page);
-                
-                // Update active state
-                navItems.forEach(nav => nav.classList.remove('active'));
-                item.classList.add('active');
-                
-                // Close sidebar on mobile
-                if (window.innerWidth <= 768) {
-                    document.getElementById('sidebar').classList.remove('active');
-                }
+            
+            // Update active state
+            navItems.forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+            
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('active');
             }
         });
     });
-}
-
-// Page Loading
-async function loadPage(page) {
-    currentPage = page;
-    const pageContent = document.getElementById('pageContent');
-    pageContent.classList.remove('fade-in');
-    
-    // Show loading
-    pageContent.innerHTML = '<div class="loading">جاري التحميل...</div>';
-    
-    try {
-        let content = '';
-        
-        switch(page) {
-            case 'dashboard':
-                content = await loadDashboard();
-                break;
-            case 'security':
-                content = await loadSecurityPage();
-                break;
-            case 'logs':
-                content = await loadLogsPage();
-                break;
-            case 'threats':
-                content = await loadThreatsPage();
-                break;
-            case 'users':
-                content = await loadUsersPage();
-                break;
-            case 'media':
-                content = await loadMediaPage();
-                break;
-            case 'providers':
-                content = await loadProvidersPage();
-                break;
-            case 'requests-media':
-                content = await loadMediaRequestsPage();
-                break;
-            case 'requests-providers':
-                content = await loadProviderRequestsPage();
-                break;
-            case 'finance':
-                content = await loadFinancePage();
-                break;
-            case 'api-costs':
-                content = await loadApiCostsPage();
-                break;
-            case 'ads':
-                content = await loadAdsPage();
-                break;
-            case 'partners':
-                content = await loadPartnersPage();
-                break;
-            case 'categories':
-                content = await loadCategoriesPage();
-                break;
-            case 'settings':
-                content = await loadSettingsPage();
-                break;
-            default:
-                content = '<h2>الصفحة غير موجودة</h2>';
-        }
-        
-        pageContent.innerHTML = content;
-        pageContent.classList.add('fade-in');
-    } catch (error) {
-        console.error('Error loading page:', error);
-        pageContent.innerHTML = '<div class="error">حدث خطأ في تحميل الصفحة</div>';
-    }
 }
 
 // Notifications

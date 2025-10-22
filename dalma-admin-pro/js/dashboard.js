@@ -423,8 +423,18 @@ function initUserTypesChart(stats) {
         dashboardCharts.userTypesChart.destroy();
     }
 
+    // Ensure we have valid numbers
+    const regularUsers = parseInt(stats.totalUsers) || 0;
+    const mediaUsers = parseInt(stats.totalMedia) || 0;
+    const providerUsers = parseInt(stats.totalProviders) || 0;
+    
+    // If all zeros, use fallback data to avoid NaN
+    const series = (regularUsers + mediaUsers + providerUsers) === 0 
+        ? [1, 0, 0] 
+        : [regularUsers, mediaUsers, providerUsers];
+
     const options = {
-        series: [stats.totalUsers || 0, stats.totalMedia || 0, stats.totalProviders || 0],
+        series: series,
         chart: {
             type: 'donut',
             height: 350,
@@ -457,6 +467,9 @@ function initUserTypesChart(stats) {
             formatter: function(val, opts) {
                 return opts.w.config.series[opts.seriesIndex];
             }
+        },
+        noData: {
+            text: 'لا توجد بيانات'
         }
     };
 
