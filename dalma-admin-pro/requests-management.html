@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/unified-sidebar.css">
     <style>
         .requests-page {
             padding: 30px;
@@ -402,38 +403,8 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="logo">
-            <i class="fas fa-shield-alt" style="font-size: 32px; color: var(--primary-color);"></i>
-            <span>Dalma Admin</span>
-        </div>
-        
-        <nav class="nav-menu">
-            <a href="index.html" class="nav-item">
-                <i class="fas fa-home"></i>
-                <span>لوحة التحكم</span>
-            </a>
-            <a href="ip-management.html" class="nav-item">
-                <i class="fas fa-network-wired"></i>
-                <span>إدارة IPs</span>
-            </a>
-            <a href="users-management.html" class="nav-item">
-                <i class="fas fa-users"></i>
-                <span>المستخدمين</span>
-            </a>
-            <a href="requests-management.html" class="nav-item active">
-                <i class="fas fa-file-alt"></i>
-                <span>الطلبات</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="admin-info">
-                <i class="fas fa-user-shield"></i>
-                <span id="adminName">Admin</span>
-            </div>
-        </div>
-    </aside>
+    <!-- Unified Sidebar -->
+    <div id="sidebarContainer"></div>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -543,6 +514,7 @@
         <img id="modalImage" src="" alt="Preview">
     </div>
 
+    <script src="js/sidebar.js"></script>
     <script src="js/main.js"></script>
     <script src="js/requests-management.js"></script>
 </body>

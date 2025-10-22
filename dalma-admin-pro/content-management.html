@@ -15,83 +15,15 @@
     
     <!-- Main CSS -->
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/unified-sidebar.css">
     
     <!-- SortableJS for Drag & Drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
     <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <i class="fas fa-shield-halved"></i>
-                <span>Dalma Admin</span>
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <!-- Dashboard -->
-            <div class="nav-section">
-                <span class="nav-section-title">لوحة التحكم</span>
-                <a href="index.html" class="nav-item">
-                    <i class="fas fa-home"></i>
-                    <span>الرئيسية</span>
-                </a>
-            </div>
-
-            <!-- Security -->
-            <div class="nav-section">
-                <span class="nav-section-title">الأمن السيبراني</span>
-                <a href="ip-management.html" class="nav-item">
-                    <i class="fas fa-network-wired"></i>
-                    <span>إدارة IPs</span>
-                </a>
-            </div>
-
-            <!-- Users -->
-            <div class="nav-section">
-                <span class="nav-section-title">المستخدمين</span>
-                <a href="users-management.html" class="nav-item">
-                    <i class="fas fa-users"></i>
-                    <span>جميع المستخدمين</span>
-                </a>
-            </div>
-
-            <!-- Requests -->
-            <div class="nav-section">
-                <span class="nav-section-title">الطلبات</span>
-                <a href="requests-management.html" class="nav-item">
-                    <i class="fas fa-file-alt"></i>
-                    <span>إدارة الطلبات</span>
-                </a>
-            </div>
-
-            <!-- Finance -->
-            <div class="nav-section">
-                <span class="nav-section-title">المالية</span>
-                <a href="finance-monitoring.html" class="nav-item">
-                    <i class="fas fa-dollar-sign"></i>
-                    <span>الرقابة المالية</span>
-                </a>
-            </div>
-
-            <!-- Content -->
-            <div class="nav-section">
-                <span class="nav-section-title">المحتوى</span>
-                <a href="content-management.html" class="nav-item active">
-                    <i class="fas fa-layer-group"></i>
-                    <span>إدارة المحتوى</span>
-                </a>
-            </div>
-        </nav>
-
-        <div class="sidebar-footer">
-            <button class="btn btn-danger btn-block" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>تسجيل الخروج</span>
-            </button>
-        </div>
-    </aside>
+    <!-- Unified Sidebar -->
+    <div id="sidebarContainer"></div>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -391,6 +323,7 @@
     </div>
 
     <!-- Scripts -->
+    <script src="js/sidebar.js"></script>
     <script src="js/main.js"></script>
     <script src="js/content-management.js"></script>
     
