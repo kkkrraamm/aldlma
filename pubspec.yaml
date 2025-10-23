@@ -1,0 +1,64 @@
+name: aldlma
+description: تطبيق الدلما - منصة خدمات ثقافية وإعلامية شاملة
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # UI & Design
+  cupertino_icons: ^1.0.2
+  google_fonts: ^6.1.0
+  
+  # State Management
+  provider: ^6.0.5
+  
+  # Storage
+  shared_preferences: ^2.2.2
+  
+  # Network & API
+  http: ^1.1.0
+  
+  # Image & Media
+  image_picker: ^1.0.4
+  cached_network_image: ^3.3.0
+  video_player: ^2.8.1
+  
+  # Utils
+  intl: ^0.20.2
+  timeago: ^3.6.0
+  url_launcher: ^6.2.1
+  visibility_detector: ^0.4.0+2
+  
+  # Maps
+  google_maps_flutter: ^2.5.0
+  geolocator: ^10.1.0
+  
+  # Device Info
+  device_info_plus: ^9.1.1
+  firebase_core: ^4.2.0
+  firebase_messaging: ^16.0.3
+  flutter_local_notifications: ^19.5.0
+  
+  # Firebase (Optional)
+  # firebase_core: ^2.24.0
+  # firebase_messaging: ^14.7.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/img/
+    - assets/videos/
+
