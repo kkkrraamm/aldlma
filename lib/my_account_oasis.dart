@@ -71,7 +71,7 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
     super.didChangeDependencies();
     // تحديث البيانات عندما تتغير حالة AuthState
     final authState = Provider.of<AuthState>(context, listen: false);
-    if (authState.isLoggedIn && _token == null) {
+    if (authState.isLoggedIn && _token == null && !_isLoading) {
       print('🔄 [MY_ACCOUNT_OASIS] تم اكتشاف تسجيل دخول جديد - تحديث البيانات...');
       _loadUserProfile();
     }
