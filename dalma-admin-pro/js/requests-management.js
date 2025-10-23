@@ -230,6 +230,10 @@ function renderMediaRequests() {
                         عرض
                     </button>
                 `}
+                <button class="btn btn-outline-danger" onclick="deleteMediaRequest(${request.id})" style="margin-right: 8px;">
+                    <i class="fas fa-trash"></i>
+                    حذف
+                </button>
             </div>
         </div>
         `;
@@ -323,6 +327,10 @@ function renderProviderRequests() {
                         عرض
                     </button>
                 `}
+                <button class="btn btn-outline-danger" onclick="deleteProviderRequest(${request.id})" style="margin-right: 8px;">
+                    <i class="fas fa-trash"></i>
+                    حذف
+                </button>
             </div>
         </div>
     `).join('');
@@ -378,25 +386,40 @@ async function rejectMediaRequest(requestId) {
     try {
         console.log('❌ [REJECT] رفض طلب إعلامي:', requestId, 'السبب:', reason);
         
-        // Update local data (mock)
-        const request = mediaRequests.find(r => r.id === requestId);
-        if (request) {
-            request.status = 'rejected';
-            request.rejection_reason = reason;
-            updateMediaStats();
-            renderMediaRequests();
-            showToast('تم رفض الطلب. تم إشعار المستخدم بالسبب.', 'success');
-        }
+        await apiRequest('/api/admin/media-requests/reject', {
+            method: 'POST',
+            body: JSON.stringify({ requestId, reason })
+        });
         
-        // TODO: Call API
-        // await apiRequest(`/api/admin/media-requests/${requestId}/reject`, { 
-        //     method: 'POST', 
-        //     body: JSON.stringify({ reason }) 
-        // });
+        showToast('تم رفض الطلب وإشعار المستخدم', 'success');
+        loadMediaRequests();
         
     } catch (error) {
         console.error('❌ [REJECT] خطأ:', error);
         showToast('فشل رفض الطلب', 'error');
+    }
+}
+
+// Delete media request
+async function deleteMediaRequest(requestId) {
+    if (!confirm('هل أنت متأكد من حذف هذا الطلب؟\n\nسيتمكن المستخدم من تقديم طلب جديد.')) {
+        return;
+    }
+    
+    try {
+        console.log('🗑️ [DELETE] حذف طلب إعلامي:', requestId);
+        
+        await apiRequest('/api/admin/media-requests/delete', {
+            method: 'POST',
+            body: JSON.stringify({ requestId })
+        });
+        
+        showToast('تم حذف الطلب بنجاح', 'success');
+        loadMediaRequests();
+        
+    } catch (error) {
+        console.error('❌ [DELETE] خطأ:', error);
+        showToast('فشل حذف الطلب', 'error');
     }
 }
 
@@ -429,18 +452,40 @@ async function rejectProviderRequest(requestId) {
     try {
         console.log('❌ [REJECT] رفض طلب مقدم خدمة:', requestId, 'السبب:', reason);
         
-        const request = providerRequests.find(r => r.id === requestId);
-        if (request) {
-            request.status = 'rejected';
-            request.rejection_reason = reason;
-            updateProviderStats();
-            renderProviderRequests();
-            showToast('تم رفض الطلب. تم إشعار المستخدم بالسبب.', 'success');
-        }
+        await apiRequest('/api/admin/provider-requests/reject', {
+            method: 'POST',
+            body: JSON.stringify({ requestId, reason })
+        });
+        
+        showToast('تم رفض الطلب وإشعار المستخدم', 'success');
+        loadProviderRequests();
         
     } catch (error) {
         console.error('❌ [REJECT] خطأ:', error);
         showToast('فشل رفض الطلب', 'error');
+    }
+}
+
+// Delete provider request
+async function deleteProviderRequest(requestId) {
+    if (!confirm('هل أنت متأكد من حذف هذا الطلب؟\n\nسيتمكن المستخدم من تقديم طلب جديد.')) {
+        return;
+    }
+    
+    try {
+        console.log('🗑️ [DELETE] حذف طلب مقدم خدمة:', requestId);
+        
+        await apiRequest('/api/admin/provider-requests/delete', {
+            method: 'POST',
+            body: JSON.stringify({ requestId })
+        });
+        
+        showToast('تم حذف الطلب بنجاح', 'success');
+        loadProviderRequests();
+        
+    } catch (error) {
+        console.error('❌ [DELETE] خطأ:', error);
+        showToast('فشل حذف الطلب', 'error');
     }
 }
 
