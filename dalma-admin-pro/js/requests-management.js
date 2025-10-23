@@ -156,13 +156,22 @@ function renderMediaRequests() {
         return;
     }
     
-    container.innerHTML = mediaRequests.map(request => `
+    container.innerHTML = mediaRequests.map(request => {
+        // Parse experience JSON if it's a string
+        let experience = {};
+        try {
+            experience = typeof request.experience === 'string' ? JSON.parse(request.experience) : request.experience || {};
+        } catch (e) {
+            console.error('Error parsing experience:', e);
+        }
+        
+        return `
         <div class="request-card">
-            <div class="request-avatar">${getInitials(request.name)}</div>
+            <div class="request-avatar">${getInitials(request.user_name)}</div>
             
             <div class="request-info">
                 <div class="request-header">
-                    <div class="request-name">${request.name}</div>
+                    <div class="request-name">${request.user_name || 'غير محدد'}</div>
                     <span class="request-status ${request.status}">
                         ${getStatusLabel(request.status)}
                     </span>
@@ -170,20 +179,20 @@ function renderMediaRequests() {
                 
                 <div class="request-details">
                     <div class="detail-item">
-                        <i class="fas fa-envelope"></i>
-                        <span>${request.email}</span>
-                    </div>
-                    <div class="detail-item">
                         <i class="fas fa-phone"></i>
-                        <span>${request.phone}</span>
+                        <span>${request.user_phone || 'غير محدد'}</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-video"></i>
-                        <span>نوع المحتوى: ${request.content_type}</span>
+                        <span>نوع المحتوى: ${experience.content_type || 'غير محدد'}</span>
                     </div>
                     <div class="detail-item">
-                        <i class="fas fa-hashtag"></i>
-                        <span>${request.social_media || 'لا يوجد'}</span>
+                        <i class="fas fa-envelope"></i>
+                        <span>${experience.email || 'غير محدد'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-link"></i>
+                        <span>${request.portfolio_url || 'لا يوجد'}</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-calendar"></i>
@@ -191,16 +200,16 @@ function renderMediaRequests() {
                     </div>
                 </div>
                 
-                ${request.bio ? `
+                ${request.reason ? `
                     <div class="request-bio">
-                        <strong>النبذة التعريفية:</strong><br>
-                        ${request.bio}
+                        <strong>السبب:</strong><br>
+                        ${request.reason}
                     </div>
                 ` : ''}
                 
-                ${request.id_image_url ? `
+                ${experience.id_image_url ? `
                     <div class="image-preview">
-                        <img src="${request.id_image_url}" alt="ID" onclick="openImageModal('${request.id_image_url}')">
+                        <img src="${experience.id_image_url}" alt="ID" onclick="openImageModal('${experience.id_image_url}')">
                     </div>
                 ` : '<p style="color: var(--text-secondary); font-size: 13px;"><i class="fas fa-exclamation-circle"></i> لم يتم رفع صورة الهوية</p>'}
             </div>
@@ -223,7 +232,8 @@ function renderMediaRequests() {
                 `}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Render provider requests
@@ -462,6 +472,7 @@ function closeImageModal() {
 
 // Helper functions
 function getInitials(name) {
+    if (!name) return '؟؟';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 }
 
