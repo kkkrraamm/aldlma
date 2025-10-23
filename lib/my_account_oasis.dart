@@ -84,7 +84,7 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
     super.dispose();
   }
 
-  Future<void> _loadUserProfile() async {
+  Future<void> _loadUserProfile({int retryCount = 0}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       _token = prefs.getString('token');
@@ -98,12 +98,19 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
         return;
       }
 
-      // جلب بيانات المستخدم
+      print('🔄 [MY_ACCOUNT_OASIS] محاولة تحميل البيانات (محاولة ${retryCount + 1}/3)...');
+
+      // جلب بيانات المستخدم مع timeout أطول
       final response = await http.get(
         Uri.parse('$_baseUrl/api/me'),
         headers: {
           'Authorization': 'Bearer $_token',
           'Content-Type': 'application/json',
+        },
+      ).timeout(
+        const Duration(seconds: 30), // timeout أطول للسماح لـ Render بالاستيقاظ
+        onTimeout: () {
+          throw Exception('انتهت مهلة الاتصال - Server قد يكون في وضع Sleep');
         },
       );
 
@@ -137,6 +144,13 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
           _loadRequestsStatus();
         }
       } else {
+        // إعادة المحاولة في حالة الخطأ
+        if (retryCount < 2) {
+          print('⚠️ [MY_ACCOUNT_OASIS] فشل التحميل، إعادة المحاولة بعد ${(retryCount + 1) * 2} ثانية...');
+          await Future.delayed(Duration(seconds: (retryCount + 1) * 2));
+          return _loadUserProfile(retryCount: retryCount + 1);
+        }
+        
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -146,6 +160,14 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
       }
     } catch (e) {
       print('❌ خطأ في تحميل البيانات: $e');
+      
+      // إعادة المحاولة في حالة الخطأ
+      if (retryCount < 2) {
+        print('⚠️ [MY_ACCOUNT_OASIS] فشل التحميل، إعادة المحاولة بعد ${(retryCount + 1) * 2} ثانية...');
+        await Future.delayed(Duration(seconds: (retryCount + 1) * 2));
+        return _loadUserProfile(retryCount: retryCount + 1);
+      }
+      
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -385,8 +407,30 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
       return Scaffold(
         backgroundColor: theme.backgroundColor,
         body: Center(
-          child: CircularProgressIndicator(
-            color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'جاري تحميل البيانات...',
+                style: GoogleFonts.cairo(
+                  fontSize: 16,
+                  color: theme.textPrimaryColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'قد يستغرق الأمر بضع ثوانٍ',
+                style: GoogleFonts.cairo(
+                  fontSize: 13,
+                  color: theme.textSecondaryColor,
+                ),
+              ),
+            ],
           ),
         ),
       );
