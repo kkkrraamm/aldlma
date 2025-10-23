@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌐 معرفة IP الخاص بك</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 50px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        h1 {
+            color: #1e293b;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+        }
+
+        .ip-box {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            margin: 30px 0;
+            font-size: 2rem;
+            font-weight: 900;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+
+        .info {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: right;
+        }
+
+        .info-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .info-value {
+            font-family: 'Courier New', monospace;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 4px solid rgba(16, 185, 129, 0.3);
+            border-radius: 50%;
+            border-top-color: #10b981;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .warning {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: right;
+        }
+
+        .warning h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+
+        .warning p {
+            color: #78350f;
+            line-height: 1.8;
+        }
+
+        .success {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .success h3 {
+            color: #065f46;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 معرفة IP الخاص بك</h1>
+        
+        <div id="loading" style="display: none;">
+            <div class="loading"></div>
+            <p style="margin-top: 20px; color: #64748b;">جاري جلب معلومات IP...</p>
+        </div>
+
+        <div id="result" style="display: none;">
+            <div class="ip-box" id="ipAddress">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+
+            <div class="info">
+                <div class="info-item">
+                    <span class="info-label">🌍 IP Address:</span>
+                    <span class="info-value" id="ip1">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">📍 Country:</span>
+                    <span class="info-value" id="country">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">🏙️ City:</span>
+                    <span class="info-value" id="city">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">🏢 ISP:</span>
+                    <span class="info-value" id="isp">-</span>
+                </div>
+            </div>
+
+            <button class="btn" onclick="copyIP()">
+                <i class="fas fa-copy"></i> نسخ IP
+            </button>
+
+            <button class="btn" onclick="addToRender()">
+                <i class="fas fa-plus"></i> إضافة إلى Render
+            </button>
+
+            <div class="success" id="successMsg" style="display: none;">
+                <h3>✅ تم النسخ بنجاح!</h3>
+                <p>الآن اذهب إلى Render → Environment Variables → ADMIN_ALLOWED_IPS وأضف هذا IP</p>
+            </div>
+        </div>
+
+        <div class="warning">
+            <h3>⚠️ ملاحظة مهمة</h3>
+            <p>
+                هذا IP يجب أن يُضاف إلى <strong>ADMIN_ALLOWED_IPS</strong> في Render Environment Variables.<br>
+                بعد إضافته، ستتمكن من الوصول إلى جميع صفحات Admin Dashboard.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let myIP = '';
+
+        async function getIP() {
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                // Method 1: ipify
+                const response1 = await fetch('https://api.ipify.org?format=json');
+                const data1 = await response1.json();
+                myIP = data1.ip;
+                
+                document.getElementById('ipAddress').textContent = myIP;
+                document.getElementById('ip1').textContent = myIP;
+
+                // Method 2: Get more details
+                try {
+                    const response2 = await fetch(`https://ipapi.co/${myIP}/json/`);
+                    const data2 = await response2.json();
+                    
+                    document.getElementById('country').textContent = data2.country_name || '-';
+                    document.getElementById('city').textContent = data2.city || '-';
+                    document.getElementById('isp').textContent = data2.org || '-';
+                } catch (e) {
+                    console.log('Could not get IP details:', e);
+                }
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error getting IP:', error);
+                document.getElementById('loading').style.display = 'none';
+                alert('فشل جلب IP. حاول مرة أخرى.');
+            }
+        }
+
+        function copyIP() {
+            navigator.clipboard.writeText(myIP).then(() => {
+                document.getElementById('successMsg').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('successMsg').style.display = 'none';
+                }, 5000);
+            });
+        }
+
+        function addToRender() {
+            alert(`
+📋 خطوات إضافة IP إلى Render:
+
+1. اذهب إلى: https://dashboard.render.com
+2. افتح: dalma-api → Environment
+3. ابحث عن: ADMIN_ALLOWED_IPS
+4. أضف IP الخاص بك: ${myIP}
+5. احفظ التغييرات
+6. انتظر إعادة التشغيل (1-2 دقيقة)
+
+✅ بعدها ستتمكن من الوصول إلى Admin Dashboard!
+            `);
+            
+            // Open Render dashboard
+            window.open('https://dashboard.render.com', '_blank');
+        }
+
+        // Auto-load on page load
+        window.addEventListener('DOMContentLoaded', getIP);
+    </script>
+</body>
+</html>
+
