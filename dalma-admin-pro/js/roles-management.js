@@ -1,6 +1,9 @@
 // Roles Management JavaScript
 console.log('🎭 [ROLES] Module loaded');
 
+// API Configuration
+const API_URL = 'https://dalma-api.onrender.com';
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎭 [ROLES] Page loaded');
     loadAdmins();
@@ -13,7 +16,7 @@ async function loadAdmins() {
     try {
         console.log('🎭 [ROLES] Loading admins...');
         
-        const response = await fetch(`${API_BASE_URL}/api/admin/admins`, {
+        const response = await fetch(`${API_URL}/api/admin/admins`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                 'x-api-key': localStorage.getItem('admin_apiKey')
@@ -97,7 +100,7 @@ async function addAdmin(e) {
         console.log(`🎭 [ROLES] Adding admin: ${username}`);
         showToast('جاري إضافة المشرف...', 'info');
         
-        const response = await fetch(`${API_BASE_URL}/api/admin/admins`, {
+        const response = await fetch(`${API_URL}/api/admin/admins`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -137,7 +140,7 @@ async function deleteAdmin(id, username) {
         console.log(`🗑️ [ROLES] Deleting admin ID: ${id}`);
         showToast('جاري الحذف...', 'info');
         
-        const response = await fetch(`${API_BASE_URL}/api/admin/admins/${id}`, {
+        const response = await fetch(`${API_URL}/api/admin/admins/${id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
@@ -166,7 +169,7 @@ async function loadAuditLog() {
     try {
         console.log('📜 [ROLES] Loading audit log...');
         
-        const response = await fetch(`${API_BASE_URL}/api/admin/audit-log`, {
+        const response = await fetch(`${API_URL}/api/admin/audit-log`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                 'x-api-key': localStorage.getItem('admin_apiKey')

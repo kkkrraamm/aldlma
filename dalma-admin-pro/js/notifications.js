@@ -1,6 +1,9 @@
 // Notifications Management JavaScript
 console.log('📧 [NOTIFICATIONS] Module loaded');
 
+// API Configuration
+const API_URL = 'https://dalma-api.onrender.com';
+
 // Templates
 const templates = {
     welcome: {
@@ -49,7 +52,7 @@ async function loadStatistics() {
     try {
         console.log('📊 [NOTIFICATIONS] Loading statistics...');
         
-        const response = await fetch(`${API_BASE_URL}/api/admin/notifications/stats`, {
+        const response = await fetch(`${API_URL}/api/admin/notifications/stats`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                 'x-api-key': localStorage.getItem('admin_apiKey')
@@ -80,7 +83,7 @@ async function loadHistory() {
     try {
         console.log('📜 [NOTIFICATIONS] Loading history...');
         
-        const response = await fetch(`${API_BASE_URL}/api/admin/notifications/history`, {
+        const response = await fetch(`${API_URL}/api/admin/notifications/history`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                 'x-api-key': localStorage.getItem('admin_apiKey')
@@ -186,7 +189,7 @@ async function sendNotification() {
         showToast('جاري الإرسال...', 'info');
 
         // Get FCM tokens
-        const tokensResponse = await fetch(`${API_BASE_URL}/api/admin/notifications/tokens`, {
+        const tokensResponse = await fetch(`${API_URL}/api/admin/notifications/tokens`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -214,7 +217,7 @@ async function sendNotification() {
         const failure = 0;
 
         // Log notification
-        await fetch(`${API_BASE_URL}/api/admin/notifications/log`, {
+        await fetch(`${API_URL}/api/admin/notifications/log`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

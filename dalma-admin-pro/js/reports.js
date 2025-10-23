@@ -1,6 +1,9 @@
 // Reports Management JavaScript
 console.log('📊 [REPORTS] Module loaded');
 
+// API Configuration
+const API_URL = 'https://dalma-api.onrender.com';
+
 let currentReportData = null;
 
 // Generate report
@@ -14,7 +17,7 @@ async function generateReport() {
 
         const endpoint = reportType === 'users' ? '/api/admin/reports/users' : '/api/admin/reports/services';
         
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        const response = await fetch(`${API_URL}${endpoint}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

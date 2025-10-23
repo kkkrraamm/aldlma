@@ -1,6 +1,9 @@
 // Security Monitoring JavaScript
 console.log('🔐 [SECURITY] Module loaded');
 
+// API Configuration (use same as main.js)
+const API_URL = 'https://dalma-api.onrender.com';
+
 let currentFilter = 'all';
 let allAttempts = [];
 
@@ -14,7 +17,7 @@ async function loadSecurityData() {
         console.log('🔐 [SECURITY] Loading security data...');
         
         // Load statistics
-        const statsResponse = await fetch(`${API_BASE_URL}/api/admin/security/stats`, {
+        const statsResponse = await fetch(`${API_URL}/api/admin/security/stats`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                 'x-api-key': localStorage.getItem('admin_apiKey')
@@ -35,7 +38,7 @@ async function loadSecurityData() {
         document.getElementById('blockedIPs').textContent = stats.blocked_ips || 0;
 
         // Load login attempts
-        const attemptsResponse = await fetch(`${API_BASE_URL}/api/admin/security/login-attempts`, {
+        const attemptsResponse = await fetch(`${API_URL}/api/admin/security/login-attempts`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                 'x-api-key': localStorage.getItem('admin_apiKey')
@@ -124,7 +127,7 @@ async function blockIP(ip) {
         console.log(`🔒 [SECURITY] Blocking IP: ${ip}`);
         showToast('جاري حظر IP...', 'info');
 
-        const response = await fetch(`${API_BASE_URL}/api/admin/security/block-ip`, {
+        const response = await fetch(`${API_URL}/api/admin/security/block-ip`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

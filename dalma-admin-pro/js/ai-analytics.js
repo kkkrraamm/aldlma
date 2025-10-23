@@ -1,12 +1,15 @@
 // AI Analytics JavaScript
 console.log('🤖 [AI] Module loaded');
 
+// API Configuration
+const API_URL = 'https://dalma-api.onrender.com';
+
 async function predictChurn() {
     try {
         console.log('🤖 [AI] Starting churn prediction analysis...');
         showToast('جاري تحليل نشاط المستخدمين...', 'info');
         
-        const response = await fetch(`${API_BASE_URL}/api/admin/ai/predict-churn`, {
+        const response = await fetch(`${API_URL}/api/admin/ai/predict-churn`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                 'x-api-key': localStorage.getItem('admin_apiKey')
@@ -76,7 +79,7 @@ async function detectFraud() {
         console.log('🚨 [AI] Starting fraud detection...');
         showToast('جاري فحص النشاطات المشبوهة...', 'info');
         
-        const response = await fetch(`${API_BASE_URL}/api/admin/ai/detect-fraud`, {
+        const response = await fetch(`${API_URL}/api/admin/ai/detect-fraud`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                 'x-api-key': localStorage.getItem('admin_apiKey')
@@ -188,7 +191,7 @@ async function blockSuspiciousIP(ip) {
         console.log(`🔒 [AI] Blocking suspicious IP: ${ip}`);
         showToast('جاري حظر IP...', 'info');
         
-        const response = await fetch(`${API_BASE_URL}/api/admin/security/block-ip`, {
+        const response = await fetch(`${API_URL}/api/admin/security/block-ip`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

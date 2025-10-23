@@ -1,6 +1,9 @@
 // Settings Management JavaScript
 console.log('⚙️ [SETTINGS] Module loaded');
 
+// API Configuration
+const API_URL = 'https://dalma-api.onrender.com';
+
 // Load settings on page load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('⚙️ [SETTINGS] Page loaded');
@@ -12,7 +15,7 @@ async function loadSettings() {
     try {
         console.log('⚙️ [SETTINGS] Loading settings from server...');
 
-        const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
+        const response = await fetch(`${API_URL}/api/admin/settings`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                 'x-api-key': localStorage.getItem('admin_apiKey')
@@ -73,7 +76,7 @@ async function saveSettings() {
         };
 
         // Send to server
-        const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
+        const response = await fetch(`${API_URL}/api/admin/settings`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -124,7 +127,7 @@ async function testSMTP() {
         showToast('تم التحقق من إعدادات SMTP (اختبار محلي)', 'success');
 
         // In production, you would call:
-        // const response = await fetch(`${API_BASE_URL}/api/admin/settings/test-smtp`, {
+        // const response = await fetch(`${API_URL}/api/admin/settings/test-smtp`, {
         //     method: 'POST',
         //     headers: { ... },
         //     body: JSON.stringify(smtpConfig)
