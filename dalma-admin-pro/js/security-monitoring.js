@@ -1,8 +1,7 @@
 // Security Monitoring JavaScript
 console.log('🔐 [SECURITY] Module loaded');
 
-// API Configuration (use same as main.js)
-const API_URL = 'https://dalma-api.onrender.com';
+// API Configuration (API_URL is defined in main.js)
 
 let currentFilter = 'all';
 let allAttempts = [];

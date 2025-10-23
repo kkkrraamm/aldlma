@@ -1,8 +1,7 @@
 // Roles Management JavaScript
 console.log('🎭 [ROLES] Module loaded');
 
-// API Configuration
-const API_URL = 'https://dalma-api.onrender.com';
+// API Configuration (API_URL is defined in main.js)
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎭 [ROLES] Page loaded');

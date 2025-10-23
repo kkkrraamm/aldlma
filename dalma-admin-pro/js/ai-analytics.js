@@ -1,8 +1,7 @@
 // AI Analytics JavaScript
 console.log('🤖 [AI] Module loaded');
 
-// API Configuration
-const API_URL = 'https://dalma-api.onrender.com';
+// API Configuration (API_URL is defined in main.js)
 
 async function predictChurn() {
     try {

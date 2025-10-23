@@ -1,5 +1,5 @@
 // Requests Management
-const API_URL = 'https://dalma-api.onrender.com';
+// API_URL is defined in main.js
 let mediaRequests = [];
 let providerRequests = [];
 let currentTab = 'media';

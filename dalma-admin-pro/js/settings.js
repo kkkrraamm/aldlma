@@ -1,8 +1,7 @@
 // Settings Management JavaScript
 console.log('⚙️ [SETTINGS] Module loaded');
 
-// API Configuration
-const API_URL = 'https://dalma-api.onrender.com';
+// API Configuration (API_URL is defined in main.js)
 
 // Load settings on page load
 document.addEventListener('DOMContentLoaded', () => {

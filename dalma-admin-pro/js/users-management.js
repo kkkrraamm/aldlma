@@ -1,5 +1,5 @@
 // Users Management Page
-const API_URL = 'https://dalma-api.onrender.com';
+// API_URL is defined in main.js
 let allUsers = [];
 let filteredUsers = [];
 let currentUser = null;
