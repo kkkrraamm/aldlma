@@ -210,20 +210,26 @@ function filterUsers() {
 }
 
 // View user details
-function viewUser(user) {
+async function viewUser(user) {
     currentUser = user;
     const modal = document.getElementById('userModal');
     const modalBody = document.getElementById('modalBody');
     
+    // Show initial content with loading for devices
     modalBody.innerHTML = `
         <div class="user-profile-header">
-            <div class="user-profile-avatar">${getInitials(user.name)}</div>
+            <div class="user-profile-avatar">
+                ${user.profile_picture 
+                    ? `<img src="${user.profile_picture}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='${getInitials(user.name)}';" />`
+                    : getInitials(user.name)
+                }
+            </div>
             <div class="user-profile-info">
                 <h2>${user.name}</h2>
-                <p>${user.email}</p>
+                <p>${user.phone || 'غير متوفر'}</p>
                 <div class="profile-badges">
                     <span class="badge ${user.role}">${getRoleLabel(user.role)}</span>
-                    <span class="badge ${user.status}">${getStatusLabel(user.status)}</span>
+                    <span class="badge ${user.status || 'inactive'}">${user.status === 'active' ? 'نشط' : 'غير نشط'}</span>
                 </div>
             </div>
         </div>
@@ -243,20 +249,116 @@ function viewUser(user) {
             </div>
             <div class="info-item">
                 <div class="info-label">عدد الأجهزة المتصلة</div>
-                <div class="info-value">${user.devices_count || 0} جهاز</div>
+                <div class="info-value">${user.device_count || 0} جهاز</div>
             </div>
             <div class="info-item">
-                <div class="info-label">عدد الطلبات</div>
-                <div class="info-value">${user.orders_count || 0} طلب</div>
+                <div class="info-label">تاريخ الميلاد</div>
+                <div class="info-value">${user.birth_date ? formatDate(user.birth_date) : 'غير متوفر'}</div>
             </div>
             <div class="info-item">
                 <div class="info-label">معرّف المستخدم</div>
                 <div class="info-value">#${user.id}</div>
             </div>
         </div>
+        
+        <div class="modal-section">
+            <h3 class="modal-section-title">
+                <i class="fas fa-mobile-alt"></i>
+                الأجهزة المتصلة (${user.device_count || 0})
+            </h3>
+            <div id="modalDevicesContainer" class="modal-devices-loading">
+                <i class="fas fa-spinner fa-spin"></i> جارٍ تحميل الأجهزة...
+            </div>
+        </div>
     `;
     
     modal.classList.add('active');
+    
+    // Load devices asynchronously
+    if (user.device_count > 0) {
+        try {
+            const data = await apiRequest(`/api/admin/users/${user.id}/devices`);
+            const devices = data.devices || [];
+            renderModalDevices(devices);
+        } catch (error) {
+            console.error('❌ [MODAL DEVICES] خطأ في تحميل الأجهزة:', error);
+            document.getElementById('modalDevicesContainer').innerHTML = `
+                <div style="text-align: center; padding: 20px; color: #e74c3c;">
+                    <i class="fas fa-exclamation-triangle"></i> فشل تحميل الأجهزة
+                </div>
+            `;
+        }
+    } else {
+        document.getElementById('modalDevicesContainer').innerHTML = `
+            <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                <i class="fas fa-mobile-alt"></i> لا توجد أجهزة مسجلة
+            </div>
+        `;
+    }
+}
+
+function renderModalDevices(devices) {
+    const container = document.getElementById('modalDevicesContainer');
+    if (!container) return;
+    
+    if (devices.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                <i class="fas fa-mobile-alt"></i> لا توجد أجهزة مسجلة
+            </div>
+        `;
+        return;
+    }
+    
+    const devicesHTML = devices.map(device => {
+        const info = device.device_info || {};
+        const deviceName = info.name || info.model || 'جهاز غير معروف';
+        const platform = info.platform || 'غير محدد';
+        const platformIcon = getPlatformIcon(platform);
+        const isPhysical = info.isPhysicalDevice !== undefined ? info.isPhysicalDevice : true;
+        const deviceType = isPhysical ? 'جهاز حقيقي' : 'محاكي';
+        const systemVersion = info.systemVersion || info.os_version || 'غير محدد';
+        const lastLogin = formatTimeAgo(device.last_login);
+        
+        return `
+            <div class="device-card">
+                <div class="device-header">
+                    <div class="device-icon ${platform.toLowerCase()}">
+                        ${platformIcon}
+                    </div>
+                    <div class="device-main-info">
+                        <div class="device-name">${deviceName}</div>
+                        <div class="device-platform">${platform} ${systemVersion}</div>
+                    </div>
+                    <div class="device-type-badge ${isPhysical ? 'physical' : 'simulator'}">
+                        ${deviceType}
+                    </div>
+                </div>
+                <div class="device-details">
+                    <div class="device-detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>آخر استخدام: ${lastLogin}</span>
+                    </div>
+                    <div class="device-detail-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>تم التسجيل: ${formatDate(device.created_at)}</span>
+                    </div>
+                    ${info.location ? `
+                        <div class="device-detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>الموقع: ${info.location.latitude.toFixed(4)}, ${info.location.longitude.toFixed(4)}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = `
+        <div class="modal-devices-grid">
+            ${devicesHTML}
+        </div>
+    `;
 }
 
 // Close user modal

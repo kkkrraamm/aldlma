@@ -1663,6 +1663,55 @@ tbody tr:hover {
     opacity: 0.5;
 }
 
+/* Modal Devices Styles */
+.modal-section {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border);
+}
+
+.modal-section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-section-title i {
+    color: var(--primary);
+}
+
+.modal-devices-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.modal-devices-loading i {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.modal-devices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+/* Responsive adjustments for modal */
+@media (max-width: 768px) {
+    .modal-devices-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .devices-container {
+        grid-template-columns: 1fr;
+    }
+}
+
 .badge i {
     font-size: 8px;
     margin-left: 5px;
