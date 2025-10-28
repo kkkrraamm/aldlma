@@ -18,8 +18,12 @@ class _AskDalmaDialogState extends State<AskDalmaDialog> {
   bool _loading = false;
   int? _streamMsgIndex;
 
-  // Backend API endpoint (أكثر أماناً - المفتاح في السيرفر)
-  static const String _backendEndpoint = 'https://dalma-api.onrender.com/api/ask-dalma';
+  // OpenAI Responses API settings - معطّل مؤقتاً
+  static const String _endpoint = 'https://api.openai.com/v1/responses';
+  static const String _apiKey = ''; // معطّل - استخدم الموقع الخارجي بدلاً منه
+  static const String _promptId = 'pmpt_68d9e5897e508193a8362567a7e2b1b30556320da57d2e9c';
+  static const String _promptVersion = '1';
+  static const String _model = 'o4-mini';
 
   @override
   void dispose() {
@@ -218,39 +222,75 @@ class _AskDalmaDialogState extends State<AskDalmaDialog> {
   }
 
   Future<void> _askDalmaStream(String question) async {
-    // استخدام Backend API بدلاً من OpenAI مباشرة (أكثر أماناً)
+    final s = _pickSettings(question);
     final headers = {
       'Content-Type': 'application/json',
+      'Authorization': 'Bearer $_apiKey',
     };
-    
-    final body = {
-      'question': question,
+    final messages = [
+      {
+        'role': 'user',
+        'content': [
+          {'type': 'input_text', 'text': question}
+        ]
+      }
+    ];
+    final Map<String, dynamic> body = {
+      'model': s.model,
+      'prompt': {'id': _promptId, 'version': _promptVersion},
+      'input': messages,
+      'text': {'verbosity': s.verbosity},
+      'max_output_tokens': s.maxOut,
+      'store': true,
+      'stream': true,
     };
+    // لا نرسل temperature مع o4-mini
 
-    debugPrint('ASK DALMA REQUEST → $_backendEndpoint');
+    debugPrint('ASK DALMA STREAM REQUEST → $_endpoint');
+    debugPrint('Headers: {Content-Type: application/json, Authorization: Bearer ${_apiKey.substring(0, 8)}...}');
     debugPrint('Body: ${json.encode(body)}');
 
+    final req = http.Request('POST', Uri.parse(_endpoint));
+    req.headers.addAll(headers);
+    req.body = json.encode(body);
+    http.StreamedResponse resp;
     try {
-      final response = await http.post(
-        Uri.parse(_backendEndpoint),
-        headers: headers,
-        body: json.encode(body),
-      ).timeout(const Duration(seconds: 30));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final answer = data['answer'] ?? 'لم أتمكن من الحصول على إجابة.';
-        
-        if (_streamMsgIndex != null && _streamMsgIndex! < _messages.length) {
-          setState(() => _messages[_streamMsgIndex!]['text'] = answer);
-          _scrollDown();
-        }
-      } else {
-        throw Exception('خطأ من الخادم: ${response.statusCode}');
-      }
+      resp = await http.Client().send(req).timeout(const Duration(seconds: 30));
     } catch (e) {
-      debugPrint('ERROR: $e');
-      throw Exception('فشل الاتصال: $e');
+      throw Exception('فشل بدء البث: $e');
+    }
+
+    if (resp.statusCode != 200) {
+      final bodyStr = await resp.stream.bytesToString();
+      debugPrint('STREAM ERROR [${resp.statusCode}] $bodyStr');
+      throw Exception('خطأ من الخادم: ${resp.statusCode}');
+    }
+
+    String buffer = '';
+    await for (final chunk in resp.stream.transform(utf8.decoder)) {
+      for (final line in const LineSplitter().convert(chunk)) {
+        final String ln = line.trim();
+        if (ln.isEmpty) continue;
+        if (ln.startsWith('data:')) {
+          final payload = ln.substring(5).trim();
+          if (payload == '[DONE]') {
+            continue;
+          }
+          try {
+            final dynamic jsonObj = json.decode(payload);
+            final delta = _extractStreamDelta(jsonObj);
+            if (delta.isNotEmpty) {
+              buffer += delta;
+              if (_streamMsgIndex != null && _streamMsgIndex! < _messages.length) {
+                setState(() => _messages[_streamMsgIndex!]['text'] = buffer);
+                _scrollDown();
+              }
+            }
+          } catch (_) {
+            // ignore malformed chunks
+          }
+        }
+      }
     }
   }
 
@@ -292,35 +332,97 @@ class _AskDalmaDialogState extends State<AskDalmaDialog> {
   }
 
   Future<String> _askDalma(String question) async {
-    // استخدام Backend API (نفس الطريقة)
     final headers = {
       'Content-Type': 'application/json',
-    };
-    
-    final body = {
-      'question': question,
+      'Authorization': 'Bearer $_apiKey',
     };
 
-    debugPrint('ASK DALMA REQUEST → $_backendEndpoint');
-
-    try {
-      final response = await http.post(
-        Uri.parse(_backendEndpoint),
-        headers: headers,
-        body: json.encode(body),
-      ).timeout(const Duration(seconds: 25));
-
-      debugPrint('ASK DALMA RESPONSE [${response.statusCode}]');
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['answer'] ?? 'لم أتمكن من الحصول على إجابة.';
-      } else {
-        throw Exception('خطأ من الخادم: ${response.statusCode}');
+    final messages = [
+      {
+        'role': 'user',
+        'content': [
+          {'type': 'input_text', 'text': question}
+        ]
       }
+    ];
+
+    Map<String, dynamic> body = {
+      'model': _model,
+      'prompt': {'id': _promptId, 'version': _promptVersion},
+      'input': messages,
+      'text': {'verbosity': 'medium'},
+      'max_output_tokens': 300,
+      'store': true,
+    };
+
+    debugPrint('ASK DALMA REQUEST → $_endpoint');
+    debugPrint('Headers: {Content-Type: application/json, Authorization: Bearer ${_apiKey.substring(0, 8)}...}');
+    debugPrint('Body: ${json.encode(body)}');
+
+    http.Response res;
+    try {
+      res = await http
+          .post(Uri.parse(_endpoint), headers: headers, body: json.encode(body))
+          .timeout(const Duration(seconds: 25));
     } catch (e) {
       throw Exception('فشل الاتصال بالخادم: $e');
     }
+
+    debugPrint('ASK DALMA RESPONSE [${res.statusCode}] ${res.body}');
+
+    if (res.statusCode == 200) {
+      final data = json.decode(res.body);
+      final ans = _parseResponsesAnswer(data);
+      if (ans.isNotEmpty) return ans;
+
+      // إذا الرجوع كان غير مكتمل بسبب حد التوكنات، جرّب بحد أعلى
+      final status = data['status'];
+      final incomplete = data['incomplete_details'];
+      final reason = (incomplete is Map) ? (incomplete['reason']?.toString() ?? '') : '';
+      if (status == 'incomplete' && reason == 'max_output_tokens') {
+        final Map<String, dynamic> body2 = Map<String, dynamic>.from(body);
+        body2['max_output_tokens'] = 480;
+        debugPrint('Retry due to incomplete/max_output_tokens with higher cap...');
+        debugPrint('Body2: ${json.encode(body2)}');
+        try {
+          final retry2 = await http
+              .post(Uri.parse(_endpoint), headers: headers, body: json.encode(body2))
+              .timeout(const Duration(seconds: 25));
+          debugPrint('RETRY2 RESPONSE [${retry2.statusCode}] ${retry2.body}');
+          if (retry2.statusCode == 200) {
+            final d2 = json.decode(retry2.body);
+            final a2 = _parseResponsesAnswer(d2);
+            if (a2.isNotEmpty) return a2;
+          }
+        } catch (_) {}
+      }
+    }
+
+    // Fallback: في حال رفض باراميتر أو عدم وجود نص
+    final bool tempUnsupported =
+        res.statusCode == 400 && res.body.toLowerCase().contains('temperature');
+    if (tempUnsupported) {
+      body.remove('temperature');
+      debugPrint('Retry without temperature...');
+      try {
+        final retry = await http
+            .post(Uri.parse(_endpoint), headers: headers, body: json.encode(body))
+            .timeout(const Duration(seconds: 25));
+        debugPrint('RETRY RESPONSE [${retry.statusCode}] ${retry.body}');
+        if (retry.statusCode == 200) {
+          final data = json.decode(retry.body);
+          final ans = _parseResponsesAnswer(data);
+          if (ans.isNotEmpty) return ans;
+        }
+      } catch (e) {
+        // ignore, will fall through to error
+      }
+    }
+
+    if (res.statusCode == 200) {
+      return 'لم أستطع توليد إجابة حالياً.';
+    }
+    throw Exception('خطأ من الخادم: ${res.statusCode}');
   }
 
   String _parseResponsesAnswer(dynamic data) {
