@@ -605,3 +605,4 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP DEFAULT NOW();
 **الصعوبة:** سهلة (مجرد نسخ ولصق)
 **النتيجة:** 🎊 **نظام Admin متكامل 100%!**
 
+

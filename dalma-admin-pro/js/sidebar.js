@@ -271,3 +271,4 @@ if (document.readyState === 'loading') {
 // Refresh pending requests count every 30 seconds
 setInterval(updatePendingRequestsCount, 30000);
 
+
