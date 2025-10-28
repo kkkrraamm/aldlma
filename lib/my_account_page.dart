@@ -454,7 +454,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
       _hasError = false;
     });
     
-    AuthState.instance.logout();
+    await AuthState.instance.logout();
     
     NotificationsService.instance.toast(
       'تم تسجيل الخروج',

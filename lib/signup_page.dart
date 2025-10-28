@@ -140,7 +140,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     );
     
     if (mounted) {
-      setState(() => _loading = false);
+    setState(() => _loading = false);
     }
     
     if (ok && mounted) {
@@ -192,7 +192,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     return AnimatedBuilder(
       animation: theme,
       builder: (context, _) {
-        return Scaffold(
+    return Scaffold(
           backgroundColor: theme.backgroundColor,
           body: Stack(
             children: [
@@ -207,9 +207,9 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                   physics: const BouncingScrollPhysics(),
                   child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
                         // زر الرجوع
                         Row(
                           children: [
@@ -260,7 +260,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                     color: theme.textPrimaryColor,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+            const SizedBox(height: 8),
                                 Text(
                                   'أنشئ حسابك لتستفيد من كامل الخدمات',
                                   style: GoogleFonts.cairo(
@@ -289,9 +289,9 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   fontSize: 14,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+            const SizedBox(height: 8),
                               _DalmaTextField(
-                                controller: _name,
+              controller: _name,
                                 hintText: 'أحمد محمد',
                                 keyboardType: TextInputType.name,
                                 prefixIcon: Icons.person_rounded,
@@ -350,13 +350,13 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   fontSize: 14,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+            const SizedBox(height: 8),
                               InkWell(
-                                onTap: _pickDob,
+              onTap: _pickDob,
                                 borderRadius: BorderRadius.circular(14),
-                                child: Container(
+              child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                  decoration: BoxDecoration(
+                decoration: BoxDecoration(
                                     color: isDark 
                                       ? ThemeConfig.kNightAccent.withOpacity(.4) 
                                       : Colors.grey[50],
@@ -368,17 +368,17 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                       width: _dob != null ? 2 : 1,
                                     ),
                                   ),
-                                  child: Row(
-                                    children: [
+                child: Row(
+                  children: [
                                       Icon(
                                         Icons.cake_rounded,
                                         color: _dob != null
                                           ? (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen)
                                           : theme.textSecondaryColor,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
                                           _formatDob(),
                                           style: GoogleFonts.cairo(
                                             color: _dob != null
@@ -393,10 +393,10 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                         size: 18,
                                         color: theme.textSecondaryColor,
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                  ],
+                ),
+              ),
+            ),
                               const SizedBox(height: 32),
 
                               // زر إنشاء الحساب

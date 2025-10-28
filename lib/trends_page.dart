@@ -1777,9 +1777,9 @@ class _LoginButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: const BorderRadius.all(Radius.circular(6)),
-      onTap: () {
+      onTap: () async {
         if (AuthState.instance.isLoggedIn) {
-          AuthState.instance.logout();
+          await AuthState.instance.logout();
           NotificationsService.instance.toast('تم تسجيل الخروج', icon: Icons.logout, color: const Color(0xFFEF4444));
         } else {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));

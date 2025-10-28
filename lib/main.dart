@@ -18,6 +18,7 @@ import 'notifications.dart';
 import 'orders_service.dart';
 import 'my_account_page.dart';
 import 'my_account_oasis.dart';
+import 'media_dashboard.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
 import 'theme_aware_widgets.dart';
@@ -142,11 +143,17 @@ class _MyHomePageState extends State<MyHomePage> {
     return Consumer<AuthState>(
       builder: (context, authState, child) {
         Widget getCurrentPage() {
-          print('🔄 [MAIN] getCurrentPage - Index: $_currentIndex, isLoggedIn: ${authState.isLoggedIn}');
+          print('🔄 [MAIN] getCurrentPage - Index: $_currentIndex, isLoggedIn: ${authState.isLoggedIn}, role: ${authState.userRole}');
           switch (_currentIndex) {
             case 0:
-              print('📱 [MAIN] عرض صفحة DalmaMyAccountOasis');
-              return const DalmaMyAccountOasis();
+              // ✅ توجيه حسب نوع المستخدم: user → MyAccountOasis, media → MediaDashboard
+              if (authState.userRole == 'media') {
+                print('📺 [MAIN] عرض صفحة DalmaMediaDashboard (إعلامي)');
+                return const DalmaMediaDashboard();
+              } else {
+                print('📱 [MAIN] عرض صفحة DalmaMyAccountOasis (مستخدم عادي)');
+                return const DalmaMyAccountOasis();
+              }
             case 1:
               return OrdersPage(showAppBar: false);
             case 2:
@@ -574,9 +581,9 @@ class _LoginButton extends StatelessWidget {
         final isLoggedIn = AuthState.instance.isLoggedIn;
         return InkWell(
           borderRadius: const BorderRadius.all(Radius.circular(6)),
-          onTap: () {
+          onTap: () async {
             if (isLoggedIn) {
-              AuthState.instance.logout();
+              await AuthState.instance.logout();
               NotificationsService.instance.toast('تم تسجيل الخروج', icon: Icons.logout, color: const Color(0xFFEF4444));
             } else {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));

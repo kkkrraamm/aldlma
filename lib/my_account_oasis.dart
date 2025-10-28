@@ -71,6 +71,23 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
     super.didChangeDependencies();
     // تحديث البيانات عندما تتغير حالة AuthState
     final authState = Provider.of<AuthState>(context, listen: false);
+    
+    // إذا تم تسجيل الخروج من صفحة أخرى
+    if (!authState.isLoggedIn && _token != null) {
+      print('🚪 [MY_ACCOUNT_OASIS] تم اكتشاف تسجيل خروج من صفحة أخرى - تحديث الصفحة...');
+      setState(() {
+        _token = null;
+        _userProfile = null;
+        _devices = [];
+        _mediaRequest = null;
+        _providerRequest = null;
+        _isLoading = false;
+        _hasError = false;
+      });
+      return;
+    }
+    
+    // إذا تم تسجيل الدخول من صفحة أخرى
     if (authState.isLoggedIn && _token == null && !_isLoading) {
       print('🔄 [MY_ACCOUNT_OASIS] تم اكتشاف تسجيل دخول جديد - تحديث البيانات...');
       _loadUserProfile();
@@ -1172,7 +1189,7 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
               
               // تحديث AuthState
               if (mounted) {
-                Provider.of<AuthState>(context, listen: false).logout();
+                await Provider.of<AuthState>(context, listen: false).logout();
               }
               
               // تحديث الصفحة الحالية

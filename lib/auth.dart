@@ -216,6 +216,13 @@ class AuthState extends ChangeNotifier {
       final deviceInfo = await _getDeviceInfo();
       print('📱 [DEVICE INFO] ${deviceInfo['platform']} - ${deviceInfo['model'] ?? deviceInfo['name'] ?? 'Unknown'}');
       
+      // الحصول على FCM Token من SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final fcmToken = prefs.getString('fcm_token');
+      if (fcmToken != null) {
+        print('📲 [FCM] إرسال FCM Token مع Login: ${fcmToken.substring(0, 20)}...');
+      }
+      
       final response = await http.post(
         Uri.parse('$_baseUrl/login'),
         headers: headers,
@@ -223,6 +230,7 @@ class AuthState extends ChangeNotifier {
           'phone': phone.trim(),
           'password': password.trim(),
           'deviceInfo': deviceInfo, // إرسال معلومات الجهاز
+          if (fcmToken != null) 'fcm_token': fcmToken, // إرسال FCM Token إذا كان موجوداً
         }),
       );
       
@@ -355,11 +363,28 @@ class AuthState extends ChangeNotifier {
     }
   }
 
-  void logout() {
+  Future<void> logout() async {
+    print('🚪 [AUTH STATE] تسجيل الخروج...');
+    
+    // مسح البيانات من الذاكرة
     _isLoggedIn = false;
     _userName = null;
     _phone = null;
-    _persist();
+    _userRole = null;
+    
+    // مسح جميع البيانات من SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    await prefs.remove('user_name');
+    await prefs.remove('user_phone');
+    await prefs.remove('user_role');
+    
+    print('✅ [AUTH STATE] تم تسجيل الخروج بنجاح');
+    
+    // حفظ الحالة الجديدة
+    await _persist();
+    
+    // إشعار جميع المستمعين
     notifyListeners();
   }
 }

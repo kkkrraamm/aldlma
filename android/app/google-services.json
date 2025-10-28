@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "180781561689",
+    "project_id": "aldlma-c5a4f",
+    "storage_bucket": "aldlma-c5a4f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:180781561689:android:0654c3ab9e0f325196be48",
+        "android_client_info": {
+          "package_name": "com.dalma.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-DZY6bk1ivuwsdy559qZOcxk910HFcZI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
