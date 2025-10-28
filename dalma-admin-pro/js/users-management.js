@@ -109,13 +109,17 @@ function renderUsersTable() {
     }
     
     tbody.innerHTML = filteredUsers.map(user => `
-        <tr>
+        <tr data-user-id="${user.id}">
             <td>
                 <div class="user-cell">
-                    <div class="user-avatar">${getInitials(user.name)}</div>
+                    ${user.profile_picture 
+                        ? `<img src="${user.profile_picture}" class="user-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                           <div class="user-avatar" style="display:none;">${getInitials(user.name)}</div>`
+                        : `<div class="user-avatar">${getInitials(user.name)}</div>`
+                    }
                     <div class="user-info">
                         <div class="user-name">${user.name}</div>
-                        <div class="user-email">${user.email}</div>
+                        <div class="user-email">${user.phone || 'لا يوجد'}</div>
                     </div>
                 </div>
             </td>
@@ -125,12 +129,18 @@ function renderUsersTable() {
                 </span>
             </td>
             <td>
-                <span class="badge ${user.status}">
-                    ${getStatusLabel(user.status)}
+                <span class="badge ${user.status || 'inactive'}">
+                    ${user.status === 'active' ? '<i class="fas fa-circle"></i> نشط' : '<i class="fas fa-circle"></i> غير نشط'}
                 </span>
             </td>
+            <td>
+                <div class="devices-count" onclick="toggleDevices(${user.id})" style="cursor: pointer;">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>${user.device_count || 0} جهاز</span>
+                    <i class="fas fa-chevron-down" style="margin-right: 5px; font-size: 12px;"></i>
+                </div>
+            </td>
             <td>${formatDate(user.created_at)}</td>
-            <td>${formatTimeAgo(user.last_login)}</td>
             <td>
                 <div class="table-actions-cell">
                     <button class="btn-icon view" onclick='viewUser(${JSON.stringify(user).replace(/'/g, "&apos;")})' title="عرض التفاصيل">
@@ -142,6 +152,13 @@ function renderUsersTable() {
                     <button class="btn-icon delete" onclick='deleteUser(${user.id})' title="حذف">
                         <i class="fas fa-trash"></i>
                     </button>
+                </div>
+            </td>
+        </tr>
+        <tr id="devices-row-${user.id}" class="devices-details-row" style="display: none;">
+            <td colspan="6">
+                <div class="devices-loading" style="text-align: center; padding: 20px;">
+                    <i class="fas fa-spinner fa-spin"></i> جارٍ تحميل الأجهزة...
                 </div>
             </td>
         </tr>
@@ -260,21 +277,123 @@ function editUser(user) {
         return;
     }
     
-    showToast('جاري فتح نموذج التعديل...', 'info');
-    // TODO: Open edit form
-    console.log('Edit user:', currentUser);
+    console.log('✏️ [USERS] فتح نموذج التعديل:', currentUser);
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div class="modal-overlay" id="editUserModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>✏️ تعديل بيانات المستخدم</h3>
+                    <button class="modal-close" onclick="closeEditModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm" onsubmit="saveUserEdit(event)">
+                        <div class="form-group">
+                            <label>الاسم الكامل</label>
+                            <input type="text" id="editName" value="${currentUser.name}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>رقم الجوال</label>
+                            <input type="tel" id="editPhone" value="${currentUser.phone}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>الدور (Role)</label>
+                            <select id="editRole" required>
+                                <option value="user" ${currentUser.role === 'user' ? 'selected' : ''}>👤 مستخدم عادي</option>
+                                <option value="media" ${currentUser.role === 'media' ? 'selected' : ''}>📺 إعلامي</option>
+                                <option value="provider" ${currentUser.role === 'provider' ? 'selected' : ''}>🏪 مزود خدمة</option>
+                                <option value="admin" ${currentUser.role === 'admin' ? 'selected' : ''}>👑 Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>تاريخ الميلاد (اختياري)</label>
+                            <input type="date" id="editBirthDate" value="${currentUser.birth_date ? currentUser.birth_date.split('T')[0] : ''}">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> حفظ التعديلات
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
+                                <i class="fas fa-times"></i> إلغاء
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Close edit modal
+function closeEditModal() {
+    const modal = document.getElementById('editUserModal');
+    if (modal) {
+        modal.remove();
+    }
+    currentUser = null;
+}
+
+// Save user edit
+async function saveUserEdit(event) {
+    event.preventDefault();
+    
+    try {
+        const name = document.getElementById('editName').value.trim();
+        const phone = document.getElementById('editPhone').value.trim();
+        const role = document.getElementById('editRole').value;
+        const birth_date = document.getElementById('editBirthDate').value;
+        
+        console.log('💾 [USERS] حفظ تعديلات المستخدم:', currentUser.id);
+        
+        // Call API
+        const data = await apiRequest(`/api/admin/users/${currentUser.id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ name, phone, role, birth_date })
+        });
+        
+        console.log('✅ [USERS] تم حفظ التعديلات:', data);
+        
+        // Update local data
+        const userIndex = allUsers.findIndex(u => u.id === currentUser.id);
+        if (userIndex !== -1) {
+            allUsers[userIndex] = { ...allUsers[userIndex], name, phone, role, birth_date };
+        }
+        
+        const filteredIndex = filteredUsers.findIndex(u => u.id === currentUser.id);
+        if (filteredIndex !== -1) {
+            filteredUsers[filteredIndex] = { ...filteredUsers[filteredIndex], name, phone, role, birth_date };
+        }
+        
+        // Refresh table
+        renderUsersTable();
+        closeEditModal();
+        showToast('تم حفظ التعديلات بنجاح', 'success');
+        
+    } catch (error) {
+        console.error('❌ [USERS] خطأ في حفظ التعديلات:', error);
+        showToast('فشل حفظ التعديلات: ' + (error.message || 'خطأ غير معروف'), 'error');
+    }
 }
 
 // Delete user
 async function deleteUser(userId) {
-    if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+    if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه.\n⚠️ سيتم حذف جميع بيانات المستخدم بشكل نهائي.')) {
         return;
     }
     
     try {
         console.log('🗑️ [USERS] حذف مستخدم:', userId);
         
-        // Remove from local array (mock)
+        // Call API to delete user
+        await apiRequest(`/api/admin/users/${userId}`, { method: 'DELETE' });
+        
+        console.log('✅ [USERS] تم حذف المستخدم من السيرفر');
+        
+        // Remove from local arrays
         allUsers = allUsers.filter(u => u.id !== userId);
         filteredUsers = filteredUsers.filter(u => u.id !== userId);
         
@@ -282,12 +401,9 @@ async function deleteUser(userId) {
         renderUsersTable();
         showToast('تم حذف المستخدم بنجاح', 'success');
         
-        // TODO: Call API to delete user
-        // await apiRequest(`/api/admin/users/${userId}`, { method: 'DELETE' });
-        
     } catch (error) {
         console.error('❌ [USERS] خطأ في حذف المستخدم:', error);
-        showToast('فشل حذف المستخدم', 'error');
+        showToast('فشل حذف المستخدم: ' + (error.message || 'خطأ غير معروف'), 'error');
     }
 }
 
@@ -384,6 +500,120 @@ function formatTimeAgo(dateString) {
     if (hours > 0) return `منذ ${hours} ساعة`;
     if (minutes > 0) return `منذ ${minutes} دقيقة`;
     return 'الآن';
+}
+
+// Toggle devices details for a user
+let loadedDevices = {}; // Cache for loaded devices
+
+async function toggleDevices(userId) {
+    const devicesRow = document.getElementById(`devices-row-${userId}`);
+    
+    if (!devicesRow) return;
+    
+    // If already visible, hide it
+    if (devicesRow.style.display !== 'none') {
+        devicesRow.style.display = 'none';
+        return;
+    }
+    
+    // Show the row
+    devicesRow.style.display = 'table-row';
+    
+    // If already loaded, just display cached data
+    if (loadedDevices[userId]) {
+        renderDevices(userId, loadedDevices[userId]);
+        return;
+    }
+    
+    // Load devices from API
+    try {
+        const data = await apiRequest(`/api/admin/users/${userId}/devices`);
+        loadedDevices[userId] = data.devices || [];
+        renderDevices(userId, loadedDevices[userId]);
+    } catch (error) {
+        console.error('❌ [DEVICES] خطأ في تحميل الأجهزة:', error);
+        devicesRow.querySelector('td').innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #e74c3c;">
+                <i class="fas fa-exclamation-triangle"></i> فشل تحميل الأجهزة
+            </div>
+        `;
+    }
+}
+
+function renderDevices(userId, devices) {
+    const devicesRow = document.getElementById(`devices-row-${userId}`);
+    if (!devicesRow) return;
+    
+    if (devices.length === 0) {
+        devicesRow.querySelector('td').innerHTML = `
+            <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                <i class="fas fa-mobile-alt"></i> لا توجد أجهزة مسجلة
+            </div>
+        `;
+        return;
+    }
+    
+    const devicesHTML = devices.map((device, index) => {
+        const info = device.device_info || {};
+        const deviceName = info.name || info.model || 'جهاز غير معروف';
+        const platform = info.platform || 'غير محدد';
+        const platformIcon = getPlatformIcon(platform);
+        const isPhysical = info.isPhysicalDevice !== undefined ? info.isPhysicalDevice : true;
+        const deviceType = isPhysical ? 'جهاز حقيقي' : 'محاكي';
+        const systemVersion = info.systemVersion || info.os_version || 'غير محدد';
+        const lastLogin = formatTimeAgo(device.last_login);
+        
+        return `
+            <div class="device-card">
+                <div class="device-header">
+                    <div class="device-icon ${platform.toLowerCase()}">
+                        ${platformIcon}
+                    </div>
+                    <div class="device-main-info">
+                        <div class="device-name">${deviceName}</div>
+                        <div class="device-platform">${platform} ${systemVersion}</div>
+                    </div>
+                    <div class="device-type-badge ${isPhysical ? 'physical' : 'simulator'}">
+                        ${deviceType}
+                    </div>
+                </div>
+                <div class="device-details">
+                    <div class="device-detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>آخر استخدام: ${lastLogin}</span>
+                    </div>
+                    <div class="device-detail-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>تم التسجيل: ${formatDate(device.created_at)}</span>
+                    </div>
+                    ${info.location ? `
+                        <div class="device-detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>الموقع: ${info.location.latitude.toFixed(4)}, ${info.location.longitude.toFixed(4)}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    devicesRow.querySelector('td').innerHTML = `
+        <div class="devices-container">
+            ${devicesHTML}
+        </div>
+    `;
+}
+
+function getPlatformIcon(platform) {
+    const icons = {
+        'ios': '<i class="fab fa-apple"></i>',
+        'android': '<i class="fab fa-android"></i>',
+        'web': '<i class="fas fa-globe"></i>',
+        'windows': '<i class="fab fa-windows"></i>',
+        'macos': '<i class="fab fa-apple"></i>',
+        'linux': '<i class="fab fa-linux"></i>'
+    };
+    return icons[platform.toLowerCase()] || '<i class="fas fa-mobile-alt"></i>';
 }
 
 function showToast(message, type = 'info') {

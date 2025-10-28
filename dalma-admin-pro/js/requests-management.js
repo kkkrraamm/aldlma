@@ -360,17 +360,16 @@ async function approveMediaRequest(requestId) {
     try {
         console.log('✅ [APPROVE] قبول طلب إعلامي:', requestId);
         
-        // Update local data (mock)
-        const request = mediaRequests.find(r => r.id === requestId);
-        if (request) {
-            request.status = 'approved';
-            updateMediaStats();
-            renderMediaRequests();
-            showToast('تم قبول الطلب بنجاح! تم إشعار المستخدم.', 'success');
-        }
+        // ✅ Call Backend API
+        await apiRequest('/api/admin/media-requests/approve', {
+            method: 'POST',
+            body: JSON.stringify({ requestId })
+        });
         
-        // TODO: Call API
-        // await apiRequest(`/api/admin/media-requests/${requestId}/approve`, { method: 'POST' });
+        showToast('تم قبول الطلب وإشعار المستخدم بنجاح!', 'success');
+        
+        // Reload requests from server
+        loadMediaRequests();
         
     } catch (error) {
         console.error('❌ [APPROVE] خطأ:', error);
@@ -430,13 +429,16 @@ async function approveProviderRequest(requestId) {
     try {
         console.log('✅ [APPROVE] قبول طلب مقدم خدمة:', requestId);
         
-        const request = providerRequests.find(r => r.id === requestId);
-        if (request) {
-            request.status = 'approved';
-            updateProviderStats();
-            renderProviderRequests();
-            showToast('تم قبول الطلب بنجاح! تم إشعار المستخدم.', 'success');
-        }
+        // ✅ Call Backend API
+        await apiRequest('/api/admin/provider-requests/approve', {
+            method: 'POST',
+            body: JSON.stringify({ requestId })
+        });
+        
+        showToast('تم قبول الطلب وإشعار المستخدم بنجاح!', 'success');
+        
+        // Reload requests from server
+        loadProviderRequests();
         
     } catch (error) {
         console.error('❌ [APPROVE] خطأ:', error);
