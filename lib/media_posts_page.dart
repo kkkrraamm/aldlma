@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'theme_config.dart';
 import 'media_add_post_page.dart';
+import 'media_edit_post_page.dart';
 
 /// 📝 صفحة عرض المنشورات للإعلامي
 class MediaPostsPage extends StatefulWidget {
@@ -276,10 +277,16 @@ class _MediaPostsPageState extends State<MediaPostsPage> {
                     Expanded(
                       child: TextButton.icon(
                         onPressed: () {
-                          // TODO: تعديل المنشور
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('ميزة التعديل قيد التطوير...')),
-                          );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MediaEditPostPage(post: post),
+                            ),
+                          ).then((value) {
+                            if (value == true) {
+                              _loadPosts(); // إعادة تحميل المنشورات بعد التعديل
+                            }
+                          });
                         },
                         icon: const Icon(Icons.edit),
                         label: const Text('تعديل'),
