@@ -6,6 +6,8 @@ import 'theme_config.dart';
 import 'auth.dart';
 import 'media_add_post_page.dart';
 import 'media_posts_page.dart';
+import 'media_profile_edit_page.dart';
+import 'media_followers_page.dart';
 
 /// 📺 صفحة إدارة الإعلامي - Dalma Media Dashboard
 /// تعرض إحصائيات الإعلامي، إدارة المحتوى، والإعدادات
@@ -245,10 +247,14 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> {
                   // Settings Button
                   IconButton(
                     onPressed: () {
-                      // TODO: فتح صفحة الإعدادات
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('صفحة الإعدادات قريباً...')),
-                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MediaProfileEditPage()),
+                      ).then((value) {
+                        if (value == true) {
+                          _loadMediaData(); // إعادة تحميل البيانات
+                        }
+                      });
                     },
                     icon: const Icon(Icons.settings, color: Colors.white, size: 28),
                   ),
@@ -311,12 +317,20 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> {
                 color: const Color(0xFF10B981),
                 isDarkMode: isDarkMode,
               ),
-              _buildStatCard(
-                icon: Icons.people,
-                title: 'المتابعون',
-                value: _formatNumber(_totalFollowers),
-                color: const Color(0xFF3B82F6),
-                isDarkMode: isDarkMode,
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MediaFollowersPage()),
+                  );
+                },
+                child: _buildStatCard(
+                  icon: Icons.people,
+                  title: 'المتابعون',
+                  value: _formatNumber(_totalFollowers),
+                  color: const Color(0xFF3B82F6),
+                  isDarkMode: isDarkMode,
+                ),
               ),
               GestureDetector(
                 onTap: () {
