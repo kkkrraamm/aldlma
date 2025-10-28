@@ -8,6 +8,8 @@ import 'media_add_post_page.dart';
 import 'media_posts_page.dart';
 import 'media_profile_edit_page.dart';
 import 'media_followers_page.dart';
+import 'media_detailed_stats_page.dart';
+import 'media_notifications_page.dart';
 
 /// 📺 صفحة إدارة الإعلامي - Dalma Media Dashboard
 /// تعرض إحصائيات الإعلامي، إدارة المحتوى، والإعدادات
@@ -394,8 +396,9 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> {
             subtitle: 'تحليل الأداء والتفاعل',
             color: const Color(0xFF3B82F6),
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('ميزة قيد التطوير...')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MediaDetailedStatsPage()),
               );
             },
           ),
@@ -408,8 +411,9 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> {
             subtitle: 'إدارة التنبيهات والرسائل',
             color: const Color(0xFFF59E0B),
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('ميزة قيد التطوير...')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MediaNotificationsPage()),
               );
             },
           ),
