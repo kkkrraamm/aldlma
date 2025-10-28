@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
@@ -26,6 +27,10 @@ class NotificationsService {
     
     try {
       print('🔔 [FCM] Initializing...');
+      
+      // Initialize Firebase
+      await Firebase.initializeApp();
+      print('✅ [FCM] Firebase Core initialized');
       
       // Initialize local notifications
       const AndroidInitializationSettings androidSettings =
@@ -61,19 +66,28 @@ class NotificationsService {
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         print('✅ [FCM] Permission granted');
         
-        // Get FCM token
-        _fcmToken = await _fcm.getToken();
-        print('📱 [FCM] Token: $_fcmToken');
-        
-        // Send token to backend
-        if (_fcmToken != null) {
-          await _sendTokenToBackend(_fcmToken!);
+        // Get FCM token (مع معالجة أخطاء iOS Simulator)
+        try {
+          _fcmToken = await _fcm.getToken();
+          
+          if (_fcmToken != null && _fcmToken!.isNotEmpty) {
+            print('📱 [FCM] Token: ${_fcmToken!.substring(0, 20)}...');
+            
+            // Send token to backend
+            await _sendTokenToBackend(_fcmToken!);
+            
+            // Listen for token refresh
+            _fcm.onTokenRefresh.listen(_sendTokenToBackend);
+          } else {
+            print('⚠️ [FCM] No token received (iOS Simulator?)');
+            print('💡 [FCM] Tip: Use a physical device or Android emulator for push notifications');
+          }
+        } catch (tokenError) {
+          print('⚠️ [FCM] Failed to get token: $tokenError');
+          print('💡 [FCM] This is expected on iOS Simulator - use a real device for testing');
         }
         
-        // Listen for token refresh
-        _fcm.onTokenRefresh.listen(_sendTokenToBackend);
-        
-        // Listen for foreground messages
+        // Listen for foreground messages (يشتغل حتى بدون token)
         FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
         
         // Listen for notification taps
@@ -83,7 +97,7 @@ class NotificationsService {
         FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
         
         _initialized = true;
-        print('✅ [FCM] Initialization complete');
+        print('✅ [FCM] Initialized successfully');
       } else {
         print('❌ [FCM] Permission denied');
       }
@@ -96,30 +110,37 @@ class NotificationsService {
   static Future<void> _sendTokenToBackend(String token) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      
+      // 1️⃣ حفظ Token محليًا أولاً (حتى لو المستخدم مو مسجل دخول)
+      await prefs.setString('fcm_token', token);
+      print('💾 [FCM] Token saved locally: ${token.substring(0, 20)}...');
+      
       final authToken = prefs.getString('token');
       final apiKey = prefs.getString('api_key');
       
-      if (authToken == null) {
-        print('⚠️ [FCM] User not logged in, skipping token upload');
-        return;
-      }
-      
+      // 2️⃣ إرسال Token للـ Backend (سواء مسجل دخول أو لا)
       print('📤 [FCM] Sending token to backend...');
+      
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey ?? '',
+      };
+      
+      // إذا المستخدم مسجل دخول، نضيف Authorization
+      if (authToken != null) {
+        headers['Authorization'] = 'Bearer $authToken';
+      }
       
       final response = await http.post(
         Uri.parse('https://dalma-api.onrender.com/api/user/fcm-token'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $authToken',
-          'x-api-key': apiKey ?? '',
-        },
+        headers: headers,
         body: jsonEncode({'fcm_token': token}),
       );
       
       if (response.statusCode == 200) {
-        print('✅ [FCM] Token sent successfully');
+        print('✅ [FCM] Token sent successfully to backend');
       } else {
-        print('❌ [FCM] Failed to send token: ${response.statusCode}');
+        print('❌ [FCM] Failed to send token: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
       print('❌ [FCM] Error sending token: $e');
