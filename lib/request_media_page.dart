@@ -120,6 +120,13 @@ class _RequestMediaPageState extends State<RequestMediaPage> with TickerProvider
     }
     print('✅ [MEDIA REQUEST] التحقق من الحقول نجح\n');
 
+    // التحقق من نوع المحتوى
+    if (_selectedContentType == null || _selectedContentType!.isEmpty) {
+      print('❌ [MEDIA REQUEST] فشل: نوع المحتوى غير محدد');
+      NotificationsService.instance.toast('يرجى اختيار نوع المحتوى', icon: Icons.warning, color: Colors.orange);
+      return;
+    }
+
     // التحقق من صورة الهوية
     if (_wantsVerification && _idImage == null) {
       print('❌ [MEDIA REQUEST] فشل: صورة الهوية مطلوبة للتوثيق');
@@ -227,7 +234,7 @@ class _RequestMediaPageState extends State<RequestMediaPage> with TickerProvider
         print('✅━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         
         NotificationsService.instance.toast('تم إرسال طلبك بنجاح! 🎉', icon: Icons.check_circle, color: Colors.green);
-        Navigator.pop(context);
+        Navigator.pop(context, true); // إرجاع true للإشارة إلى نجاح الإرسال
       } else {
         print('❌━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         print('❌ فشل إرسال الطلب!');
@@ -358,14 +365,22 @@ class _RequestMediaPageState extends State<RequestMediaPage> with TickerProvider
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 // نبذة عنك
-                                _FieldLabel('نبذة عنك *'),
+                                _FieldLabel('نبذة عنك * (على الأقل 50 حرف)'),
                                 const SizedBox(height: 8),
                                 _DalmaTextField(
                                   controller: _bioController,
-                                  hintText: 'أخبرنا عن نفسك وخبراتك...',
+                                  hintText: 'أخبرنا عن نفسك وخبراتك بالتفصيل...',
                                   maxLines: 3,
                                   prefixIcon: Icons.description_rounded,
-                                  validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) {
+                                      return 'النبذة مطلوبة';
+                                    }
+                                    if (v.trim().length < 50) {
+                                      return 'النبذة قصيرة جداً (${v.trim().length}/50 حرف)';
+                                    }
+                                    return null;
+                                  },
                                 ),
                                 const SizedBox(height: 20),
 
@@ -374,9 +389,24 @@ class _RequestMediaPageState extends State<RequestMediaPage> with TickerProvider
                                 const SizedBox(height: 8),
                                 _DalmaTextField(
                                   controller: _socialMediaController,
-                                  hintText: '@username أو رابط الحساب',
+                                  hintText: '@username أو https://...',
                                   prefixIcon: Icons.share_rounded,
-                                  validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) {
+                                      return 'حساب التواصل مطلوب';
+                                    }
+                                    final trimmed = v.trim();
+                                    // يجب أن يبدأ بـ @ أو http أو يحتوي على نقطة (مثل instagram.com/username)
+                                    if (!trimmed.startsWith('@') && 
+                                        !trimmed.startsWith('http') && 
+                                        !trimmed.contains('.')) {
+                                      return 'أدخل @username أو رابط صحيح';
+                                    }
+                                    if (trimmed.length < 5) {
+                                      return 'الحساب قصير جداً';
+                                    }
+                                    return null;
+                                  },
                                 ),
                                 const SizedBox(height: 20),
 
@@ -392,25 +422,45 @@ class _RequestMediaPageState extends State<RequestMediaPage> with TickerProvider
                                 const SizedBox(height: 20),
 
                                 // واتساب
-                                _FieldLabel('رقم واتساب *'),
+                                _FieldLabel('رقم واتساب * (سعودي)'),
                                 const SizedBox(height: 8),
                                 _DalmaTextField(
                                   controller: _whatsappController,
                                   hintText: '05xxxxxxxx',
                                   keyboardType: TextInputType.phone,
                                   prefixIcon: Icons.phone_rounded,
-                                  validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) {
+                                      return 'رقم الواتساب مطلوب';
+                                    }
+                                    final phone = v.trim().replaceAll(' ', '').replaceAll('-', '');
+                                    // رقم سعودي: يبدأ بـ 05 ويتكون من 10 أرقام
+                                    if (!RegExp(r'^05\d{8}$').hasMatch(phone)) {
+                                      return 'أدخل رقم سعودي صحيح (05xxxxxxxx)';
+                                    }
+                                    return null;
+                                  },
                                 ),
                                 const SizedBox(height: 20),
 
                                 // البريد الإلكتروني
-                                _FieldLabel('البريد الإلكتروني'),
+                                _FieldLabel('البريد الإلكتروني (اختياري)'),
                                 const SizedBox(height: 8),
                                 _DalmaTextField(
                                   controller: _emailController,
                                   hintText: 'example@email.com',
                                   keyboardType: TextInputType.emailAddress,
                                   prefixIcon: Icons.email_rounded,
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) {
+                                      return null; // اختياري
+                                    }
+                                    // التحقق من صيغة البريد الإلكتروني
+                                    if (!RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$').hasMatch(v.trim())) {
+                                      return 'أدخل بريد إلكتروني صحيح';
+                                    }
+                                    return null;
+                                  },
                                 ),
                                 const SizedBox(height: 24),
 

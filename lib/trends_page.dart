@@ -9,6 +9,9 @@ import 'package:visibility_detector/visibility_detector.dart';
 import 'notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'theme_config.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'api_config.dart';
 
 class TrendsPage extends StatefulWidget {
   const TrendsPage({Key? key}) : super(key: key);
@@ -27,9 +30,17 @@ class _TrendsPageState extends State<TrendsPage> {
   
   // مفتاح المستخدم الحالي للحفظ المحلي
   String? _userKey;
+  String? _token;
+  final String _baseUrl = ApiConfig.baseUrl;
+  
+  // بيانات من Backend
+  List<Map<String, dynamic>> verifiedJournalists = [];
+  List<Map<String, dynamic>> journalistPosts = [];
+  bool _isLoadingMedia = true;
+  bool _isLoadingPosts = true;
 
-  // بيانات الإعلاميين المعتمدين
-  final List<Map<String, dynamic>> verifiedJournalists = [
+  // بيانات الإعلاميين المعتمدين (backup - سيتم استبدالها بالبيانات من Backend)
+  final List<Map<String, dynamic>> _backupJournalists = [
     {
       'id': '1',
       'name': 'أحمد العتيبي',
@@ -74,54 +85,297 @@ class _TrendsPageState extends State<TrendsPage> {
     },
   ];
 
-  // بيانات المنشورات
-  final List<Map<String, dynamic>> journalistPosts = [
-    {
-      'id': '1',
-      'journalistId': '1',
-      'title': 'تقرير: التطوير الحضري في عرعر',
-      'content': 'تقرير شامل عن مشاريع التطوير الحضري الجديدة في مدينة عرعر...',
-      'imageUrl': 'assets/img/تنزيل.jpeg',
-      'videoUrl': 'assets/videos/Download.mp4',
-      'type': 'video',
-      'likes': 245,
-      'comments': 67,
-      'shares': 23,
-      'timestamp': 'منذ ساعتين',
-      'hashtags': ['#عرعر', '#التطوير_الحضري', '#الأخبار_المحلية'],
-    },
-    {
-      'id': '2',
-      'journalistId': '2',
-      'title': 'تحليل: مؤشرات الاقتصاد المحلي',
-      'content': 'تحليل مفصل لمؤشرات الاقتصاد المحلي واتجاهات النمو...',
-      'imageUrl': 'assets/img/تنزيل.jpeg',
-      'type': 'image',
-      'likes': 189,
-      'comments': 34,
-      'shares': 12,
-      'timestamp': 'منذ 4 ساعات',
-      'hashtags': ['#الاقتصاد', '#التحليل_المالي', '#النمو'],
-    },
-    {
-      'id': '3',
-      'journalistId': '3',
-      'title': 'مباراة اليوم: النتائج المباشرة',
-      'content': 'تغطية مباشرة لمباراة اليوم مع النتائج والتعليقات...',
-      'imageUrl': 'assets/img/تنزيل.jpeg',
-      'type': 'text',
-      'likes': 567,
-      'comments': 123,
-      'shares': 89,
-      'timestamp': 'منذ 6 ساعات',
-      'hashtags': ['#كرة_القدم', '#النتائج_المباشرة', '#الرياضة'],
-    },
-  ];
+  // ═══════════════════════════════════════════════════════════════
+  // 🌐 Backend API Functions
+  // ═══════════════════════════════════════════════════════════════
+  
+  Future<void> _loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _token = prefs.getString('token');
+    });
+  }
+
+  Future<void> _loadMediaFromBackend() async {
+    setState(() => _isLoadingMedia = true);
+    
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/trends/media'),
+        headers: {'X-API-Key': ApiConfig.apiKey},
+      );
+
+      print('📺 [TRENDS] Response status: ${response.statusCode}');
+      print('📺 [TRENDS] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        
+        // التحقق من نوع البيانات المرجعة
+        List<dynamic> mediaList = [];
+        if (responseData is List) {
+          // إذا كانت البيانات array مباشرة
+          mediaList = responseData;
+        } else if (responseData is Map && responseData['media'] != null) {
+          // إذا كانت البيانات object يحتوي على media
+          mediaList = responseData['media'];
+        }
+        
+        print('📺 [TRENDS] Raw media data: ${mediaList.length} items');
+        if (mediaList.isNotEmpty) {
+          print('📺 [TRENDS] First item: ${mediaList[0]}');
+        }
+        
+        setState(() {
+          verifiedJournalists = mediaList.map((media) {
+            try {
+              // تحويل آمن للأرقام
+              int followersCount = 0;
+              if (media['followers_count'] != null) {
+                if (media['followers_count'] is int) {
+                  followersCount = media['followers_count'];
+                } else {
+                  followersCount = int.tryParse(media['followers_count'].toString()) ?? 0;
+                }
+              }
+              
+              int postsCount = 0;
+              if (media['posts_count'] != null) {
+                if (media['posts_count'] is int) {
+                  postsCount = media['posts_count'];
+                } else {
+                  postsCount = int.tryParse(media['posts_count'].toString()) ?? 0;
+                }
+              }
+              
+              return {
+                'id': '${media['id'] ?? ''}',
+                'name': media['name'] ?? 'غير معروف',
+                'username': '@${media['phone'] ?? 'unknown'}',
+                'specialty': 'إعلامي موثق',
+                'avatar': media['profile_picture'] ?? media['profile_image'],
+                'followers': followersCount,
+                'following': 0,
+                'posts': postsCount,
+                'bio': media['bio'] ?? '',
+                'phone': media['phone'] ?? '',
+                'email': '',
+                'isVerified': true,
+              };
+            } catch (e) {
+              print('❌ [TRENDS] Error parsing media item: $e');
+              print('❌ [TRENDS] Problematic item: $media');
+              return null;
+            }
+          }).where((m) => m != null).cast<Map<String, dynamic>>().toList();
+          
+          _filteredJournalists = List.from(verifiedJournalists);
+        });
+        
+        print('📺 [TRENDS] تم جلب ${verifiedJournalists.length} إعلامي من Backend');
+      } else {
+        print('❌ [TRENDS] Bad status code: ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('❌ [TRENDS] Error loading media: $e');
+      print('❌ [TRENDS] Stack trace: $stackTrace');
+      // استخدام البيانات الاحتياطية
+      setState(() {
+        verifiedJournalists = List.from(_backupJournalists);
+        _filteredJournalists = List.from(verifiedJournalists);
+      });
+    } finally {
+      setState(() => _isLoadingMedia = false);
+    }
+  }
+
+  Future<void> _loadPostsFromBackend() async {
+    setState(() => _isLoadingPosts = true);
+    
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/trends/posts'),
+        headers: {'X-API-Key': ApiConfig.apiKey},
+      );
+
+      print('📰 [TRENDS] Response status: ${response.statusCode}');
+      print('📰 [TRENDS] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        
+        // التحقق من نوع البيانات المرجعة
+        List<dynamic> postsList = [];
+        if (responseData is List) {
+          // إذا كانت البيانات array مباشرة
+          postsList = responseData;
+        } else if (responseData is Map && responseData['posts'] != null) {
+          // إذا كانت البيانات object يحتوي على posts
+          postsList = responseData['posts'];
+        }
+        
+        print('📰 [TRENDS] Raw posts data: ${postsList.length} items');
+        if (postsList.isNotEmpty) {
+          print('📰 [TRENDS] First post: ${postsList[0]}');
+        }
+        
+        setState(() {
+          journalistPosts = postsList.map((post) {
+            try {
+              // تحويل آمن للأرقام
+              int likesCount = 0;
+              if (post['likes_count'] != null) {
+                if (post['likes_count'] is int) {
+                  likesCount = post['likes_count'];
+                } else {
+                  likesCount = int.tryParse(post['likes_count'].toString()) ?? 0;
+                }
+              }
+              
+              int commentsCount = 0;
+              if (post['comments_count'] != null) {
+                if (post['comments_count'] is int) {
+                  commentsCount = post['comments_count'];
+                } else {
+                  commentsCount = int.tryParse(post['comments_count'].toString()) ?? 0;
+                }
+              }
+              
+              return {
+                'id': '${post['id'] ?? ''}',
+                'journalistId': '${post['user_id'] ?? ''}',
+                'title': post['title'] ?? '',
+                'content': post['description'] ?? '',
+                'imageUrl': post['media'],
+                'videoUrl': null,
+                'type': post['media'] != null ? 'image' : 'text',
+                'likes': likesCount,
+                'comments': commentsCount,
+                'shares': 0,
+                'timestamp': _formatTime(post['created_at']),
+                'hashtags': [],
+                'journalistName': post['user_name'] ?? '',
+                'journalistAvatar': post['user_avatar'] ?? post['user_profile_image'],
+                'isVerified': true,
+              };
+            } catch (e) {
+              print('❌ [TRENDS] Error parsing post: $e');
+              print('❌ [TRENDS] Problematic post: $post');
+              return null;
+            }
+          }).where((p) => p != null).cast<Map<String, dynamic>>().toList();
+        });
+        
+        print('📰 [TRENDS] تم جلب ${journalistPosts.length} منشور من Backend');
+      } else {
+        print('❌ [TRENDS] Bad status code: ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('❌ [TRENDS] Error loading posts: $e');
+      print('❌ [TRENDS] Stack trace: $stackTrace');
+    } finally {
+      setState(() => _isLoadingPosts = false);
+    }
+  }
+
+  String _formatTime(String? timestamp) {
+    if (timestamp == null) return 'منذ وقت قصير';
+    
+    try {
+      final date = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final diff = now.difference(date);
+      
+      if (diff.inMinutes < 1) return 'الآن';
+      if (diff.inHours < 1) return 'منذ ${diff.inMinutes} دقيقة';
+      if (diff.inDays < 1) return 'منذ ${diff.inHours} ساعة';
+      if (diff.inDays < 7) return 'منذ ${diff.inDays} يوم';
+      return 'منذ ${(diff.inDays / 7).floor()} أسبوع';
+    } catch (e) {
+      return 'منذ وقت قصير';
+    }
+  }
+
+  Future<void> _toggleFollow(String mediaId) async {
+    if (_token == null) {
+      NotificationsService.instance.toast('يجب تسجيل الدخول أولاً', color: Colors.orange);
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/trends/media/$mediaId/follow'),
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'X-API-Key': ApiConfig.apiKey,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final following = data['following'] ?? false;
+        
+        setState(() {
+          if (following) {
+            _followingList.add(mediaId);
+          } else {
+            _followingList.remove(mediaId);
+          }
+        });
+        
+        NotificationsService.instance.toast(
+          following ? 'تمت المتابعة بنجاح! ✅' : 'تم إلغاء المتابعة',
+          color: following ? Colors.green : Colors.grey,
+        );
+        
+        _loadMediaFromBackend(); // تحديث البيانات
+      }
+    } catch (e) {
+      print('❌ [FOLLOW] Error: $e');
+      NotificationsService.instance.toast('فشل في المتابعة', color: Colors.red);
+    }
+  }
+
+  Future<void> _toggleLike(String postId) async {
+    if (_token == null) {
+      NotificationsService.instance.toast('يجب تسجيل الدخول أولاً', color: Colors.orange);
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/trends/posts/$postId/like'),
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'X-API-Key': ApiConfig.apiKey,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final liked = data['liked'] ?? false;
+        
+        setState(() {
+          if (liked) {
+            _likedPosts.add(postId);
+          } else {
+            _likedPosts.remove(postId);
+          }
+        });
+        
+        _loadPostsFromBackend(); // تحديث البيانات
+      }
+    } catch (e) {
+      print('❌ [LIKE] Error: $e');
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _filteredJournalists = List.from(verifiedJournalists);
+    _loadToken();
+    _loadMediaFromBackend();
+    _loadPostsFromBackend();
     _searchController.addListener(_onSearchChanged);
     // استمع لحالة الدخول العالمية
     AuthState.instance.addListener(_authListener);
@@ -209,17 +463,6 @@ class _TrendsPageState extends State<TrendsPage> {
         ),
       );
     }
-  }
-
-  void _toggleFollow(String journalistId) {
-    setState(() {
-      if (_followingList.contains(journalistId)) {
-        _followingList.remove(journalistId);
-      } else {
-        _followingList.add(journalistId);
-      }
-    });
-    _persistInteractions();
   }
 
   void _showFollowingList() {
@@ -399,14 +642,30 @@ class _TrendsPageState extends State<TrendsPage> {
           ),
           SizedBox(height: 12),
           Expanded(
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _filteredJournalists.length,
-              itemBuilder: (context, index) {
-                return _buildJournalistCard(_filteredJournalists[index]);
-              },
-            ),
+            child: _isLoadingMedia
+                ? Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(ThemeConfig.instance.primaryColor),
+                    ),
+                  )
+                : _filteredJournalists.isEmpty
+                    ? Center(
+                        child: Text(
+                          'لا يوجد إعلاميون حالياً',
+                          style: GoogleFonts.cairo(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _filteredJournalists.length,
+                        itemBuilder: (context, index) {
+                          return _buildJournalistCard(_filteredJournalists[index]);
+                        },
+                      ),
           ),
         ],
       ),
@@ -447,7 +706,23 @@ class _TrendsPageState extends State<TrendsPage> {
                 ),
                 child: CircleAvatar(
                   radius: 24,
-                  backgroundImage: AssetImage(journalist['avatar']),
+                  backgroundImage: (journalist['profile_picture'] != null && journalist['profile_picture'].toString().isNotEmpty)
+                      ? NetworkImage(journalist['profile_picture'])
+                      : (journalist['profile_image'] != null && journalist['profile_image'].toString().isNotEmpty)
+                          ? NetworkImage(journalist['profile_image'])
+                          : null,
+                  child: (journalist['profile_picture'] == null || journalist['profile_picture'].toString().isEmpty) &&
+                          (journalist['profile_image'] == null || journalist['profile_image'].toString().isEmpty)
+                      ? Text(
+                          journalist['name']?.toString().substring(0, 1) ?? '?',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+                          ),
+                        )
+                      : null,
+                  backgroundColor: isDark ? ThemeConfig.kNightSoft : Colors.grey[200],
                 ),
               ),
               SizedBox(width: 12),
@@ -478,16 +753,17 @@ class _TrendsPageState extends State<TrendsPage> {
                       ],
                     ),
                     SizedBox(height: 2),
-                    Text(
-                      journalist['specialty'],
-                      style: GoogleFonts.cairo(
-                        fontSize: 11,
-                        color: theme.textSecondaryColor,
-                        fontWeight: FontWeight.w500,
+                    if (journalist['bio'] != null && journalist['bio'].toString().isNotEmpty)
+                      Text(
+                        journalist['bio'],
+                        style: GoogleFonts.cairo(
+                          fontSize: 11,
+                          color: theme.textSecondaryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                     SizedBox(height: 4),
                     Row(
                       children: [
@@ -498,7 +774,22 @@ class _TrendsPageState extends State<TrendsPage> {
                         ),
                         SizedBox(width: 4),
                         Text(
-                          '${journalist['followers']} متابع',
+                          '${journalist['followers_count'] ?? 0} متابع',
+                          style: GoogleFonts.cairo(
+                            fontSize: 10,
+                            color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.article_outlined,
+                          size: 12,
+                          color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          '${journalist['posts_count'] ?? 0} منشور',
                           style: GoogleFonts.cairo(
                             fontSize: 10,
                             color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
@@ -513,6 +804,56 @@ class _TrendsPageState extends State<TrendsPage> {
             ],
           ),
           SizedBox(height: 12),
+          // Contact buttons (if available)
+          if (journalist['contact_email'] != null || journalist['contact_whatsapp'] != null)
+            Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (journalist['contact_email'] != null && journalist['contact_email'].toString().isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        // Open email app
+                        // TODO: Add url_launcher
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: (isDark ? ThemeConfig.kNightAccent : Colors.grey[200]),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.email_outlined,
+                          size: 18,
+                          color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+                        ),
+                      ),
+                    ),
+                  if (journalist['contact_email'] != null && journalist['contact_whatsapp'] != null)
+                    SizedBox(width: 8),
+                  if (journalist['contact_whatsapp'] != null && journalist['contact_whatsapp'].toString().isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        // Open WhatsApp
+                        // TODO: Add url_launcher
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: (isDark ? ThemeConfig.kNightAccent : Colors.grey[200]),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.phone,
+                          size: 18,
+                          color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           Row(
             children: [
               Expanded(
@@ -565,6 +906,33 @@ class _TrendsPageState extends State<TrendsPage> {
   }
 
   Widget _buildPostsFeed() {
+    // التحقق من وجود منشورات
+    if (_isLoadingPosts) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(ThemeConfig.instance.primaryColor),
+          ),
+        ),
+      );
+    }
+    
+    if (journalistPosts.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Text(
+            'لا توجد منشورات حالياً',
+            style: GoogleFonts.cairo(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+      );
+    }
+    
     final List<Map<String, dynamic>> repeatedPosts = List.generate(
       12,
       (index) => journalistPosts[index % journalistPosts.length],

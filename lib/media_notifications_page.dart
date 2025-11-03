@@ -83,7 +83,7 @@ class _MediaNotificationsPageState extends State<MediaNotificationsPage> {
   Widget build(BuildContext context) {
     final themeConfig = ThemeConfig.instance;
     final isDarkMode = themeConfig.isDarkMode;
-    final primaryColor = themeConfig.primaryColor;
+    final primaryColor = isDarkMode ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
 
     final unreadCount = _notifications.where((n) => n['is_read'] == false || n['is_read'] == null).length;
 

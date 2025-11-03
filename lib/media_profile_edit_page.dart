@@ -251,7 +251,7 @@ class _MediaProfileEditPageState extends State<MediaProfileEditPage> {
   Widget build(BuildContext context) {
     final themeConfig = ThemeConfig.instance;
     final isDarkMode = themeConfig.isDarkMode;
-    final primaryColor = themeConfig.primaryColor;
+    final primaryColor = isDarkMode ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
 
     return Scaffold(
       appBar: AppBar(

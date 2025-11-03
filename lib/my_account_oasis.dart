@@ -19,6 +19,7 @@ import 'api_config.dart';
 import 'auth.dart';
 import 'request_media_page.dart';
 import 'request_provider_page.dart';
+import 'media_dashboard.dart';
 
 class DalmaMyAccountOasis extends StatefulWidget {
   const DalmaMyAccountOasis({super.key});
@@ -70,7 +71,7 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
   void didChangeDependencies() {
     super.didChangeDependencies();
     // تحديث البيانات عندما تتغير حالة AuthState
-    final authState = Provider.of<AuthState>(context, listen: false);
+    final authState = Provider.of<AuthState>(context, listen: true); // تغيير إلى listen: true
     
     // إذا تم تسجيل الخروج من صفحة أخرى
     if (!authState.isLoggedIn && _token != null) {
@@ -87,9 +88,13 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
       return;
     }
     
-    // إذا تم تسجيل الدخول من صفحة أخرى
+    // إذا تم تسجيل الدخول من صفحة أخرى أو من نفس الصفحة
     if (authState.isLoggedIn && _token == null && !_isLoading) {
       print('🔄 [MY_ACCOUNT_OASIS] تم اكتشاف تسجيل دخول جديد - تحديث البيانات...');
+      setState(() {
+        _isLoading = true;
+        _hasError = false;
+      });
       _loadUserProfile();
     }
   }
@@ -107,6 +112,7 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
       _token = prefs.getString('token');
 
       if (_token == null) {
+        print('❌ [MY_ACCOUNT_OASIS] لا يوجد Token محفوظ!');
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -115,9 +121,15 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
         return;
       }
 
-      print('🔄 [MY_ACCOUNT_OASIS] محاولة تحميل البيانات (محاولة ${retryCount + 1}/3)...');
+      print('🔄 [MY_ACCOUNT_OASIS] محاولة تحميل البيانات (محاولة ${retryCount + 1}/5)...');
+      print('🎫 [TOKEN] Token موجود: ${_token!.substring(0, 20)}...');
+      print('🌐 [API] URL: $_baseUrl/api/me');
+      if (retryCount == 0) {
+        print('⏳ [MY_ACCOUNT_OASIS] قد يستغرق الأمر بعض الوقت إذا كان السيرفر في وضع السكون...');
+      }
 
-      // جلب بيانات المستخدم مع timeout أطول
+      // جلب بيانات المستخدم مع timeout أطول جداً
+      print('📤 [HTTP] إرسال GET request...');
       final response = await http.get(
         Uri.parse('$_baseUrl/api/me'),
         headers: {
@@ -125,11 +137,44 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
           'Content-Type': 'application/json',
         },
       ).timeout(
-        const Duration(seconds: 30), // timeout أطول للسماح لـ Render بالاستيقاظ
+        const Duration(seconds: 60), // timeout أطول جداً للسماح لـ Render بالاستيقاظ
         onTimeout: () {
           throw Exception('انتهت مهلة الاتصال - Server قد يكون في وضع Sleep');
         },
       );
+
+      print('📥 [HTTP] استلام الرد - Status: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('❌ [HTTP] Body: ${response.body}');
+      }
+
+      // إذا كان التوكن غير صحيح أو منتهي الصلاحية
+      if (response.statusCode == 403 || response.statusCode == 401) {
+        print('🚪 [MY_ACCOUNT_OASIS] Token منتهي الصلاحية أو غير صحيح - تسجيل خروج تلقائي...');
+        
+        // حذف التوكن والبيانات
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('token');
+        await prefs.remove('user_name');
+        await prefs.remove('user_phone');
+        await prefs.remove('user_role');
+        
+        // تحديث AuthState
+        if (mounted) {
+          final authState = Provider.of<AuthState>(context, listen: false);
+          await authState.logout();
+          
+          setState(() {
+            _token = null;
+            _userProfile = null;
+            _devices = [];
+            _isLoading = false;
+            _hasError = false;
+          });
+        }
+        
+        return;
+      }
 
       if (response.statusCode == 200) {
         final userData = json.decode(response.body);
@@ -148,7 +193,7 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
             _hasError = false;
           });
           
-          print('✅ [MY_ACCOUNT_OASIS] تم تحميل البيانات:');
+          print('✅ [MY_ACCOUNT_OASIS] تم تحميل البيانات بنجاح!');
           print('   - الاسم: ${userData['name']}');
           print('   - الصورة: ${userData['profile_image']}');
           print('   - عدد الأجهزة: ${devicesList.length}');
@@ -161,13 +206,15 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
           _loadRequestsStatus();
         }
       } else {
-        // إعادة المحاولة في حالة الخطأ
-        if (retryCount < 2) {
-          print('⚠️ [MY_ACCOUNT_OASIS] فشل التحميل، إعادة المحاولة بعد ${(retryCount + 1) * 2} ثانية...');
-          await Future.delayed(Duration(seconds: (retryCount + 1) * 2));
+        // إعادة المحاولة في حالة الخطأ (5 محاولات بدلاً من 3)
+        if (retryCount < 4) {
+          final waitTime = (retryCount + 1) * 5; // 5، 10، 15، 20 ثانية
+          print('⚠️ [MY_ACCOUNT_OASIS] فشل التحميل (كود: ${response.statusCode})، إعادة المحاولة بعد $waitTime ثانية...');
+          await Future.delayed(Duration(seconds: waitTime));
           return _loadUserProfile(retryCount: retryCount + 1);
         }
         
+        print('❌ [MY_ACCOUNT_OASIS] فشل التحميل بعد 5 محاولات');
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -176,15 +223,17 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
         }
       }
     } catch (e) {
-      print('❌ خطأ في تحميل البيانات: $e');
+      print('❌ [MY_ACCOUNT_OASIS] خطأ في تحميل البيانات: $e');
       
-      // إعادة المحاولة في حالة الخطأ
-      if (retryCount < 2) {
-        print('⚠️ [MY_ACCOUNT_OASIS] فشل التحميل، إعادة المحاولة بعد ${(retryCount + 1) * 2} ثانية...');
-        await Future.delayed(Duration(seconds: (retryCount + 1) * 2));
+      // إعادة المحاولة في حالة الخطأ (5 محاولات بدلاً من 3)
+      if (retryCount < 4) {
+        final waitTime = (retryCount + 1) * 5; // 5، 10، 15، 20 ثانية
+        print('⚠️ [MY_ACCOUNT_OASIS] إعادة المحاولة بعد $waitTime ثانية...');
+        await Future.delayed(Duration(seconds: waitTime));
         return _loadUserProfile(retryCount: retryCount + 1);
       }
       
+      print('❌ [MY_ACCOUNT_OASIS] فشل التحميل بعد 5 محاولات');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -364,6 +413,16 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
     } catch (e) {
       NotificationsService.instance.toast('حدث خطأ: $e', icon: Icons.error, color: Colors.red);
     }
+  }
+
+  void _navigateToMediaDashboard() {
+    // الانتقال إلى لوحة تحكم الإعلامي
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const DalmaMediaDashboard(),
+      ),
+    );
   }
 
   Future<void> _uploadLicenseImage() async {
@@ -698,10 +757,17 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
                               child: _MiniAction(
                                 icon: Icons.campaign_rounded,
                                 label: 'طلب إعلامي',
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => const RequestMediaPage()),
-                                ),
+                                onTap: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const RequestMediaPage()),
+                                  );
+                                  // إذا تم إرسال الطلب بنجاح، حدّث البيانات
+                                  if (result == true && mounted) {
+                                    print('🔄 [MY_ACCOUNT_OASIS] تم إرسال طلب إعلامي - تحديث البيانات...');
+                                    _loadRequestsStatus();
+                                  }
+                                },
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -709,10 +775,17 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
                               child: _MiniAction(
                                 icon: Icons.store_mall_directory_rounded,
                                 label: 'مقدم خدمة',
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => const RequestProviderPage()),
-                                ),
+                                onTap: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const RequestProviderPage()),
+                                  );
+                                  // إذا تم إرسال الطلب بنجاح، حدّث البيانات
+                                  if (result == true && mounted) {
+                                    print('🔄 [MY_ACCOUNT_OASIS] تم إرسال طلب مزود خدمة - تحديث البيانات...');
+                                    _loadRequestsStatus();
+                                  }
+                                },
                               ),
                             ),
                           ],
@@ -774,6 +847,9 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
                                     status: _mediaRequest!['status'],
                                     date: _formatDate(_mediaRequest!['created_at']),
                                     onUploadId: _hasIdImage(_mediaRequest!) ? null : () => _uploadIdImage(),
+                                    onNavigateToMediaDashboard: _mediaRequest!['status'] == 'approved' 
+                                      ? () => _navigateToMediaDashboard() 
+                                      : null,
                                   ),
                                   if (_providerRequest != null) _DividerLine(),
                                 ],
@@ -1630,6 +1706,7 @@ class _RequestStatusTile extends StatelessWidget {
   final String date;
   final VoidCallback? onUploadId;
   final VoidCallback? onUploadLicense;
+  final VoidCallback? onNavigateToMediaDashboard;
   
   const _RequestStatusTile({
     required this.icon,
@@ -1638,6 +1715,7 @@ class _RequestStatusTile extends StatelessWidget {
     required this.date,
     this.onUploadId,
     this.onUploadLicense,
+    this.onNavigateToMediaDashboard,
   });
   
   @override
@@ -1771,6 +1849,34 @@ class _RequestStatusTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                ),
+              ),
+            ),
+          ],
+          // زر الانتقال إلى إدارة إعلامي (عند الموافقة)
+          if (status == 'approved' && onNavigateToMediaDashboard != null) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onNavigateToMediaDashboard,
+                icon: Icon(Icons.dashboard_customize_rounded, size: 18),
+                label: Text(
+                  'انتقال إلى إدارة إعلامي 🚀',
+                  style: GoogleFonts.cairo(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                  elevation: 4,
+                  shadowColor: (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen).withOpacity(0.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                 ),
               ),
             ),
@@ -2073,4 +2179,8 @@ class _Field extends StatelessWidget {
     );
   }
 }
+
+
+// بيانات حقيقية من API + تكامل كامل
+// by Abdulkarim ✨
 

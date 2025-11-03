@@ -1,15 +1,13 @@
-import 'dart:ui';
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'theme_config.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
-import 'package:geolocator/geolocator.dart';
-import 'theme_config.dart';
-import 'notifications.dart';
+import 'dart:io';
 import 'secure_api_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 class RequestProviderPage extends StatefulWidget {
   const RequestProviderPage({Key? key}) : super(key: key);
@@ -27,9 +25,9 @@ class _RequestProviderPageState extends State<RequestProviderPage> with TickerPr
   final _emailController = TextEditingController();
   final _licenseNumberController = TextEditingController();
   
-  late AnimationController _fadeCtrl, _slideCtrl;
-  late Animation<double> _fade;
-  late Animation<Offset> _slide;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
   
   bool _isLoading = false;
   bool _hasCommercialLicense = false;
@@ -50,40 +48,38 @@ class _RequestProviderPageState extends State<RequestProviderPage> with TickerPr
     {'name': 'أخرى', 'icon': Icons.more_horiz, 'color': Colors.grey},
   ];
 
+  Position? _currentPosition;
+
   @override
   void initState() {
     super.initState();
-    _fadeCtrl = AnimationController(
+    _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _slideCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
-    _fade = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut);
-    _slide = Tween<Offset>(
-      begin: const Offset(0, .15),
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOutBack));
+    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
     
-    _fadeCtrl.forward();
-    _slideCtrl.forward();
+    _animationController.forward();
     _loadUserPhone();
   }
 
   Future<void> _loadUserPhone() async {
     final prefs = await SharedPreferences.getInstance();
     final phone = prefs.getString('user_phone');
-    if (phone != null && mounted) {
+    if (phone != null) {
       setState(() => _whatsappController.text = phone);
     }
   }
 
   @override
   void dispose() {
-    _fadeCtrl.dispose();
-    _slideCtrl.dispose();
+    _animationController.dispose();
     _businessNameController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
@@ -95,853 +91,697 @@ class _RequestProviderPageState extends State<RequestProviderPage> with TickerPr
 
   Future<void> _pickLicenseImage() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(
+      final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1024,
+        maxWidth: 1920,
+        maxHeight: 1080,
         imageQuality: 85,
       );
       
-      if (pickedFile != null) {
-        setState(() {
-          _licenseImage = File(pickedFile.path);
-        });
-        NotificationsService.instance.toast('تم اختيار الصورة بنجاح ✅');
+      if (image != null) {
+        setState(() => _licenseImage = File(image.path));
       }
     } catch (e) {
-      NotificationsService.instance.toast('فشل اختيار الصورة', icon: Icons.error, color: Colors.red);
+      _showErrorDialog('خطأ في اختيار الصورة: $e');
     }
   }
 
   Future<void> _getCurrentLocation() async {
     try {
+      setState(() => _isLoading = true);
+      
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        NotificationsService.instance.toast('خدمة الموقع غير مفعلة', icon: Icons.warning, color: Colors.orange);
-        return;
+        throw Exception('خدمة الموقع معطلة');
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          NotificationsService.instance.toast('تم رفض إذن الموقع', icon: Icons.error, color: Colors.red);
-          return;
+          throw Exception('تم رفض إذن الموقع');
         }
       }
+      
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception('إذن الموقع مرفوض بشكل دائم');
+      }
 
-      Position position = await Geolocator.getCurrentPosition();
+      _currentPosition = await Geolocator.getCurrentPosition();
+      
       setState(() {
-        _locationController.text = '${position.latitude}, ${position.longitude}';
+        _locationController.text = 'Lat: ${_currentPosition!.latitude.toStringAsFixed(6)}, '
+            'Lng: ${_currentPosition!.longitude.toStringAsFixed(6)}';
       });
-      NotificationsService.instance.toast('تم تحديد الموقع بنجاح 📍');
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ تم تحديد موقعك بنجاح'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
-      NotificationsService.instance.toast('فشل تحديد الموقع', icon: Icons.error, color: Colors.red);
+      _showErrorDialog('خطأ في تحديد الموقع: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
   Future<void> _submitRequest() async {
-    print('\n🏪━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    print('🏪 ${DateTime.now()} بدء عملية إرسال طلب مقدم خدمة');
-    print('🏪━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-    
-    // التحقق من الحقول
-    print('🏪 الخطوة 1: التحقق من الحقول...');
     if (!_formKey.currentState!.validate()) {
-      print('❌ [PROVIDER REQUEST] فشل التحقق: حقول ناقصة');
-      NotificationsService.instance.toast('يرجى ملء جميع الحقول المطلوبة', icon: Icons.warning, color: Colors.orange);
       return;
     }
-    print('✅ [PROVIDER REQUEST] التحقق من الحقول نجح');
 
     if (_selectedCategory == null) {
-      print('❌ [PROVIDER REQUEST] فشل: الفئة غير محددة');
-      NotificationsService.instance.toast('يرجى اختيار الفئة', icon: Icons.warning, color: Colors.orange);
+      _showErrorDialog('يرجى اختيار نوع النشاط التجاري');
       return;
     }
-    print('✅ [PROVIDER REQUEST] الفئة محددة: $_selectedCategory\n');
 
     if (_hasCommercialLicense && _licenseImage == null) {
-      print('❌ [PROVIDER REQUEST] فشل: صورة السجل التجاري مطلوبة');
-      NotificationsService.instance.toast('يرجى إرفاق صورة السجل التجاري', icon: Icons.warning, color: Colors.orange);
+      _showErrorDialog('يرجى إرفاق صورة السجل التجاري');
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      // جلب التوكن
-      print('🏪 الخطوة 2: جلب Token...');
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final api = SecureApiService();
       
-      if (token == null) {
-        print('❌ [PROVIDER REQUEST] فشل: المستخدم غير مسجل الدخول');
-        NotificationsService.instance.toast('يجب تسجيل الدخول أولاً', icon: Icons.error, color: Colors.red);
-        setState(() => _isLoading = false);
-        return;
-      }
-      print('✅ [PROVIDER REQUEST] Token موجود\n');
+      // Prepare request data
+      final requestData = {
+        'business_name': _businessNameController.text.trim(),
+        'business_category': _selectedCategory,
+        'description': _descriptionController.text.trim(),
+        'location_address': _locationController.text.trim(),
+        'whatsapp_number': _whatsappController.text.trim(),
+        'email': _emailController.text.trim(),
+        'has_commercial_license': _hasCommercialLicense,
+        'license_number': _hasCommercialLicense ? _licenseNumberController.text.trim() : null,
+        'latitude': _currentPosition?.latitude,
+        'longitude': _currentPosition?.longitude,
+      };
 
-      // رفع صورة السجل عبر Backend API (إذا كانت موجودة)
-      String? licenseImageUrl;
-      if (_licenseImage != null) {
-        print('🏪 الخطوة 3: رفع صورة السجل التجاري عبر Backend API...');
-        print('   📂 حجم الملف: ${(_licenseImage!.lengthSync() / 1024).toStringAsFixed(2)} KB');
-        print('   📂 المسار: ${_licenseImage!.path}');
-        
-        final uploadRequest = http.MultipartRequest(
-          'POST',
-          Uri.parse('https://dalma-api.onrender.com/api/upload-image'),
-        )
-          ..headers['Authorization'] = 'Bearer $token'
-          ..files.add(await http.MultipartFile.fromPath('image', _licenseImage!.path));
-        
-        print('   📤 إرسال إلى Backend API...');
-        final streamedResponse = await uploadRequest.send();
-        final uploadResponse = await http.Response.fromStream(streamedResponse);
-        
-        print('   📊 استجابة Upload API: ${uploadResponse.statusCode}');
-        
-        if (uploadResponse.statusCode == 200) {
-          final data = json.decode(uploadResponse.body);
-          licenseImageUrl = data['url'];
-          print('   ✅ تم رفع الصورة بنجاح!');
-          print('   🔗 URL: $licenseImageUrl\n');
-        } else {
-          print('   ❌ فشل رفع الصورة: ${uploadResponse.statusCode}');
-          print('   📄 Response: ${uploadResponse.body}\n');
+      // TODO: Handle image upload if needed
+      
+      final response = await api.post('/api/request-provider', requestData, requireAuth: true);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (mounted) {
+          _showSuccessDialog();
         }
       } else {
-        print('🏪 الخطوة 3: تخطي رفع صورة السجل (غير موجودة)\n');
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['error'] ?? 'فشل إرسال الطلب');
       }
-
-      // إعداد البيانات
-      print('🏪 الخطوة 4: إعداد بيانات الطلب...');
-      final requestData = {
-        'business_name': _businessNameController.text,
-        'description': _descriptionController.text,
-        'category': _selectedCategory,
-        'location': _locationController.text,
-        'whatsapp': _whatsappController.text,
-        'email': _emailController.text,
-        'has_commercial_license': _hasCommercialLicense,
-        'license_number': _licenseNumberController.text,
-        'license_image_url': licenseImageUrl,
-      };
-      print('   📋 البيانات:');
-      print('      - اسم النشاط: ${_businessNameController.text}');
-      print('      - الوصف: ${_descriptionController.text.substring(0, _descriptionController.text.length > 30 ? 30 : _descriptionController.text.length)}...');
-      print('      - الفئة: $_selectedCategory');
-      print('      - الموقع: ${_locationController.text}');
-      print('      - واتساب: ${_whatsappController.text}');
-      print('      - سجل تجاري: $_hasCommercialLicense');
-      print('      - رقم السجل: ${_licenseNumberController.text}');
-      print('      - صورة السجل: ${licenseImageUrl != null ? "✅ موجودة" : "❌ غير موجودة"}\n');
-
-      // إرسال الطلب إلى API
-      print('🏪 الخطوة 5: إرسال الطلب إلى API...');
-      print('   🌐 URL: https://dalma-api.onrender.com/api/provider-request');
-      print('   📤 إرسال...');
-      
-      final response = await http.post(
-        Uri.parse('https://dalma-api.onrender.com/api/provider-request'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(requestData),
-      );
-
-      print('   📊 استجابة API: ${response.statusCode}');
-      print('   📄 Response Body: ${response.body}\n');
-
+    } catch (e) {
+      _showErrorDialog('خطأ في إرسال الطلب: $e');
+    } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        print('✅━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        print('✅ نجح! تم إرسال طلب مقدم الخدمة بنجاح!');
-        print('   📋 رقم الطلب: ${responseData['request']?['id']}');
-        print('   ⏳ الحالة: ${responseData['request']?['status']}');
-        print('   📅 تاريخ الإنشاء: ${responseData['request']?['created_at']}');
-        print('✅━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        
-        NotificationsService.instance.toast('تم إرسال طلبك بنجاح! 🎉', icon: Icons.check_circle, color: Colors.green);
-        Navigator.pop(context);
-      } else {
-        print('❌━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        print('❌ فشل إرسال الطلب!');
-        print('   📊 Status Code: ${response.statusCode}');
-        print('   📄 Response: ${response.body}');
-        print('❌━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        
-        NotificationsService.instance.toast('حدث خطأ، حاول مرة أخرى', icon: Icons.error, color: Colors.red);
-      }
-    } catch (e, stackTrace) {
-      print('❌━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      print('❌ خطأ في إرسال الطلب!');
-      print('   🔴 Error: $e');
-      print('   📍 Stack Trace: $stackTrace');
-      print('❌━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-      
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-      NotificationsService.instance.toast('حدث خطأ: $e', icon: Icons.error, color: Colors.red);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: ThemeConfig.instance,
-      builder: (context, _) {
-        final theme = ThemeConfig.instance;
-        final isDark = theme.isDarkMode;
-
-        final headerGradient = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isDark
-              ? [ThemeConfig.kNightDeep, ThemeConfig.kNightSoft, ThemeConfig.kNightDeep]
-              : [const Color(0xFFECFDF5), ThemeConfig.kBeige, const Color(0xFFF5F9ED)],
-        );
-
-        return Scaffold(
-          backgroundColor: theme.backgroundColor,
-          body: Stack(
-            children: [
-              // خلفية عليا متدرجة
-              Container(
-                height: 280,
-                decoration: BoxDecoration(gradient: headerGradient),
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                shape: BoxShape.circle,
               ),
-              // المحتوى
-              SafeArea(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // زر الرجوع
-                        Row(
-                          children: [
-                            _TopIcon(
-                              icon: Icons.arrow_back_ios_new_rounded,
-                              onTap: () => Navigator.pop(context),
-                            ),
-                            const Spacer(),
-                            _TopIcon(
-                              icon: theme.isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
-                              onTap: () async => await ThemeConfig.instance.toggleTheme(),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-
-                        // العنوان والوصف
-                        FadeTransition(
-                          opacity: _fade,
-                          child: SlideTransition(
-                            position: _slide,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // أيقونة الدلما
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      colors: isDark
-                                        ? [ThemeConfig.kGoldNight.withOpacity(0.2), ThemeConfig.kGoldNight.withOpacity(0.05)]
-                                        : [ThemeConfig.kGreen.withOpacity(0.2), ThemeConfig.kGreen.withOpacity(0.05)],
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    Icons.store_mall_directory_rounded,
-                                    size: 48,
-                                    color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                Text(
-                                  'طلب مقدم خدمة',
-                                  style: GoogleFonts.cairo(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w900,
-                                    color: theme.textPrimaryColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'انضم إلى شبكة مقدمي الخدمات واعرض خدماتك',
-                                  style: GoogleFonts.cairo(
-                                    fontSize: 15,
-                                    color: theme.textSecondaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-
-                        // بطاقة النموذج
-                        _GlassCard(
-                          padding: const EdgeInsets.all(24),
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                // اسم النشاط
-                                _FieldLabel('اسم النشاط التجاري *'),
-                                const SizedBox(height: 8),
-                                _DalmaTextField(
-                                  controller: _businessNameController,
-                                  hintText: 'مثال: مطعم الدلما',
-                                  prefixIcon: Icons.business_rounded,
-                                  validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-                                ),
-                                const SizedBox(height: 20),
-
-                                // الوصف
-                                _FieldLabel('وصف الخدمة *'),
-                                const SizedBox(height: 8),
-                                _DalmaTextField(
-                                  controller: _descriptionController,
-                                  hintText: 'اكتب وصفاً تفصيلياً للخدمات التي تقدمها...',
-                                  maxLines: 3,
-                                  prefixIcon: Icons.description_rounded,
-                                  validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-                                ),
-                                const SizedBox(height: 20),
-
-                                // الفئة
-                                _FieldLabel('الفئة *'),
-                                const SizedBox(height: 8),
-                                _CategoryGrid(
-                                  categories: _categories,
-                                  selectedCategory: _selectedCategory,
-                                  onSelect: (v) => setState(() => _selectedCategory = v),
-                                ),
-                                const SizedBox(height: 20),
-
-                                // الموقع
-                                _FieldLabel('الموقع *'),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _DalmaTextField(
-                                        controller: _locationController,
-                                        hintText: 'عرعر، شارع...',
-                                        prefixIcon: Icons.location_on_rounded,
-                                        validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    _IconButton(
-                                      icon: Icons.my_location_rounded,
-                                      onTap: _getCurrentLocation,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-
-                                // واتساب
-                                _FieldLabel('رقم واتساب *'),
-                                const SizedBox(height: 8),
-                                _DalmaTextField(
-                                  controller: _whatsappController,
-                                  hintText: '05xxxxxxxx',
-                                  keyboardType: TextInputType.phone,
-                                  prefixIcon: Icons.phone_rounded,
-                                  validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-                                ),
-                                const SizedBox(height: 20),
-
-                                // البريد الإلكتروني
-                                _FieldLabel('البريد الإلكتروني'),
-                                const SizedBox(height: 8),
-                                _DalmaTextField(
-                                  controller: _emailController,
-                                  hintText: 'example@email.com',
-                                  keyboardType: TextInputType.emailAddress,
-                                  prefixIcon: Icons.email_rounded,
-                                ),
-                                const SizedBox(height: 24),
-
-                                // السجل التجاري
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen).withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.assignment_rounded,
-                                            color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'السجل التجاري',
-                                                  style: GoogleFonts.cairo(
-                                                    color: theme.textPrimaryColor,
-                                                    fontWeight: FontWeight.w900,
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'لدي سجل تجاري رسمي',
-                                                  style: GoogleFonts.cairo(
-                                                    color: theme.textSecondaryColor,
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Switch(
-                                            value: _hasCommercialLicense,
-                                            activeColor: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
-                                            onChanged: (v) => setState(() => _hasCommercialLicense = v),
-                                          ),
-                                        ],
-                                      ),
-                                      if (_hasCommercialLicense) ...[
-                                        const SizedBox(height: 16),
-                                        _DalmaTextField(
-                                          controller: _licenseNumberController,
-                                          hintText: 'رقم السجل التجاري',
-                                          prefixIcon: Icons.numbers_rounded,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        _ImageUploadBox(
-                                          image: _licenseImage,
-                                          onTap: _pickLicenseImage,
-                                          label: 'إرفاق صورة السجل التجاري',
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 32),
-
-                                // زر الإرسال
-                                _PrimaryGradientButton(
-                                  label: _isLoading ? 'جاري الإرسال...' : 'إرسال الطلب',
-                                  onTap: _isLoading ? () {} : _submitRequest,
-                                  loading: _isLoading,
-                                  icon: Icons.send_rounded,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ========================
-// Widgets & Styles
-// ========================
-
-class _TopIcon extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _TopIcon({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ThemeConfig.instance;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: theme.cardColor.withOpacity(.7),
-          shape: BoxShape.circle,
-          border: Border.all(color: theme.borderColor.withOpacity(.6)),
-          boxShadow: theme.cardShadow,
-        ),
-        child: Icon(icon, color: theme.textPrimaryColor, size: 18),
-      ),
-    );
-  }
-}
-
-class _IconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _IconButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ThemeConfig.instance;
-    final isDark = theme.isDarkMode;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen).withOpacity(0.3),
-          ),
-        ),
-        child: Icon(
-          icon,
-          color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
-        ),
-      ),
-    );
-  }
-}
-
-class _GlassCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry padding;
-  const _GlassCard({required this.child, this.padding = EdgeInsets.zero});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ThemeConfig.instance;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: theme.cardColor.withOpacity(.9),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: theme.borderColor),
-            boxShadow: theme.cardShadow,
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: GoogleFonts.cairo(
-        fontWeight: FontWeight.w700,
-        color: ThemeConfig.instance.textPrimaryColor,
-        fontSize: 14,
-      ),
-    );
-  }
-}
-
-class _DalmaTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hintText;
-  final TextInputType? keyboardType;
-  final int maxLines;
-  final IconData prefixIcon;
-  final String? Function(String?)? validator;
-
-  const _DalmaTextField({
-    required this.controller,
-    required this.hintText,
-    this.keyboardType,
-    this.maxLines = 1,
-    required this.prefixIcon,
-    this.validator,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ThemeConfig.instance;
-    final isDark = theme.isDarkMode;
-    
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: validator,
-      style: GoogleFonts.cairo(
-        color: theme.textPrimaryColor,
-        fontWeight: FontWeight.w600,
-      ),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: GoogleFonts.cairo(
-          color: theme.textSecondaryColor.withOpacity(0.5),
-        ),
-        filled: true,
-        fillColor: isDark 
-          ? ThemeConfig.kNightAccent.withOpacity(.4) 
-          : Colors.grey[50],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: theme.borderColor.withOpacity(0.3)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(
-            color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
-            width: 2,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.red, width: 1),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        prefixIcon: Icon(
-          prefixIcon,
-          color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      ),
-    );
-  }
-}
-
-class _CategoryGrid extends StatelessWidget {
-  final List<Map<String, dynamic>> categories;
-  final String? selectedCategory;
-  final ValueChanged<String> onSelect;
-
-  const _CategoryGrid({
-    required this.categories,
-    required this.selectedCategory,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ThemeConfig.instance;
-    final isDark = theme.isDarkMode;
-    
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: categories.map((cat) {
-        final isSelected = selectedCategory == cat['name'];
-        return InkWell(
-          onTap: () => onSelect(cat['name']),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected
-                ? (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen).withOpacity(0.15)
-                : (isDark ? ThemeConfig.kNightAccent : Colors.grey[50]),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected
-                  ? (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen)
-                  : theme.borderColor.withOpacity(0.3),
-                width: isSelected ? 2 : 1,
-              ),
+              child: Icon(Icons.check_circle, color: Colors.green, size: 60),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  cat['icon'],
-                  size: 18,
-                  color: isSelected
-                    ? (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen)
-                    : theme.textSecondaryColor,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  cat['name'],
-                  style: GoogleFonts.cairo(
-                    color: isSelected ? theme.textPrimaryColor : theme.textSecondaryColor,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _ImageUploadBox extends StatelessWidget {
-  final File? image;
-  final VoidCallback onTap;
-  final String label;
-
-  const _ImageUploadBox({
-    required this.image,
-    required this.onTap,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ThemeConfig.instance;
-    final isDark = theme.isDarkMode;
-    
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 120,
-        decoration: BoxDecoration(
-          color: isDark 
-            ? ThemeConfig.kNightAccent.withOpacity(.4) 
-            : Colors.grey[50],
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: image != null
-              ? (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen)
-              : theme.borderColor.withOpacity(0.3),
-            width: image != null ? 2 : 1,
-          ),
-        ),
-        child: image != null
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.file(
-                image!,
-                fit: BoxFit.cover,
-              ),
-            )
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.cloud_upload_rounded,
-                  size: 40,
-                  color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  style: GoogleFonts.cairo(
-                    color: theme.textSecondaryColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-      ),
-    );
-  }
-}
-
-class _PrimaryGradientButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final bool loading;
-  final IconData icon;
-  
-  const _PrimaryGradientButton({
-    required this.label,
-    required this.onTap,
-    this.loading = false,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = ThemeConfig.instance.isDarkMode;
-    final colors = isDark
-        ? [ThemeConfig.kGoldNight, ThemeConfig.kGoldNight.withOpacity(.8)]
-        : [ThemeConfig.kGreen, const Color(0xFF059669)];
-
-    return InkWell(
-      onTap: loading ? null : onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Ink(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: colors),
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: colors.first.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+            const SizedBox(height: 16),
+            Text(
+              'تم إرسال الطلب بنجاح! 🎉',
+              style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          alignment: Alignment.center,
-          child: loading
-              ? SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: isDark ? ThemeConfig.kNightDeep : Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      icon,
-                      color: isDark ? ThemeConfig.kNightDeep : Colors.white,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      label,
-                      style: GoogleFonts.cairo(
-                        color: isDark ? ThemeConfig.kNightDeep : Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
+        content: Text(
+          'تم استلام طلبك لتصبح مقدم خدمة.\n\nسيتم مراجعة طلبك من قبل فريق الإدارة خلال 24-48 ساعة، وسيتم إشعارك بالنتيجة عبر الواتساب والإيميل.',
+          style: GoogleFonts.cairo(),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                Navigator.pop(context, true); // Go back with success result
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6B6B),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text('حسناً', style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('خطأ'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('حسناً'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: Text('طلب أن تصبح مقدم خدمة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFFFF6B6B),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Hero Section
+                  _buildHeroSection(),
+                  const SizedBox(height: 30),
+                  
+                  // Category Selection
+                  _buildCategorySelection(),
+                  const SizedBox(height: 20),
+                  
+                  // Business Info Card
+                  _buildBusinessInfoCard(),
+                  const SizedBox(height: 20),
+                  
+                  // Location Card
+                  _buildLocationCard(),
+                  const SizedBox(height: 20),
+                  
+                  // Contact Info Card
+                  _buildContactInfoCard(),
+                  const SizedBox(height: 20),
+                  
+                  // License Card
+                  _buildLicenseCard(),
+                  const SizedBox(height: 30),
+                  
+                  // Submit Button
+                  _buildSubmitButton(),
+                  const SizedBox(height: 20),
+                  
+                  // Terms Text
+                  _buildTermsText(),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
+
+  Widget _buildHeroSection() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF6B6B), Color(0xFFE85454)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6B6B).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.storefront, size: 60, color: Colors.white),
+          const SizedBox(height: 16),
+          Text(
+            'انضم لشبكة مقدمي الخدمات',
+            style: GoogleFonts.cairo(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'قدّم خدماتك لآلاف العملاء وزد من دخلك',
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.9),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategorySelection() {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'اختر نوع النشاط التجاري *',
+              style: GoogleFonts.cairo(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 1,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                final isSelected = _selectedCategory == category['name'];
+                
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedCategory = category['name']),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? (category['color'] as Color).withOpacity(0.1)
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? (category['color'] as Color)
+                            : Colors.grey.shade300,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          category['icon'],
+                          size: 32,
+                          color: isSelected
+                              ? (category['color'] as Color)
+                              : Colors.grey.shade600,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          category['name'],
+                          style: GoogleFonts.cairo(
+                            fontSize: 11,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected ? Colors.black : Colors.grey.shade700,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBusinessInfoCard() {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'معلومات النشاط التجاري',
+              style: GoogleFonts.cairo(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFF6B6B),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            _buildTextField(
+              controller: _businessNameController,
+              label: 'اسم النشاط التجاري',
+              hint: 'مثال: مطعم الذواقة',
+              icon: Icons.business,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'اسم النشاط مطلوب';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            _buildTextField(
+              controller: _descriptionController,
+              label: 'وصف النشاط',
+              hint: 'اكتب وصفاً مختصراً عن خدماتك...',
+              icon: Icons.description,
+              maxLines: 4,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'وصف النشاط مطلوب';
+                }
+                if (value.trim().length < 20) {
+                  return 'الوصف قصير جداً (20 حرف على الأقل)';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationCard() {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'الموقع',
+              style: GoogleFonts.cairo(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFF6B6B),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            _buildTextField(
+              controller: _locationController,
+              label: 'العنوان',
+              hint: 'اكتب عنوان نشاطك التجاري',
+              icon: Icons.location_on,
+              maxLines: 2,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'العنوان مطلوب';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            
+            OutlinedButton.icon(
+              onPressed: _isLoading ? null : _getCurrentLocation,
+              icon: Icon(Icons.my_location, color: const Color(0xFFFF6B6B)),
+              label: Text(
+                'تحديد موقعي الحالي',
+                style: GoogleFonts.cairo(color: const Color(0xFFFF6B6B)),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: const Color(0xFFFF6B6B)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactInfoCard() {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'معلومات التواصل',
+              style: GoogleFonts.cairo(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFF6B6B),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            _buildTextField(
+              controller: _whatsappController,
+              label: 'رقم الواتساب',
+              hint: '05xxxxxxxx',
+              icon: Icons.phone,
+              keyboardType: TextInputType.phone,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'رقم الواتساب مطلوب';
+                }
+                if (!RegExp(r'^05\d{8}$').hasMatch(value.trim())) {
+                  return 'رقم الواتساب غير صحيح';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            _buildTextField(
+              controller: _emailController,
+              label: 'البريد الإلكتروني (اختياري)',
+              hint: 'example@email.com',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLicenseCard() {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.verified_user, color: Colors.blue, size: 26),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'السجل التجاري (اختياري)',
+                    style: GoogleFonts.cairo(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'إذا كان لديك سجل تجاري، سيعطيك أولوية في الظهور',
+              style: GoogleFonts.cairo(color: Colors.grey.shade700, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            
+            SwitchListTile(
+              value: _hasCommercialLicense,
+              onChanged: (value) => setState(() => _hasCommercialLicense = value),
+              title: Text('لدي سجل تجاري', style: GoogleFonts.cairo(fontWeight: FontWeight.w600)),
+              activeColor: Colors.blue,
+              contentPadding: EdgeInsets.zero,
+            ),
+            
+            if (_hasCommercialLicense) ...[
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 16),
+              
+              _buildTextField(
+                controller: _licenseNumberController,
+                label: 'رقم السجل التجاري',
+                hint: '1234567890',
+                icon: Icons.numbers,
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+              
+              if (_licenseImage != null) ...[
+                Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        _licenseImage!,
+                        height: 150,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 20),
+                      ),
+                      onPressed: () => setState(() => _licenseImage = null),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+              
+              OutlinedButton.icon(
+                onPressed: _pickLicenseImage,
+                icon: Icon(Icons.upload_file, color: Colors.blue),
+                label: Text(
+                  _licenseImage == null ? 'إرفاق صورة السجل التجاري' : 'تغيير الصورة',
+                  style: GoogleFonts.cairo(color: Colors.blue),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.blue),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator,
+      style: GoogleFonts.cairo(),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon, color: const Color(0xFFFF6B6B)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        labelStyle: GoogleFonts.cairo(),
+        hintStyle: GoogleFonts.cairo(color: Colors.grey.shade400),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return ElevatedButton(
+      onPressed: _isLoading ? null : _submitRequest,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFFF6B6B),
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 3,
+      ),
+      child: _isLoading
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            )
+          : Text(
+              'إرسال الطلب',
+              style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+    );
+  }
+
+  Widget _buildTermsText() {
+    return Text(
+      'بإرسال هذا الطلب، أنت توافق على شروط وأحكام المنصة وسياسة الخصوصية',
+      style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey.shade600),
+      textAlign: TextAlign.center,
+    );
+  }
 }
+

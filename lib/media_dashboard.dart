@@ -1,8 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// lib/media_dashboard.dart
+// Dalma Media Dashboard – لوحة تحكم الإعلامي (Luxury, Glass, Dynamic Theme)
+// بيانات حقيقية من API + تكامل كامل + تصميم فخم مثل صفحة حسابي
+// by Abdulkarim ✨
+
+import 'dart:ui';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
 import 'theme_config.dart';
+import 'notifications.dart';
+import 'api_config.dart';
 import 'auth.dart';
 import 'media_add_post_page.dart';
 import 'media_posts_page.dart';
@@ -10,18 +22,21 @@ import 'media_profile_edit_page.dart';
 import 'media_followers_page.dart';
 import 'media_detailed_stats_page.dart';
 import 'media_notifications_page.dart';
+import 'media_public_profile_page.dart';
 
-/// 📺 صفحة إدارة الإعلامي - Dalma Media Dashboard
-/// تعرض إحصائيات الإعلامي، إدارة المحتوى، والإعدادات
 class DalmaMediaDashboard extends StatefulWidget {
-  const DalmaMediaDashboard({Key? key}) : super(key: key);
+  const DalmaMediaDashboard({super.key});
 
   @override
   State<DalmaMediaDashboard> createState() => _DalmaMediaDashboardState();
 }
 
-class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> {
+class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerProviderStateMixin {
+  final String _baseUrl = ApiConfig.baseUrl;
+  String? _token;
   bool _isLoading = true;
+  
+  // بيانات المستخدم
   String _userName = '';
   String _userPhone = '';
   String? _profileImageUrl;
@@ -31,6 +46,7 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> {
   int _totalFollowers = 0;
   int _totalPosts = 0;
   int _monthlyReach = 0;
+  double _engagementRate = 0.0;
 
   @override
   void initState() {
@@ -43,565 +59,57 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> {
     
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      final baseUrl = 'https://dalma-api.onrender.com';
+      _token = prefs.getString('token');
 
-      if (token == null) {
+      if (_token == null) {
         throw Exception('No token found');
       }
 
-      // جلب بيانات الإعلامي
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/me'),
+      // جلب بيانات المستخدم
+      final userResponse = await http.get(
+        Uri.parse('$_baseUrl/api/me'),
         headers: {
-          'Authorization': 'Bearer $token',
-          'X-API-Key': 'FKSOE445DF8F44F3BA62C9084DBBC023E3E3F',
+          'Authorization': 'Bearer $_token',
+          'X-API-Key': ApiConfig.apiKey,
         },
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+      if (userResponse.statusCode == 200) {
+        final userData = json.decode(userResponse.body);
         setState(() {
-          _userName = data['name'] ?? '';
-          _userPhone = data['phone'] ?? '';
-          _profileImageUrl = data['profile_image'];
+          _userName = userData['name'] ?? '';
+          _userPhone = userData['phone'] ?? '';
+          _profileImageUrl = userData['profile_image'];
         });
+      }
 
-        // جلب إحصائيات الإعلامي الحقيقية
-        final statsResponse = await http.get(
-          Uri.parse('$baseUrl/api/media/stats'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'X-API-Key': 'FKSOE445DF8F44F3BA62C9084DBBC023E3E3F',
-          },
-        );
+      // جلب إحصائيات الإعلامي
+      final statsResponse = await http.get(
+        Uri.parse('$_baseUrl/api/media/stats'),
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'X-API-Key': ApiConfig.apiKey,
+        },
+      );
 
-        if (statsResponse.statusCode == 200) {
-          final statsData = json.decode(statsResponse.body);
-          final stats = statsData['stats'];
-          setState(() {
-            _totalViews = stats['totalViews'] ?? 0;
-            _totalFollowers = stats['totalFollowers'] ?? 0;
-            _totalPosts = stats['totalPosts'] ?? 0;
-            _monthlyReach = stats['monthlyReach'] ?? 0;
-          });
-        } else {
-          print('❌ [MEDIA STATS] Error: ${statsResponse.statusCode}');
-          // استخدام قيم افتراضية في حالة الخطأ
-          setState(() {
-            _totalViews = 0;
-            _totalFollowers = 0;
-            _totalPosts = 0;
-            _monthlyReach = 0;
-          });
-        }
+      if (statsResponse.statusCode == 200) {
+        final statsData = json.decode(statsResponse.body);
+        final stats = statsData['stats'];
+        setState(() {
+          _totalViews = stats['totalViews'] ?? 0;
+          _totalFollowers = stats['totalFollowers'] ?? 0;
+          _totalPosts = stats['totalPosts'] ?? 0;
+          _monthlyReach = stats['monthlyReach'] ?? 0;
+          _engagementRate = (stats['engagementRate'] ?? 0.0).toDouble();
+        });
       }
     } catch (e) {
-      print('❌ [MEDIA DASHBOARD] Error loading data: $e');
+      print('❌ [MEDIA DASHBOARD] Error: $e');
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final themeConfig = ThemeConfig.instance;
-    final isDarkMode = themeConfig.isDarkMode;
-    final primaryColor = themeConfig.primaryColor;
-    final accentColor = themeConfig.accentColor;
-    
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // Hero Header
-          SliverToBoxAdapter(
-            child: _buildHeroHeader(isDarkMode, primaryColor, accentColor),
-          ),
-          
-          // المحتوى الرئيسي
-          SliverToBoxAdapter(
-            child: _isLoading
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                : _buildDashboardContent(isDarkMode, primaryColor, accentColor),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 🎭 بناء Hero Header
-  Widget _buildHeroHeader(bool isDarkMode, Color primaryColor, Color accentColor) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: isDarkMode 
-              ? [const Color(0xFF1a1a1a), const Color(0xFF2d2d2d)]
-              : [primaryColor, accentColor],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-          child: Column(
-            children: [
-              // الصورة الشخصية والمعلومات
-              Row(
-                children: [
-                  // Profile Image
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: accentColor.withOpacity(0.4),
-                          blurRadius: 20,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: _profileImageUrl != null
-                          ? Image.network(
-                              _profileImageUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
-                            )
-                          : _buildDefaultAvatar(),
-                    ),
-                  ),
-                  
-                  const SizedBox(width: 16),
-                  
-                  // Name & Phone
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                _userName,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            // شارة التوثيق
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.verified,
-                                    color: Colors.white,
-                                    size: 14,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'إعلامي',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _userPhone,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  // Settings Button
-                  IconButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MediaProfileEditPage()),
-                      ).then((value) {
-                        if (value == true) {
-                          _loadMediaData(); // إعادة تحميل البيانات
-                        }
-                      });
-                    },
-                    icon: const Icon(Icons.settings, color: Colors.white, size: 28),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 👤 بناء Avatar افتراضي
-  Widget _buildDefaultAvatar() {
-    return Container(
-      color: const Color(0xFF10B981),
-      child: Center(
-        child: Text(
-          _userName.isNotEmpty ? _userName[0].toUpperCase() : '؟',
-          style: const TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 📊 بناء محتوى Dashboard
-  Widget _buildDashboardContent(bool isDarkMode, Color primaryColor, Color accentColor) {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // العنوان
-          const Text(
-            '📊 لوحة التحكم',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          
-          // الإحصائيات (2x2 Grid)
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.3,
-            children: [
-              _buildStatCard(
-                icon: Icons.visibility,
-                title: 'المشاهدات',
-                value: _formatNumber(_totalViews),
-                color: const Color(0xFF10B981),
-                isDarkMode: isDarkMode,
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MediaFollowersPage()),
-                  );
-                },
-                child: _buildStatCard(
-                  icon: Icons.people,
-                  title: 'المتابعون',
-                  value: _formatNumber(_totalFollowers),
-                  color: const Color(0xFF3B82F6),
-                  isDarkMode: isDarkMode,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MediaPostsPage()),
-                  ).then((value) => _loadMediaData());
-                },
-                child: _buildStatCard(
-                  icon: Icons.article,
-                  title: 'المنشورات',
-                  value: _formatNumber(_totalPosts),
-                  color: const Color(0xFFF59E0B),
-                  isDarkMode: isDarkMode,
-                ),
-              ),
-              _buildStatCard(
-                icon: Icons.trending_up,
-                title: 'الوصول الشهري',
-                value: _formatNumber(_monthlyReach),
-                color: const Color(0xFFEC4899),
-                isDarkMode: isDarkMode,
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // الإجراءات السريعة
-          const Text(
-            '⚡ إجراءات سريعة',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          _buildActionButton(
-            icon: Icons.add_circle,
-            title: 'إضافة منشور جديد',
-            subtitle: 'شارك محتوى مع جمهورك',
-            color: const Color(0xFF10B981),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MediaAddPostPage()),
-              ).then((value) {
-                if (value == true) {
-                  _loadMediaData(); // إعادة تحميل البيانات
-                }
-              });
-            },
-          ),
-          
-          const SizedBox(height: 12),
-          
-          _buildActionButton(
-            icon: Icons.bar_chart,
-            title: 'الإحصائيات التفصيلية',
-            subtitle: 'تحليل الأداء والتفاعل',
-            color: const Color(0xFF3B82F6),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MediaDetailedStatsPage()),
-              );
-            },
-          ),
-          
-          const SizedBox(height: 12),
-          
-          _buildActionButton(
-            icon: Icons.notifications,
-            title: 'الإشعارات',
-            subtitle: 'إدارة التنبيهات والرسائل',
-            color: const Color(0xFFF59E0B),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MediaNotificationsPage()),
-              );
-            },
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // زر تسجيل الخروج
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('تسجيل الخروج'),
-                    content: const Text('هل أنت متأكد من تسجيل الخروج؟'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('إلغاء'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('تسجيل الخروج'),
-                      ),
-                    ],
-                  ),
-                );
-                
-                if (confirm == true) {
-                  await AuthState.instance.logout();
-                }
-              },
-              icon: const Icon(Icons.logout),
-              label: const Text('تسجيل الخروج'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade400,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  /// 📈 بناء بطاقة إحصائية
-  Widget _buildStatCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-    required bool isDarkMode,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF2d2d2d) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 32),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDarkMode 
-                    ? Colors.white.withOpacity(0.6) 
-                    : Colors.black54,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 🔘 بناء زر إجراء
-  Widget _buildActionButton({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF2d2d2d) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDarkMode 
-                            ? Colors.white.withOpacity(0.6) 
-                            : Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: isDarkMode 
-                    ? Colors.white.withOpacity(0.3) 
-                    : Colors.black26,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 🔢 تنسيق الأرقام
   String _formatNumber(int number) {
     if (number >= 1000000) {
       return '${(number / 1000000).toStringAsFixed(1)}M';
@@ -610,5 +118,626 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> {
     }
     return number.toString();
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeConfig>(context);
+    final isDark = theme.isDarkMode;
+    final primaryColor = isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
+
+    return Scaffold(
+      backgroundColor: theme.backgroundColor,
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: primaryColor,
+              ),
+            )
+          : CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // AppBar فخم مع Glass Effect
+                SliverAppBar(
+                  expandedHeight: 280,
+                  floating: false,
+                  pinned: true,
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  leading: IconButton(
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textPrimaryColor),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: Icon(Icons.settings_rounded, color: theme.textPrimaryColor),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const MediaProfileEditPage()),
+                        );
+                      },
+                    ),
+                  ],
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // خلفية متدرجة
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                primaryColor.withOpacity(0.3),
+                                theme.backgroundColor,
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Glass Effect
+                        BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            color: theme.backgroundColor.withOpacity(0.3),
+                          ),
+                        ),
+                        // محتوى الـ Header
+                        SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                // صورة البروفايل
+                                Hero(
+                                  tag: 'profile_image',
+                                  child: Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: primaryColor,
+                                        width: 3,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: primaryColor.withOpacity(0.5),
+                                          blurRadius: 20,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipOval(
+                                      child: _profileImageUrl != null
+                                          ? Image.network(
+                                              _profileImageUrl!,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
+                                            )
+                                          : _buildDefaultAvatar(),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                // اسم المستخدم
+                                Text(
+                                  _userName,
+                                  style: GoogleFonts.cairo(
+                                    color: theme.textPrimaryColor,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 4),
+                                // شارة "إعلامي موثق"
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [primaryColor, primaryColor.withOpacity(0.7)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: primaryColor.withOpacity(0.3),
+                                        blurRadius: 10,
+                                        spreadRadius: 1,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.verified_rounded, color: Colors.white, size: 16),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'إعلامي موثق',
+                                        style: GoogleFonts.cairo(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // الإحصائيات الرئيسية (2x2 Grid)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.4,
+                      children: [
+                        _buildStatCard(
+                          icon: Icons.visibility_rounded,
+                          label: 'المشاهدات',
+                          value: _formatNumber(_totalViews),
+                          color: Colors.blue,
+                          onTap: null,
+                        ),
+                        _buildStatCard(
+                          icon: Icons.people_rounded,
+                          label: 'المتابعين',
+                          value: _formatNumber(_totalFollowers),
+                          color: Colors.purple,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const MediaFollowersPage()),
+                            );
+                          },
+                        ),
+                        _buildStatCard(
+                          icon: Icons.article_rounded,
+                          label: 'المنشورات',
+                          value: _formatNumber(_totalPosts),
+                          color: Colors.orange,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const MediaPostsPage()),
+                            );
+                          },
+                        ),
+                        _buildStatCard(
+                          icon: Icons.trending_up_rounded,
+                          label: 'الوصول الشهري',
+                          value: _formatNumber(_monthlyReach),
+                          color: Colors.green,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const MediaDetailedStatsPage()),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // معدل التفاعل
+                if (_engagementRate > 0)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: _GlassCard(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.pink.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.favorite_rounded,
+                                color: Colors.pink,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'معدل التفاعل',
+                                    style: GoogleFonts.cairo(
+                                      color: Provider.of<ThemeConfig>(context).textSecondaryColor,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_engagementRate.toStringAsFixed(1)}%',
+                                    style: GoogleFonts.cairo(
+                                      color: Provider.of<ThemeConfig>(context).textPrimaryColor,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: Provider.of<ThemeConfig>(context).textSecondaryColor,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // الإجراءات السريعة
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: _SectionCard(
+                      title: 'إجراءات سريعة',
+                      icon: Icons.bolt_rounded,
+                      child: Column(
+                        children: [
+                          _ActionRow(
+                            icon: Icons.add_circle_rounded,
+                            label: 'إضافة منشور جديد',
+                            color: primaryColor,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MediaAddPostPage()),
+                              ).then((_) => _loadMediaData());
+                            },
+                          ),
+                          _ActionRow(
+                            icon: Icons.article_rounded,
+                            label: 'إدارة المنشورات',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MediaPostsPage()),
+                              );
+                            },
+                          ),
+                          _ActionRow(
+                            icon: Icons.bar_chart_rounded,
+                            label: 'الإحصائيات التفصيلية',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MediaDetailedStatsPage()),
+                              );
+                            },
+                          ),
+                          _ActionRow(
+                            icon: Icons.notifications_rounded,
+                            label: 'الإشعارات',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MediaNotificationsPage()),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // إعدادات الحساب
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: _SectionCard(
+                      title: 'إعدادات الحساب',
+                      icon: Icons.settings_rounded,
+                      child: Column(
+                        children: [
+                          _ActionRow(
+                            icon: Icons.public_rounded,
+                            label: 'إدارة البروفايل العام',
+                            subtitle: 'البايو وطرق التواصل',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MediaPublicProfilePage()),
+                              ).then((_) => _loadMediaData());
+                            },
+                          ),
+                          _ActionRow(
+                            icon: Icons.edit_rounded,
+                            label: 'تعديل الملف الشخصي',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MediaProfileEditPage()),
+                              ).then((_) => _loadMediaData());
+                            },
+                          ),
+                          _ActionRow(
+                            icon: Icons.people_rounded,
+                            label: 'قائمة المتابعين',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MediaFollowersPage()),
+                              );
+                            },
+                          ),
+                          _ActionRow(
+                            icon: isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                            label: isDark ? 'الوضع النهاري' : 'الوضع الليلي',
+                            onTap: () async {
+                              await ThemeConfig.instance.toggleTheme();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // مساحة إضافية في الأسفل
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 40),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildDefaultAvatar() {
+    final theme = Provider.of<ThemeConfig>(context, listen: false);
+    final isDark = theme.isDarkMode;
+    final primaryColor = isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
+    
+    return Container(
+      color: primaryColor.withOpacity(0.2),
+      child: Center(
+        child: Text(
+          _userName.isNotEmpty ? _userName[0].toUpperCase() : '📺',
+          style: GoogleFonts.cairo(
+            color: primaryColor,
+            fontSize: 40,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
+    final theme = Provider.of<ThemeConfig>(context);
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: _GlassCard(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: GoogleFonts.cairo(
+                color: theme.textPrimaryColor,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: GoogleFonts.cairo(
+                color: theme.textSecondaryColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 🎨 Reusable Widgets (Glass Card, Section Card, Action Row)
+// ═══════════════════════════════════════════════════════════════
+
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets? padding;
+
+  const _GlassCard({required this.child, this.padding});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeConfig>(context);
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: padding ?? const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.cardColor.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: theme.borderColor.withOpacity(0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Widget child;
+
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeConfig>(context);
+    final isDark = theme.isDarkMode;
+    final primaryColor = isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
+
+    return _GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: primaryColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: GoogleFonts.cairo(
+                  color: theme.textPrimaryColor,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? subtitle;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _ActionRow({
+    required this.icon,
+    required this.label,
+    this.subtitle,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeConfig>(context);
+    final isDark = theme.isDarkMode;
+    final primaryColor = color ?? (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: primaryColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.cairo(
+                      color: theme.textPrimaryColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: GoogleFonts.cairo(
+                        color: theme.textSecondaryColor,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: theme.textSecondaryColor,
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
