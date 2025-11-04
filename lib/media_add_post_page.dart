@@ -255,15 +255,15 @@ class _MediaAddPostPageState extends State<MediaAddPostPage> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
-      final body = {
+      final Map<String, dynamic> body = {
         'description': _descriptionController.text.trim(),
       };
 
       if (_mediaType == 'images') {
         body['media_urls'] = _uploadedImageUrls;
       } else if (_mediaType == 'video') {
-        body['video_url'] = _uploadedVideoUrl;
-        body['video_thumbnail'] = _videoThumbnailUrl;
+        body['video_url'] = _uploadedVideoUrl ?? '';
+        body['video_thumbnail'] = _videoThumbnailUrl ?? '';
       }
 
       final response = await http.post(
