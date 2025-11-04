@@ -638,10 +638,20 @@ class _TrendsPageState extends State<TrendsPage> {
                       itemCount: _followingList.length,
                       itemBuilder: (context, index) {
                         final journalistId = _followingList[index];
-                        final journalist = verifiedJournalists.firstWhere(
-                          (j) => j['id']?.toString() == journalistId,
-                        );
-                        return _buildJournalistCard(journalist);
+                        try {
+                          final journalist = verifiedJournalists.firstWhere(
+                            (j) => j['id']?.toString() == journalistId,
+                            orElse: () => <String, dynamic>{}, // إرجاع map فارغ إذا لم يُعثر عليه
+                          );
+                          // تأكد من أن الـ journalist ليس فارغاً
+                          if (journalist.isEmpty) {
+                            return SizedBox.shrink();
+                          }
+                          return _buildJournalistCard(journalist);
+                        } catch (e) {
+                          print('❌ [TRENDS] Error building card for journalist $journalistId: $e');
+                          return SizedBox.shrink();
+                        }
                       },
                     ),
             ),
