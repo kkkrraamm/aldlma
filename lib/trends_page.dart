@@ -303,26 +303,26 @@ class _TrendsPageState extends State<TrendsPage> {
                   try {
                     final decoded = json.decode(post['media_urls']);
                     if (decoded is List) {
-                      mediaUrls = decoded.cast<String>();
+                      mediaUrls = decoded.map((e) => e.toString()).toList();
                     }
                   } catch (e) {
                     print('❌ Error parsing media_urls: $e');
                   }
                 } else if (post['media_urls'] is List) {
-                  mediaUrls = (post['media_urls'] as List).cast<String>();
+                  mediaUrls = (post['media_urls'] as List).map((e) => e.toString()).toList();
                 }
               }
               
               // استخراج hashtags
               List<String> hashtags = [];
               if (post['hashtags'] != null && post['hashtags'] is List) {
-                hashtags = (post['hashtags'] as List).cast<String>();
+                hashtags = (post['hashtags'] as List).map((e) => e.toString()).toList();
               }
               
               // استخراج mentions
               List<String> mentions = [];
               if (post['mentions'] != null && post['mentions'] is List) {
-                mentions = (post['mentions'] as List).cast<String>();
+                mentions = (post['mentions'] as List).map((e) => e.toString()).toList();
               }
               
               return {
