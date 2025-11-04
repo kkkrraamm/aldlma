@@ -93,9 +93,45 @@ class _TrendsPageState extends State<TrendsPage> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _token = prefs.getString('token');
-      // تحميل قائمة المتابعين المحفوظة
+      // تحميل قائمة المتابعين المحفوظة محلياً (backup)
       _followingList = prefs.getStringList('following_list') ?? [];
     });
+    
+    // تحميل قائمة المتابعة من Backend (الأحدث)
+    if (_token != null) {
+      await _loadFollowingFromBackend();
+    }
+  }
+  
+  Future<void> _loadFollowingFromBackend() async {
+    if (_token == null) return;
+    
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/trends/following'),
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'X-API-Key': ApiConfig.apiKey,
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final followingIds = List<String>.from(data['following'] ?? []);
+        
+        setState(() {
+          _followingList = followingIds;
+        });
+        
+        // حفظ محلياً للاستخدام في المرة القادمة
+        await _saveFollowingList();
+        
+        print('✅ [FOLLOWING] تم تحميل ${followingIds.length} إعلامي من Backend');
+      }
+    } catch (e) {
+      print('❌ [FOLLOWING] Error loading from backend: $e');
+      // الاحتفاظ بالقائمة المحلية في حالة الفشل
+    }
   }
   
   Future<void> _saveFollowingList() async {
