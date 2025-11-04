@@ -55,13 +55,24 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
   }
 
   Future<void> _loadMediaData() async {
+    print('🔄 [MEDIA DASHBOARD] بدء _loadMediaData...');
+    print('🔍 [MEDIA DASHBOARD] Widget mounted: $mounted');
+    
+    if (!mounted) {
+      print('⚠️ [MEDIA DASHBOARD] Widget not mounted في بداية _loadMediaData - إلغاء');
+      return;
+    }
+    
     setState(() => _isLoading = true);
+    print('✅ [MEDIA DASHBOARD] setState(_isLoading = true) نجح');
     
     try {
       final prefs = await SharedPreferences.getInstance();
       _token = prefs.getString('token');
+      print('🔑 [MEDIA DASHBOARD] Token: ${_token != null ? "موجود" : "غير موجود"}');
 
       if (_token == null) {
+        print('❌ [MEDIA DASHBOARD] لا يوجد token');
         throw Exception('No token found');
       }
 
@@ -76,11 +87,19 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
 
       if (userResponse.statusCode == 200) {
         final userData = json.decode(userResponse.body);
+        print('✅ [MEDIA DASHBOARD] تم جلب بيانات المستخدم');
+        
+        if (!mounted) {
+          print('⚠️ [MEDIA DASHBOARD] Widget disposed أثناء جلب بيانات المستخدم - إلغاء setState');
+          return;
+        }
+        
         setState(() {
           _userName = userData['name'] ?? '';
           _userPhone = userData['phone'] ?? '';
           _profileImageUrl = userData['profile_image'];
         });
+        print('✅ [MEDIA DASHBOARD] تم تحديث بيانات المستخدم في State');
       }
 
       // جلب إحصائيات الإعلامي
@@ -95,6 +114,13 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
       if (statsResponse.statusCode == 200) {
         final statsData = json.decode(statsResponse.body);
         final stats = statsData['stats'];
+        print('✅ [MEDIA DASHBOARD] تم جلب الإحصائيات');
+        
+        if (!mounted) {
+          print('⚠️ [MEDIA DASHBOARD] Widget disposed أثناء جلب الإحصائيات - إلغاء setState');
+          return;
+        }
+        
         setState(() {
           _totalViews = stats['totalViews'] ?? 0;
           _totalFollowers = stats['totalFollowers'] ?? 0;
@@ -107,11 +133,19 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
             _engagementRate = (stats['engagementRate'] ?? 0.0).toDouble();
           }
         });
+        print('✅ [MEDIA DASHBOARD] تم تحديث الإحصائيات في State');
       }
     } catch (e) {
       print('❌ [MEDIA DASHBOARD] Error: $e');
+      print('❌ [MEDIA DASHBOARD] Stack trace: ${StackTrace.current}');
     } finally {
+      if (!mounted) {
+        print('⚠️ [MEDIA DASHBOARD] Widget disposed في finally block - إلغاء setState');
+        return;
+      }
+      
       setState(() => _isLoading = false);
+      print('✅ [MEDIA DASHBOARD] انتهى تحميل البيانات');
     }
   }
 
