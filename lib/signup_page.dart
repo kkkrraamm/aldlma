@@ -191,25 +191,32 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
       return;
     }
     
-    // التحقق من Username (اختياري)
-    if (_username.text.isNotEmpty) {
-      if (_username.text.length < 3) {
-        NotificationsService.instance.toast(
-          'اسم المستخدم يجب أن يكون 3 أحرف على الأقل',
-          icon: Icons.warning,
-          color: Colors.orange,
-        );
-        return;
-      }
-      
-      if (_usernameAvailable == false) {
-        NotificationsService.instance.toast(
-          'اسم المستخدم محجوز، اختر اسماً آخر',
-          icon: Icons.warning,
-          color: Colors.orange,
-        );
-        return;
-      }
+    // التحقق من Username (إلزامي)
+    if (_username.text.isEmpty) {
+      NotificationsService.instance.toast(
+        'يرجى إدخال اسم المستخدم',
+        icon: Icons.warning,
+        color: Colors.orange,
+      );
+      return;
+    }
+    
+    if (_username.text.length < 3) {
+      NotificationsService.instance.toast(
+        'اسم المستخدم يجب أن يكون 3 أحرف على الأقل',
+        icon: Icons.warning,
+        color: Colors.orange,
+      );
+      return;
+    }
+    
+    if (_usernameAvailable == false) {
+      NotificationsService.instance.toast(
+        'اسم المستخدم محجوز، اختر اسماً آخر',
+        icon: Icons.warning,
+        color: Colors.orange,
+      );
+      return;
     }
     
     setState(() => _loading = true);
@@ -219,7 +226,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
       dob: _dob!,
       phone: _phone.text,
       password: _password.text,
-      username: _username.text.isNotEmpty ? _username.text : null,
+      username: _username.text, // إلزامي
     );
     
     if (mounted) {
@@ -388,13 +395,25 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                               const SizedBox(height: 20),
 
                               // اسم المستخدم (Username)
-                              Text(
-                                'اسم المستخدم (اختياري)',
-                                style: GoogleFonts.cairo(
-                                  fontWeight: FontWeight.w700,
-                                  color: theme.textPrimaryColor,
-                                  fontSize: 14,
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'اسم المستخدم',
+                                    style: GoogleFonts.cairo(
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.textPrimaryColor,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    ' *',
+                                    style: GoogleFonts.cairo(
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.red,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 8),
                               _DalmaTextField(

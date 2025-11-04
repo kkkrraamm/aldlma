@@ -285,7 +285,7 @@ class AuthState extends ChangeNotifier {
     required DateTime dob,
     required String phone,
     required String password,
-    String? username,
+    required String username, // إلزامي
   }) async {
     print('\n📝━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     print('📝 [SIGNUP] بدء عملية إنشاء حساب جديد');
@@ -311,13 +311,11 @@ class AuthState extends ChangeNotifier {
         'phone': phone.trim(),
         'password': password.trim(),
         'dob': dob.toIso8601String(),
+        'username': username.trim().toLowerCase(), // إلزامي
         'deviceInfo': deviceInfo, // إرسال معلومات الجهاز
       };
       
-      if (username != null && username.isNotEmpty) {
-        body['username'] = username.trim().toLowerCase();
-        print('🆔 [USERNAME] $username');
-      }
+      print('🆔 [USERNAME] $username');
       
       final response = await http.post(
         Uri.parse('$_baseUrl/user'),
