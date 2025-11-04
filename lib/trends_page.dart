@@ -197,6 +197,8 @@ class _TrendsPageState extends State<TrendsPage> {
                 'username': '@${media['phone'] ?? 'unknown'}',
                 'specialty': 'إعلامي موثق',
                 'avatar': media['profile_picture'] ?? media['profile_image'],
+                'profile_picture': media['profile_picture'],
+                'profile_image': media['profile_image'],
                 'followers': followersCount,
                 'following': 0,
                 'posts': postsCount,
