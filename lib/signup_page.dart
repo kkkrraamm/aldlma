@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import 'auth.dart';
 import 'notifications.dart';
 import 'theme_config.dart';
+import 'api_config.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -73,8 +75,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     setState(() => _checkingUsername = true);
     
     try {
-      final response = await AuthState.instance.http.get(
-        Uri.parse('${AuthState.instance.baseUrl}/api/username/check/$username'),
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/username/check/$username'),
       );
       
       if (response.statusCode == 200) {
@@ -97,8 +99,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     if (_name.text.isEmpty) return;
     
     try {
-      final response = await AuthState.instance.http.post(
-        Uri.parse('${AuthState.instance.baseUrl}/api/username/suggestions'),
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/username/suggestions'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'name': _name.text}),
       );
