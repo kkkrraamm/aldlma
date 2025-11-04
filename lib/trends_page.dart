@@ -94,14 +94,13 @@ class _TrendsPageState extends State<TrendsPage> {
     setState(() {
       _token = prefs.getString('token');
       // تحميل قائمة المتابعين المحفوظة
-      final savedFollowing = prefs.getStringList('following_list') ?? [];
-      _followingList = savedFollowing.toSet();
+      _followingList = prefs.getStringList('following_list') ?? [];
     });
   }
   
   Future<void> _saveFollowingList() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('following_list', _followingList.toList());
+    await prefs.setStringList('following_list', _followingList);
   }
 
   Future<void> _loadMediaFromBackend() async {
