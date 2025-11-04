@@ -1318,18 +1318,9 @@ class _TrendsPageState extends State<TrendsPage> {
                       ],
                     ),
                     
-                    SizedBox(height: 8),
-                    Text(
-                      journalist['username'],
-                      style: GoogleFonts.cairo(
-                        fontSize: 16,
-                        color: theme.textSecondaryColor,
-                      ),
-                    ),
-                    
                     SizedBox(height: 16),
                     Text(
-                      journalist['bio'],
+                      journalist['bio'] ?? '',
                       style: GoogleFonts.cairo(
                         fontSize: 14,
                         height: 1.5,
