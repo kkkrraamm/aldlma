@@ -93,7 +93,15 @@ class _TrendsPageState extends State<TrendsPage> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _token = prefs.getString('token');
+      // تحميل قائمة المتابعين المحفوظة
+      final savedFollowing = prefs.getStringList('following_list') ?? [];
+      _followingList = savedFollowing.toSet();
     });
+  }
+  
+  Future<void> _saveFollowingList() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('following_list', _followingList.toList());
   }
 
   Future<void> _loadMediaFromBackend() async {
@@ -322,6 +330,9 @@ class _TrendsPageState extends State<TrendsPage> {
             _followingList.remove(mediaId);
           }
         });
+        
+        // حفظ قائمة المتابعين
+        await _saveFollowingList();
         
         NotificationsService.instance.toast(
           following ? 'تمت المتابعة بنجاح! ✅' : 'تم إلغاء المتابعة',
@@ -1292,35 +1303,55 @@ class _TrendsPageState extends State<TrendsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // صورة الملف الشخصي
+                    // صورة الملف الشخصي (مثل صفحة حسابي)
                     Center(
                       child: Container(
+                        width: 120,
+                        height: 120,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
-                            width: 3,
+                          gradient: LinearGradient(
+                            colors: isDark 
+                                ? [ThemeConfig.kGoldNight, ThemeConfig.kGoldNight.withOpacity(0.6)]
+                                : [Color(0xFF10B981), Color(0xFF059669)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981)).withOpacity(0.3),
+                              blurRadius: 20,
+                              spreadRadius: 5,
+                            ),
+                          ],
                         ),
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundImage: (journalist['profile_picture'] != null && journalist['profile_picture'].toString().isNotEmpty)
-                              ? NetworkImage(journalist['profile_picture'])
-                              : (journalist['profile_image'] != null && journalist['profile_image'].toString().isNotEmpty)
-                                  ? NetworkImage(journalist['profile_image'])
-                                  : null,
-                          child: (journalist['profile_picture'] == null || journalist['profile_picture'].toString().isEmpty) &&
-                                  (journalist['profile_image'] == null || journalist['profile_image'].toString().isEmpty)
-                              ? Text(
-                                  journalist['name']?.toString().substring(0, 1) ?? '?',
-                                  style: TextStyle(
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
-                                  ),
-                                )
-                              : null,
-                          backgroundColor: isDark ? ThemeConfig.kNightSoft : Colors.grey[200],
+                        padding: EdgeInsets.all(4),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isDark ? ThemeConfig.kNightSoft : Colors.white,
+                          ),
+                          padding: EdgeInsets.all(4),
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundImage: (journalist['profile_picture'] != null && journalist['profile_picture'].toString().isNotEmpty)
+                                ? NetworkImage(journalist['profile_picture'])
+                                : (journalist['profile_image'] != null && journalist['profile_image'].toString().isNotEmpty)
+                                    ? NetworkImage(journalist['profile_image'])
+                                    : null,
+                            child: (journalist['profile_picture'] == null || journalist['profile_picture'].toString().isEmpty) &&
+                                    (journalist['profile_image'] == null || journalist['profile_image'].toString().isEmpty)
+                                ? Text(
+                                    journalist['name']?.toString().substring(0, 1) ?? '?',
+                                    style: TextStyle(
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+                                    ),
+                                  )
+                                : null,
+                            backgroundColor: isDark ? ThemeConfig.kNightSoft : Colors.grey[200],
+                          ),
                         ),
                       ),
                     ),
