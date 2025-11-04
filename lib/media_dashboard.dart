@@ -100,7 +100,12 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
           _totalFollowers = stats['totalFollowers'] ?? 0;
           _totalPosts = stats['totalPosts'] ?? 0;
           _monthlyReach = stats['monthlyReach'] ?? 0;
-          _engagementRate = (stats['engagementRate'] ?? 0.0).toDouble();
+          // تحويل engagementRate من String إلى double
+          if (stats['engagementRate'] is String) {
+            _engagementRate = double.tryParse(stats['engagementRate']) ?? 0.0;
+          } else {
+            _engagementRate = (stats['engagementRate'] ?? 0.0).toDouble();
+          }
         });
       }
     } catch (e) {
