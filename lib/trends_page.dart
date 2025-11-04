@@ -212,7 +212,7 @@ class _TrendsPageState extends State<TrendsPage> {
               print('❌ [TRENDS] Problematic item: $media');
               return null;
             }
-          }).where((m) => m != null).cast<Map<String, dynamic>>().toList();
+          }).where((m) => m != null).map((m) => m as Map<String, dynamic>).toList();
           
           _filteredJournalists = List.from(verifiedJournalists);
         });
@@ -350,7 +350,7 @@ class _TrendsPageState extends State<TrendsPage> {
               print('❌ [TRENDS] Problematic post: $post');
               return null;
             }
-          }).where((p) => p != null).cast<Map<String, dynamic>>().toList();
+          }).where((p) => p != null).map((p) => p as Map<String, dynamic>).toList();
         });
         
         print('📰 [TRENDS] تم جلب ${journalistPosts.length} منشور من Backend');
@@ -1279,7 +1279,9 @@ class _TrendsPageState extends State<TrendsPage> {
     final mediaUrls = post['media_urls'] as List;
     if (mediaUrls.isEmpty) return SizedBox.shrink();
     
-    return _ImageCarousel(images: mediaUrls.cast<String>());
+    // تحويل آمن من List إلى List<String>
+    final imageUrls = mediaUrls.map((e) => e.toString()).toList();
+    return _ImageCarousel(images: imageUrls);
   }
 
   // فيديو بحجم TikTok/Reels

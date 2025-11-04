@@ -798,7 +798,9 @@ class _ExperienceBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ThemeConfig.instance;
-    final chips = (provider['specialties'] as List?)?.cast<String>() ?? [];
+    // تحويل آمن من List إلى List<String>
+    final specialtiesList = provider['specialties'] as List?;
+    final chips = specialtiesList?.map((e) => e.toString()).toList() ?? [];
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16), // زيادة المسافة السفلية
