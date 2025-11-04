@@ -236,6 +236,13 @@ class _MediaPostsPageState extends State<MediaPostsPage> {
   }
 
   Widget _buildPostCard(dynamic post, ThemeConfig theme, bool isDark, Color primaryColor) {
+    // استخراج البيانات من المنشور
+    final mediaType = post['media_type'] ?? 'text';
+    final description = post['description'] ?? '';
+    final mediaUrls = post['media_urls'] is List ? List<String>.from(post['media_urls']) : <String>[];
+    final videoUrl = post['video_url'];
+    final int postId = post['id'] is int ? post['id'] : int.tryParse(post['id'].toString()) ?? 0;
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: _GlassCard(
@@ -243,12 +250,12 @@ class _MediaPostsPageState extends State<MediaPostsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // صورة المنشور
-            if (post['media'] != null)
+            // عرض الميديا حسب النوع
+            if (mediaType == 'image' && mediaUrls.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(
-                  post['media'],
+                  mediaUrls.first,
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -259,29 +266,85 @@ class _MediaPostsPageState extends State<MediaPostsPage> {
                   ),
                 ),
               ),
-            if (post['media'] != null) const SizedBox(height: 12),
-            
-            // العنوان
-            Text(
-              post['title'] ?? 'بدون عنوان',
-              style: GoogleFonts.cairo(
-                color: theme.textPrimaryColor,
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
+            if (mediaType == 'carousel' && mediaUrls.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  children: [
+                    Image.network(
+                      mediaUrls.first,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 180,
+                        color: primaryColor.withOpacity(0.1),
+                        child: Icon(Icons.image_not_supported, color: primaryColor, size: 40),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.collections, color: Colors.white, size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${mediaUrls.length}',
+                              style: GoogleFonts.cairo(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
+            if (mediaType == 'video' && videoUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      height: 180,
+                      width: double.infinity,
+                      color: Colors.black,
+                      child: post['video_thumbnail'] != null
+                          ? Image.network(
+                              post['video_thumbnail'],
+                              fit: BoxFit.cover,
+                            )
+                          : Icon(Icons.videocam, color: Colors.white, size: 60),
+                    ),
+                    Icon(Icons.play_circle_outline, color: Colors.white, size: 60),
+                  ],
+                ),
+              ),
+            if (mediaType != 'text') const SizedBox(height: 12),
             
             // الوصف
-            Text(
-              post['description'] ?? '',
-              style: GoogleFonts.cairo(
-                color: theme.textSecondaryColor,
-                fontSize: 14,
+            if (description.isNotEmpty)
+              Text(
+                description,
+                style: GoogleFonts.cairo(
+                  color: theme.textPrimaryColor,
+                  fontSize: 15,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
             const SizedBox(height: 16),
             
             // الإجراءات
@@ -316,7 +379,7 @@ class _MediaPostsPageState extends State<MediaPostsPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _deletePost(post['id']),
+                    onPressed: () => _deletePost(postId),
                     icon: const Icon(Icons.delete_rounded, size: 18),
                     label: Text(
                       'حذف',
