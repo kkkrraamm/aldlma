@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -16,9 +17,13 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   final TextEditingController _name = TextEditingController();
   final TextEditingController _phone = TextEditingController();
   final TextEditingController _password = TextEditingController();
+  final TextEditingController _username = TextEditingController();
   DateTime? _dob;
   bool _loading = false;
   bool _obscure = true;
+  bool _checkingUsername = false;
+  bool? _usernameAvailable;
+  List<String> _usernameSuggestions = [];
 
   late AnimationController _fadeCtrl, _slideCtrl;
   late Animation<double> _fade;
@@ -50,9 +55,63 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     _name.dispose();
     _phone.dispose();
     _password.dispose();
+    _username.dispose();
     _fadeCtrl.dispose();
     _slideCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkUsername(String username) async {
+    if (username.length < 3) {
+      setState(() {
+        _usernameAvailable = null;
+        _usernameSuggestions = [];
+      });
+      return;
+    }
+    
+    setState(() => _checkingUsername = true);
+    
+    try {
+      final response = await AuthState.instance.http.get(
+        Uri.parse('${AuthState.instance.baseUrl}/api/username/check/$username'),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _usernameAvailable = data['available'] == true;
+          _checkingUsername = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Error checking username: $e');
+      setState(() {
+        _usernameAvailable = null;
+        _checkingUsername = false;
+      });
+    }
+  }
+  
+  Future<void> _getSuggestions() async {
+    if (_name.text.isEmpty) return;
+    
+    try {
+      final response = await AuthState.instance.http.post(
+        Uri.parse('${AuthState.instance.baseUrl}/api/username/suggestions'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'name': _name.text}),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _usernameSuggestions = List<String>.from(data['suggestions'] ?? []);
+        });
+      }
+    } catch (e) {
+      print('❌ Error getting suggestions: $e');
+    }
   }
 
   Future<void> _pickDob() async {
@@ -130,6 +189,27 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
       return;
     }
     
+    // التحقق من Username (اختياري)
+    if (_username.text.isNotEmpty) {
+      if (_username.text.length < 3) {
+        NotificationsService.instance.toast(
+          'اسم المستخدم يجب أن يكون 3 أحرف على الأقل',
+          icon: Icons.warning,
+          color: Colors.orange,
+        );
+        return;
+      }
+      
+      if (_usernameAvailable == false) {
+        NotificationsService.instance.toast(
+          'اسم المستخدم محجوز، اختر اسماً آخر',
+          icon: Icons.warning,
+          color: Colors.orange,
+        );
+        return;
+      }
+    }
+    
     setState(() => _loading = true);
     
     final ok = await AuthState.instance.signup(
@@ -137,6 +217,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
       dob: _dob!,
       phone: _phone.text,
       password: _password.text,
+      username: _username.text.isNotEmpty ? _username.text : null,
     );
     
     if (mounted) {
@@ -295,7 +376,101 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                 hintText: 'أحمد محمد',
                                 keyboardType: TextInputType.name,
                                 prefixIcon: Icons.person_rounded,
+                                onChanged: (value) {
+                                  // اقتراح username تلقائياً عند كتابة الاسم
+                                  if (value.isNotEmpty && _username.text.isEmpty) {
+                                    _getSuggestions();
+                                  }
+                                },
                               ),
+                              const SizedBox(height: 20),
+
+                              // اسم المستخدم (Username)
+                              Text(
+                                'اسم المستخدم (اختياري)',
+                                style: GoogleFonts.cairo(
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.textPrimaryColor,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _DalmaTextField(
+                                controller: _username,
+                                hintText: 'ahmed_ksa',
+                                keyboardType: TextInputType.text,
+                                prefixIcon: Icons.alternate_email_rounded,
+                                onChanged: (value) {
+                                  if (value.length >= 3) {
+                                    _checkUsername(value);
+                                  } else {
+                                    setState(() {
+                                      _usernameAvailable = null;
+                                      _usernameSuggestions = [];
+                                    });
+                                  }
+                                },
+                                suffixIcon: _checkingUsername
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Padding(
+                                          padding: EdgeInsets.all(12),
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        ),
+                                      )
+                                    : _usernameAvailable != null
+                                        ? Icon(
+                                            _usernameAvailable! ? Icons.check_circle : Icons.cancel,
+                                            color: _usernameAvailable!
+                                                ? Colors.green
+                                                : Colors.red,
+                                          )
+                                        : null,
+                              ),
+                              if (_usernameAvailable == false && _usernameSuggestions.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  'اقتراحات متاحة:',
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 12,
+                                    color: theme.textSecondaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _usernameSuggestions.take(3).map((suggestion) {
+                                    return InkWell(
+                                      onTap: () {
+                                        _username.text = suggestion;
+                                        _checkUsername(suggestion);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: isDark
+                                              ? ThemeConfig.kGoldNight.withOpacity(0.1)
+                                              : ThemeConfig.kGreen.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          suggestion,
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 12,
+                                            color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
                               const SizedBox(height: 20),
 
                               // رقم الجوال
@@ -504,6 +679,7 @@ class _DalmaTextField extends StatelessWidget {
   final bool obscureText;
   final IconData prefixIcon;
   final Widget? suffixIcon;
+  final Function(String)? onChanged;
 
   const _DalmaTextField({
     required this.controller,
@@ -512,6 +688,7 @@ class _DalmaTextField extends StatelessWidget {
     this.obscureText = false,
     required this.prefixIcon,
     this.suffixIcon,
+    this.onChanged,
   });
 
   @override
@@ -523,6 +700,7 @@ class _DalmaTextField extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
+      onChanged: onChanged,
       style: GoogleFonts.cairo(
         color: theme.textPrimaryColor,
         fontWeight: FontWeight.w600,
