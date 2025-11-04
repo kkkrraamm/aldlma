@@ -248,20 +248,62 @@ class _TrendsPageState extends State<TrendsPage> {
                 }
               }
               
+              int sharesCount = 0;
+              if (post['shares_count'] != null) {
+                if (post['shares_count'] is int) {
+                  sharesCount = post['shares_count'];
+                } else {
+                  sharesCount = int.tryParse(post['shares_count'].toString()) ?? 0;
+                }
+              }
+              
+              // استخراج media_urls (مصفوفة صور)
+              List<String> mediaUrls = [];
+              if (post['media_urls'] != null) {
+                if (post['media_urls'] is String) {
+                  // إذا كانت JSON string
+                  try {
+                    final decoded = json.decode(post['media_urls']);
+                    if (decoded is List) {
+                      mediaUrls = decoded.cast<String>();
+                    }
+                  } catch (e) {
+                    print('❌ Error parsing media_urls: $e');
+                  }
+                } else if (post['media_urls'] is List) {
+                  mediaUrls = (post['media_urls'] as List).cast<String>();
+                }
+              }
+              
+              // استخراج hashtags
+              List<String> hashtags = [];
+              if (post['hashtags'] != null && post['hashtags'] is List) {
+                hashtags = (post['hashtags'] as List).cast<String>();
+              }
+              
+              // استخراج mentions
+              List<String> mentions = [];
+              if (post['mentions'] != null && post['mentions'] is List) {
+                mentions = (post['mentions'] as List).cast<String>();
+              }
+              
               return {
                 'id': '${post['id'] ?? ''}',
                 'journalistId': '${post['user_id'] ?? ''}',
-                'title': post['title'] ?? '',
                 'content': post['description'] ?? '',
-                'imageUrl': post['media'],
-                'videoUrl': null,
-                'type': post['media'] != null ? 'image' : 'text',
+                'media_type': post['media_type'] ?? 'text',
+                'media_urls': mediaUrls, // مصفوفة صور
+                'video_url': post['video_url'], // فيديو
+                'video_thumbnail': post['video_thumbnail'],
+                'type': post['media_type'] ?? 'text',
                 'likes': likesCount,
                 'comments': commentsCount,
-                'shares': 0,
+                'shares': sharesCount,
                 'timestamp': _formatTime(post['created_at']),
-                'hashtags': [],
+                'hashtags': hashtags,
+                'mentions': mentions,
                 'journalistName': post['user_name'] ?? '',
+                'journalistUsername': post['user_username'] ?? '',
                 'journalistAvatar': post['user_avatar'] ?? post['user_profile_image'],
                 'isVerified': true,
               };
@@ -1059,56 +1101,17 @@ class _TrendsPageState extends State<TrendsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  post['title'],
-                  style: GoogleFonts.cairo(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  post['content'],
-                  style: GoogleFonts.cairo(
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
+                // الوصف مع هاشتاقات ومنشنات
+                _buildRichDescription(post['content'] ?? '', post['hashtags'] ?? [], post['mentions'] ?? []),
                 SizedBox(height: 12),
                 
                 // الوسائط
-                if (post['type'] == 'image')
-                  _buildImagePost(post)
-                else if (post['type'] == 'video')
-                  _buildVideoPost(post),
-                
-                SizedBox(height: 12),
-                
-                // الهاشتاغات
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: (post['hashtags'] as List<String>).map((tag) {
-                    return GestureDetector(
-                      onTap: () {},
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF10B981).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          tag,
-                          style: GoogleFonts.cairo(
-                            fontSize: 12,
-                            color: Color(0xFF10B981),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
+                if (post['media_type'] == 'video')
+                  _buildVideoPost(post)
+                else if (post['media_type'] == 'carousel' && post['media_urls'] != null && (post['media_urls'] as List).isNotEmpty)
+                  _buildCarouselPost(post)
+                else if (post['media_type'] == 'image' && post['media_urls'] != null && (post['media_urls'] as List).isNotEmpty)
+                  _buildSingleImagePost(post),
               ],
             ),
           ),
@@ -1130,21 +1133,94 @@ class _TrendsPageState extends State<TrendsPage> {
     );
   }
 
-  Widget _buildImagePost(Map<String, dynamic> post) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.asset(
-        post['imageUrl'],
-        width: double.infinity,
-        height: 200,
-        fit: BoxFit.cover,
+  // وصف غني مع هاشتاقات ومنشنات
+  Widget _buildRichDescription(String text, List hashtags, List mentions) {
+    final theme = ThemeConfig.instance;
+    final isDark = theme.isDarkMode;
+    
+    // تقسيم النص وتلوين الهاشتاقات والمنشنات
+    final List<TextSpan> spans = [];
+    final words = text.split(' ');
+    
+    for (int i = 0; i < words.length; i++) {
+      final word = words[i];
+      if (word.startsWith('#')) {
+        spans.add(TextSpan(
+          text: word + (i < words.length - 1 ? ' ' : ''),
+          style: TextStyle(
+            color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+            fontWeight: FontWeight.w600,
+          ),
+        ));
+      } else if (word.startsWith('@')) {
+        spans.add(TextSpan(
+          text: word + (i < words.length - 1 ? ' ' : ''),
+          style: TextStyle(
+            color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+            fontWeight: FontWeight.w600,
+          ),
+        ));
+      } else {
+        spans.add(TextSpan(
+          text: word + (i < words.length - 1 ? ' ' : ''),
+        ));
+      }
+    }
+    
+    return RichText(
+      text: TextSpan(
+        style: GoogleFonts.cairo(
+          fontSize: 14,
+          height: 1.5,
+          color: theme.textPrimaryColor,
+        ),
+        children: spans,
       ),
     );
   }
 
+  // صورة واحدة
+  Widget _buildSingleImagePost(Map<String, dynamic> post) {
+    final mediaUrls = post['media_urls'] as List;
+    if (mediaUrls.isEmpty) return SizedBox.shrink();
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.network(
+        mediaUrls[0],
+        width: double.infinity,
+        height: 400,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 400,
+            color: Colors.grey[300],
+            child: Icon(Icons.broken_image, size: 50),
+          );
+        },
+      ),
+    );
+  }
+
+  // Carousel للصور (حتى 5 صور)
+  Widget _buildCarouselPost(Map<String, dynamic> post) {
+    final mediaUrls = post['media_urls'] as List;
+    if (mediaUrls.isEmpty) return SizedBox.shrink();
+    
+    return _ImageCarousel(images: mediaUrls.cast<String>());
+  }
+
+  // فيديو بحجم TikTok/Reels
   Widget _buildVideoPost(Map<String, dynamic> post) {
-    final String asset = (post['videoUrl'] as String?) ?? 'assets/videos/Download.mp4';
-    return _TrendsAutoPlayVideo(assetPath: asset);
+    final videoUrl = post['video_url'];
+    final thumbnail = post['video_thumbnail'];
+    
+    if (videoUrl == null) return SizedBox.shrink();
+    
+    return _TikTokVideoPlayer(
+      videoUrl: videoUrl,
+      thumbnail: thumbnail,
+    );
   }
 
   Widget _buildInteractionButton({
@@ -2381,6 +2457,145 @@ class _IconBadge extends StatelessWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+// ========================
+// Image Carousel Widget
+// ========================
+class _ImageCarousel extends StatefulWidget {
+  final List<String> images;
+  const _ImageCarousel({required this.images});
+
+  @override
+  State<_ImageCarousel> createState() => _ImageCarouselState();
+}
+
+class _ImageCarouselState extends State<_ImageCarousel> {
+  int _currentIndex = 0;
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ThemeConfig.instance;
+    final isDark = theme.isDarkMode;
+    
+    return Column(
+      children: [
+        // الصور
+        SizedBox(
+          height: 400,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() => _currentIndex = index);
+            },
+            itemCount: widget.images.length,
+            itemBuilder: (context, index) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  widget.images[index],
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[300],
+                      child: Icon(Icons.broken_image, size: 50),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        
+        // دوائر التوضيح (مثل Instagram)
+        if (widget.images.length > 1) ...[
+          SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              widget.images.length,
+              (index) => Container(
+                margin: EdgeInsets.symmetric(horizontal: 3),
+                width: _currentIndex == index ? 8 : 6,
+                height: _currentIndex == index ? 8 : 6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentIndex == index
+                      ? (isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981))
+                      : Colors.grey[400],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// ========================
+// TikTok/Reels Video Player
+// ========================
+class _TikTokVideoPlayer extends StatelessWidget {
+  final String videoUrl;
+  final String? thumbnail;
+  
+  const _TikTokVideoPlayer({
+    required this.videoUrl,
+    this.thumbnail,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ThemeConfig.instance;
+    
+    return Container(
+      height: 500, // حجم TikTok/Reels
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.black,
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // صورة مصغرة
+          if (thumbnail != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                thumbnail!,
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+          
+          // زر التشغيل
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.9),
+            ),
+            child: Icon(
+              Icons.play_arrow_rounded,
+              size: 40,
+              color: Colors.black,
+            ),
+          ),
         ],
       ),
     );
