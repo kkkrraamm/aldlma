@@ -1268,33 +1268,61 @@ class _TrendsPageState extends State<TrendsPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.8,
-        decoration: BoxDecoration(
-          color: isDark ? ThemeConfig.kNightSoft : Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: theme.textSecondaryColor.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          decoration: BoxDecoration(
+            color: isDark ? ThemeConfig.kNightSoft : Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: theme.textSecondaryColor.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // صورة الملف الشخصي
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: AssetImage(journalist['avatar']),
+                    Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+                            width: 3,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage: (journalist['profile_picture'] != null && journalist['profile_picture'].toString().isNotEmpty)
+                              ? NetworkImage(journalist['profile_picture'])
+                              : (journalist['profile_image'] != null && journalist['profile_image'].toString().isNotEmpty)
+                                  ? NetworkImage(journalist['profile_image'])
+                                  : null,
+                          child: (journalist['profile_picture'] == null || journalist['profile_picture'].toString().isEmpty) &&
+                                  (journalist['profile_image'] == null || journalist['profile_image'].toString().isEmpty)
+                              ? Text(
+                                  journalist['name']?.toString().substring(0, 1) ?? '?',
+                                  style: TextStyle(
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+                                  ),
+                                )
+                              : null,
+                          backgroundColor: isDark ? ThemeConfig.kNightSoft : Colors.grey[200],
+                        ),
+                      ),
                     ),
                     SizedBox(height: 16),
                     
@@ -1349,6 +1377,7 @@ class _TrendsPageState extends State<TrendsPage> {
                                   onPressed: () {
                                     final journalistId = journalist['id']?.toString() ?? '';
                                     _toggleFollow(journalistId);
+                                    setModalState(() {}); // تحديث UI
                                   },
                                   icon: Icon(
                                     () {
@@ -1409,38 +1438,44 @@ class _TrendsPageState extends State<TrendsPage> {
                     
                     SizedBox(height: 16),
                     
-                    // طرق التواصل
-                    Text(
-                      'طرق التواصل',
-                      style: GoogleFonts.cairo(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF10B981),
+                    // طرق التواصل (فقط المفعلة)
+                    if (journalist['contact_email'] != null || journalist['contact_whatsapp'] != null) ...[
+                      Text(
+                        'طرق التواصل',
+                        style: GoogleFonts.cairo(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+                        ),
                       ),
-                    ),
-                    
-                    SizedBox(height: 16),
-                    
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildContactMethod(
-                            icon: Icons.phone,
-                            label: 'اتصال',
-                            onTap: () => _contactJournalist(journalist['phone'], 'phone'),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: _buildContactMethod(
-                            icon: Icons.email,
-                            label: 'بريد إلكتروني',
-                            onTap: () => _contactJournalist(journalist['email'], 'email'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 24),
+                      
+                      SizedBox(height: 16),
+                      
+                      Row(
+                        children: [
+                          if (journalist['contact_whatsapp'] != null && journalist['contact_whatsapp'].toString().isNotEmpty)
+                            Expanded(
+                              child: _buildContactMethod(
+                                icon: Icons.phone,
+                                label: 'واتساب',
+                                onTap: () => _contactJournalist(journalist['contact_whatsapp'], 'whatsapp'),
+                              ),
+                            ),
+                          if (journalist['contact_whatsapp'] != null && journalist['contact_email'] != null &&
+                              journalist['contact_whatsapp'].toString().isNotEmpty && journalist['contact_email'].toString().isNotEmpty)
+                            SizedBox(width: 12),
+                          if (journalist['contact_email'] != null && journalist['contact_email'].toString().isNotEmpty)
+                            Expanded(
+                              child: _buildContactMethod(
+                                icon: Icons.email,
+                                label: 'بريد إلكتروني',
+                                onTap: () => _contactJournalist(journalist['contact_email'], 'email'),
+                              ),
+                            ),
+                        ],
+                      ),
+                      SizedBox(height: 24),
+                    ],
 
                     // جميع منشورات الإعلامي
                     Text(
@@ -1462,6 +1497,7 @@ class _TrendsPageState extends State<TrendsPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1531,6 +1567,8 @@ class _TrendsPageState extends State<TrendsPage> {
   void _contactJournalist(String contact, String type) {
     if (type == 'phone') {
       launchUrl(Uri.parse('tel:$contact'));
+    } else if (type == 'whatsapp') {
+      launchUrl(Uri.parse('https://wa.me/966${contact.replaceFirst('0', '')}'));
     } else if (type == 'email') {
       launchUrl(Uri.parse('mailto:$contact'));
     }
