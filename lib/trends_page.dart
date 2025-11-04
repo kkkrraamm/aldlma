@@ -397,6 +397,16 @@ class _TrendsPageState extends State<TrendsPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 🔄 تحديث تلقائي عند العودة للصفحة
+    if (mounted) {
+      _loadMediaFromBackend();
+      _loadPostsFromBackend();
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     AuthState.instance.removeListener(_authListener);
@@ -1274,6 +1284,10 @@ class _TrendsPageState extends State<TrendsPage> {
     final theme = ThemeConfig.instance;
     final isDark = theme.isDarkMode;
     
+    // 🔄 تحديث البيانات عند فتح البروفايل
+    _loadMediaFromBackend();
+    _loadPostsFromBackend();
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1297,11 +1311,19 @@ class _TrendsPageState extends State<TrendsPage> {
                 ),
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    await _loadMediaFromBackend();
+                    await _loadPostsFromBackend();
+                    setModalState(() {}); // 🔄 تحديث UI البروفايل
+                  },
+                  color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
+                  child: SingleChildScrollView(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     // صورة الملف الشخصي (مثل صفحة حسابي)
                     Center(
                       child: Container(
@@ -1523,11 +1545,12 @@ class _TrendsPageState extends State<TrendsPage> {
                         .toList(),
                   ],
                 ),
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
