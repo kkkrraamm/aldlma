@@ -565,6 +565,16 @@ class _TrendsPageState extends State<TrendsPage> {
   }
 
   void _showFollowingList() {
+    // التحقق من تسجيل الدخول
+    if (!_isLoggedIn || _token == null) {
+      NotificationsService.instance.toast(
+        'يجب تسجيل الدخول أولاً',
+        icon: Icons.login,
+        color: Colors.orange,
+      );
+      return;
+    }
+    
     final theme = ThemeConfig.instance;
     final isDark = theme.isDarkMode;
     
@@ -979,7 +989,20 @@ class _TrendsPageState extends State<TrendsPage> {
               ),
               SizedBox(width: 8),
               GestureDetector(
-                onTap: () => _toggleFollow(journalistId),
+                onTap: () {
+                  if (!_isLoggedIn) {
+                    // إذا لم يكن مسجل دخول، عرض رسالة وتوجيهه لتسجيل الدخول
+                    NotificationsService.instance.toast(
+                      'يجب تسجيل الدخول للمتابعة',
+                      color: Colors.orange,
+                      icon: Icons.login,
+                    );
+                    // يمكن إضافة Navigation لصفحة تسجيل الدخول هنا إذا أردت
+                    Navigator.pushNamed(context, '/login');
+                  } else {
+                    _toggleFollow(journalistId);
+                  }
+                },
                 child: Container(
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
