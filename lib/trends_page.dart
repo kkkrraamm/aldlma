@@ -479,6 +479,7 @@ class _TrendsPageState extends State<TrendsPage> {
     super.didChangeDependencies();
     // 🔄 تحديث تلقائي عند العودة للصفحة
     if (mounted) {
+      _loadFollowingFromBackend(); // تحديث قائمة المتابعة
       _loadMediaFromBackend();
       _loadPostsFromBackend();
     }
