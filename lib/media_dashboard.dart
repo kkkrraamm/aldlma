@@ -150,6 +150,15 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
     } catch (e) {
       print('❌ [MEDIA DASHBOARD] Error: $e');
       print('❌ [MEDIA DASHBOARD] Stack trace: ${StackTrace.current}');
+      
+      // عرض رسالة خطأ للمستخدم
+      if (mounted) {
+        NotificationsService.instance.toast(
+          'حدث خطأ في تحميل البيانات. يرجى المحاولة مرة أخرى.',
+          icon: Icons.error_outline,
+          color: Colors.red,
+        );
+      }
     } finally {
       if (!mounted) {
         print('⚠️ [MEDIA DASHBOARD] Widget disposed في finally block - إلغاء setState');
@@ -196,9 +205,20 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
                   elevation: 0,
                   leading: IconButton(
                     icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textPrimaryColor),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      print('🔙 [MEDIA DASHBOARD] الرجوع للصفحة الرئيسية');
+                      Navigator.pop(context);
+                    },
                   ),
                   actions: [
+                    IconButton(
+                      icon: Icon(Icons.refresh_rounded, color: theme.textPrimaryColor),
+                      onPressed: () {
+                        print('🔄 [MEDIA DASHBOARD] إعادة تحميل البيانات');
+                        setState(() => _isLoading = true);
+                        _loadMediaData();
+                      },
+                    ),
                     IconButton(
                       icon: Icon(Icons.settings_rounded, color: theme.textPrimaryColor),
                       onPressed: () {
