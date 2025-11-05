@@ -55,24 +55,13 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
   }
 
   Future<void> _loadMediaData() async {
-    print('🔄 [MEDIA DASHBOARD] بدء _loadMediaData...');
-    print('🔍 [MEDIA DASHBOARD] Widget mounted: $mounted');
-    
-    if (!mounted) {
-      print('⚠️ [MEDIA DASHBOARD] Widget not mounted في بداية _loadMediaData - إلغاء');
-      return;
-    }
-    
     setState(() => _isLoading = true);
-    print('✅ [MEDIA DASHBOARD] setState(_isLoading = true) نجح');
     
     try {
       final prefs = await SharedPreferences.getInstance();
       _token = prefs.getString('token');
-      print('🔑 [MEDIA DASHBOARD] Token: ${_token != null ? "موجود" : "غير موجود"}');
 
       if (_token == null) {
-        print('❌ [MEDIA DASHBOARD] لا يوجد token');
         throw Exception('No token found');
       }
 
@@ -87,24 +76,11 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
 
       if (userResponse.statusCode == 200) {
         final userData = json.decode(userResponse.body);
-        print('✅ [MEDIA DASHBOARD] تم جلب بيانات المستخدم');
-        print('📊 [MEDIA DASHBOARD] User Data: $userData');
-        print('🖼️ [MEDIA DASHBOARD] Profile Image URL: ${userData['profile_image']}');
-        print('👥 [MEDIA DASHBOARD] Followers Count: ${userData['followers_count']}');
-        print('📝 [MEDIA DASHBOARD] Posts Count: ${userData['posts_count']}');
-        
-        if (!mounted) {
-          print('⚠️ [MEDIA DASHBOARD] Widget disposed أثناء جلب بيانات المستخدم - إلغاء setState');
-          return;
-        }
-        
         setState(() {
           _userName = userData['name'] ?? '';
           _userPhone = userData['phone'] ?? '';
           _profileImageUrl = userData['profile_image'];
         });
-        print('✅ [MEDIA DASHBOARD] تم تحديث بيانات المستخدم في State');
-        print('✅ [MEDIA DASHBOARD] Profile Image في State: $_profileImageUrl');
       }
 
       // جلب إحصائيات الإعلامي
@@ -119,54 +95,27 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
       if (statsResponse.statusCode == 200) {
         final statsData = json.decode(statsResponse.body);
         final stats = statsData['stats'];
-        print('✅ [MEDIA DASHBOARD] تم جلب الإحصائيات');
-        print('📊 [MEDIA DASHBOARD] Stats Data: $stats');
-        print('📊 [MEDIA DASHBOARD] Total Views: ${stats['totalViews']}');
-        print('👥 [MEDIA DASHBOARD] Total Followers: ${stats['totalFollowers']}');
-        print('📝 [MEDIA DASHBOARD] Total Posts: ${stats['totalPosts']}');
-        print('📈 [MEDIA DASHBOARD] Monthly Reach: ${stats['monthlyReach']}');
-        print('💯 [MEDIA DASHBOARD] Engagement Rate: ${stats['engagementRate']}');
-        
-        if (!mounted) {
-          print('⚠️ [MEDIA DASHBOARD] Widget disposed أثناء جلب الإحصائيات - إلغاء setState');
-          return;
+        if (mounted) {
+          setState(() {
+            _totalViews = stats['totalViews'] ?? 0;
+            _totalFollowers = stats['totalFollowers'] ?? 0;
+            _totalPosts = stats['totalPosts'] ?? 0;
+            _monthlyReach = stats['monthlyReach'] ?? 0;
+            // تحويل engagementRate من String إلى double
+            if (stats['engagementRate'] is String) {
+              _engagementRate = double.tryParse(stats['engagementRate']) ?? 0.0;
+            } else {
+              _engagementRate = (stats['engagementRate'] ?? 0.0).toDouble();
+            }
+          });
         }
-        
-        setState(() {
-          _totalViews = stats['totalViews'] ?? 0;
-          _totalFollowers = stats['totalFollowers'] ?? 0;
-          _totalPosts = stats['totalPosts'] ?? 0;
-          _monthlyReach = stats['monthlyReach'] ?? 0;
-          // تحويل engagementRate من String إلى double
-          if (stats['engagementRate'] is String) {
-            _engagementRate = double.tryParse(stats['engagementRate']) ?? 0.0;
-          } else {
-            _engagementRate = (stats['engagementRate'] ?? 0.0).toDouble();
-          }
-        });
-        print('✅ [MEDIA DASHBOARD] تم تحديث الإحصائيات في State');
-        print('📊 [MEDIA DASHBOARD] State - Views: $_totalViews, Followers: $_totalFollowers, Posts: $_totalPosts');
       }
     } catch (e) {
       print('❌ [MEDIA DASHBOARD] Error: $e');
-      print('❌ [MEDIA DASHBOARD] Stack trace: ${StackTrace.current}');
-      
-      // عرض رسالة خطأ للمستخدم
-      if (mounted) {
-        NotificationsService.instance.toast(
-          'حدث خطأ في تحميل البيانات. يرجى المحاولة مرة أخرى.',
-          icon: Icons.error_outline,
-          color: Colors.red,
-        );
-      }
     } finally {
-      if (!mounted) {
-        print('⚠️ [MEDIA DASHBOARD] Widget disposed في finally block - إلغاء setState');
-        return;
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
-      
-      setState(() => _isLoading = false);
-      print('✅ [MEDIA DASHBOARD] انتهى تحميل البيانات');
     }
   }
 
@@ -205,20 +154,9 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
                   elevation: 0,
                   leading: IconButton(
                     icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textPrimaryColor),
-                    onPressed: () {
-                      print('🔙 [MEDIA DASHBOARD] الرجوع للصفحة الرئيسية');
-                      Navigator.pop(context);
-                    },
+                    onPressed: () => Navigator.pop(context),
                   ),
                   actions: [
-                    IconButton(
-                      icon: Icon(Icons.refresh_rounded, color: theme.textPrimaryColor),
-                      onPressed: () {
-                        print('🔄 [MEDIA DASHBOARD] إعادة تحميل البيانات');
-                        setState(() => _isLoading = true);
-                        _loadMediaData();
-                      },
-                    ),
                     IconButton(
                       icon: Icon(Icons.settings_rounded, color: theme.textPrimaryColor),
                       onPressed: () {

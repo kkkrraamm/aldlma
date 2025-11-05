@@ -171,15 +171,11 @@ class AuthState extends ChangeNotifier {
     }).where((m) => (m['phone'] ?? '').toString().isNotEmpty).toList();
     // If logged in but missing name, hydrate from users list
     if (_isLoggedIn && (_userName == null || _userName!.trim().isEmpty) && _phone != null) {
-      try {
-        final u = _users.firstWhere(
-          (e) => e is Map && e['phone'] == _phone,
-          orElse: () => <String, dynamic>{},
-        );
-        if (u.isNotEmpty) _userName = (u['name'] as String?) ?? _userName;
-      } catch (e) {
-        print('❌ [AUTH] Error finding user in list: $e');
-      }
+      final u = _users.cast<Map<String, dynamic>?>().firstWhere(
+        (e) => e != null && e['phone'] == _phone,
+        orElse: () => null,
+      );
+      if (u != null) _userName = (u['name'] as String?) ?? _userName;
     }
     
     print('📊 [AUTH STATE] حالة النهائية: isLoggedIn=$_isLoggedIn');
