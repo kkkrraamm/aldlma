@@ -88,6 +88,10 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
       if (userResponse.statusCode == 200) {
         final userData = json.decode(userResponse.body);
         print('✅ [MEDIA DASHBOARD] تم جلب بيانات المستخدم');
+        print('📊 [MEDIA DASHBOARD] User Data: $userData');
+        print('🖼️ [MEDIA DASHBOARD] Profile Image URL: ${userData['profile_image']}');
+        print('👥 [MEDIA DASHBOARD] Followers Count: ${userData['followers_count']}');
+        print('📝 [MEDIA DASHBOARD] Posts Count: ${userData['posts_count']}');
         
         if (!mounted) {
           print('⚠️ [MEDIA DASHBOARD] Widget disposed أثناء جلب بيانات المستخدم - إلغاء setState');
@@ -100,6 +104,7 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
           _profileImageUrl = userData['profile_image'];
         });
         print('✅ [MEDIA DASHBOARD] تم تحديث بيانات المستخدم في State');
+        print('✅ [MEDIA DASHBOARD] Profile Image في State: $_profileImageUrl');
       }
 
       // جلب إحصائيات الإعلامي
@@ -115,6 +120,12 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
         final statsData = json.decode(statsResponse.body);
         final stats = statsData['stats'];
         print('✅ [MEDIA DASHBOARD] تم جلب الإحصائيات');
+        print('📊 [MEDIA DASHBOARD] Stats Data: $stats');
+        print('📊 [MEDIA DASHBOARD] Total Views: ${stats['totalViews']}');
+        print('👥 [MEDIA DASHBOARD] Total Followers: ${stats['totalFollowers']}');
+        print('📝 [MEDIA DASHBOARD] Total Posts: ${stats['totalPosts']}');
+        print('📈 [MEDIA DASHBOARD] Monthly Reach: ${stats['monthlyReach']}');
+        print('💯 [MEDIA DASHBOARD] Engagement Rate: ${stats['engagementRate']}');
         
         if (!mounted) {
           print('⚠️ [MEDIA DASHBOARD] Widget disposed أثناء جلب الإحصائيات - إلغاء setState');
@@ -134,6 +145,7 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
           }
         });
         print('✅ [MEDIA DASHBOARD] تم تحديث الإحصائيات في State');
+        print('📊 [MEDIA DASHBOARD] State - Views: $_totalViews, Followers: $_totalFollowers, Posts: $_totalPosts');
       }
     } catch (e) {
       print('❌ [MEDIA DASHBOARD] Error: $e');
