@@ -157,6 +157,15 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
                     onPressed: () => Navigator.pop(context),
                   ),
                   actions: [
+                    // زر العودة لحساب المستخدم
+                    IconButton(
+                      icon: Icon(Icons.person_outline_rounded, color: theme.textPrimaryColor),
+                      onPressed: () {
+                        // العودة لصفحة My Account
+                        Navigator.pop(context);
+                      },
+                      tooltip: 'العودة لحسابي',
+                    ),
                     IconButton(
                       icon: Icon(Icons.settings_rounded, color: theme.textPrimaryColor),
                       onPressed: () {
@@ -165,6 +174,7 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
                           MaterialPageRoute(builder: (_) => const MediaProfileEditPage()),
                         );
                       },
+                      tooltip: 'إعدادات الحساب',
                     ),
                   ],
                   flexibleSpace: FlexibleSpaceBar(
@@ -499,6 +509,16 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
                             label: isDark ? 'الوضع النهاري' : 'الوضع الليلي',
                             onTap: () async {
                               await ThemeConfig.instance.toggleTheme();
+                            },
+                          ),
+                          const Divider(height: 1, thickness: 1),
+                          _ActionRow(
+                            icon: Icons.exit_to_app_rounded,
+                            label: 'العودة لحسابي الشخصي',
+                            subtitle: 'عرض كمستخدم عادي',
+                            color: primaryColor,
+                            onTap: () {
+                              Navigator.pop(context);
                             },
                           ),
                         ],
