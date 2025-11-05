@@ -18,6 +18,7 @@ import 'api_config.dart';
 import 'auth.dart';
 import 'media_add_post_page.dart';
 import 'media_posts_page.dart';
+import 'my_account_oasis.dart';
 import 'media_profile_edit_page.dart';
 import 'media_followers_page.dart';
 import 'media_detailed_stats_page.dart';
@@ -162,7 +163,10 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
                       icon: Icon(Icons.person_outline_rounded, color: theme.textPrimaryColor),
                       onPressed: () {
                         // العودة لصفحة My Account
-                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const DalmaMyAccountOasis()),
+                        );
                       },
                       tooltip: 'العودة لحسابي',
                     ),
@@ -518,7 +522,10 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
                             subtitle: 'عرض كمستخدم عادي',
                             color: primaryColor,
                             onTap: () {
-                              Navigator.pop(context);
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (_) => const DalmaMyAccountOasis()),
+                              );
                             },
                           ),
                         ],
