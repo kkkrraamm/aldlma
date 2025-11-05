@@ -162,11 +162,8 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
                     IconButton(
                       icon: Icon(Icons.person_outline_rounded, color: theme.textPrimaryColor),
                       onPressed: () {
-                        // العودة لصفحة My Account
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const DalmaMyAccountOasis()),
-                        );
+                        // العودة لصفحة My Account (الصفحة الأساسية)
+                        Navigator.pop(context);
                       },
                       tooltip: 'العودة لحسابي',
                     ),
@@ -522,10 +519,8 @@ class _DalmaMediaDashboardState extends State<DalmaMediaDashboard> with TickerPr
                             subtitle: 'عرض كمستخدم عادي',
                             color: primaryColor,
                             onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (_) => const DalmaMyAccountOasis()),
-                              );
+                              // العودة لصفحة My Account (الصفحة الأساسية)
+                              Navigator.pop(context);
                             },
                           ),
                         ],

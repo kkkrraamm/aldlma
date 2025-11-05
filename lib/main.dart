@@ -146,14 +146,9 @@ class _MyHomePageState extends State<MyHomePage> {
           print('🔄 [MAIN] getCurrentPage - Index: $_currentIndex, isLoggedIn: ${authState.isLoggedIn}, role: ${authState.userRole}');
           switch (_currentIndex) {
             case 0:
-              // ✅ توجيه حسب نوع المستخدم: user → MyAccountOasis, media → MediaDashboard
-              if (authState.userRole == 'media') {
-                print('📺 [MAIN] عرض صفحة DalmaMediaDashboard (إعلامي)');
-                return const DalmaMediaDashboard();
-              } else {
-                print('📱 [MAIN] عرض صفحة DalmaMyAccountOasis (مستخدم عادي)');
-                return const DalmaMyAccountOasis();
-              }
+              // ✅ دائماً عرض صفحة المستخدم العادي (يحتوي على زر للانتقال لـ Media Dashboard)
+              print('📱 [MAIN] عرض صفحة DalmaMyAccountOasis');
+              return const DalmaMyAccountOasis();
             case 1:
               return OrdersPage(showAppBar: false);
             case 2:
