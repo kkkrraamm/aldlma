@@ -639,15 +639,15 @@ class _TrendsPageState extends State<TrendsPage> {
                       itemBuilder: (context, index) {
                         final journalistId = _followingList[index];
                         try {
-                          final journalist = verifiedJournalists.firstWhere(
-                            (j) => j['id']?.toString() == journalistId,
+                        final journalist = verifiedJournalists.firstWhere(
+                          (j) => j['id']?.toString() == journalistId,
                             orElse: () => <String, dynamic>{}, // إرجاع map فارغ إذا لم يُعثر عليه
-                          );
+                        );
                           // تأكد من أن الـ journalist ليس فارغاً
                           if (journalist.isEmpty) {
                             return SizedBox.shrink();
                           }
-                          return _buildJournalistCard(journalist);
+                        return _buildJournalistCard(journalist);
                         } catch (e) {
                           print('❌ [TRENDS] Error building card for journalist $journalistId: $e');
                           return SizedBox.shrink();
@@ -669,9 +669,9 @@ class _TrendsPageState extends State<TrendsPage> {
     return AnimatedBuilder(
       animation: theme,
       builder: (context, child) {
-        return Scaffold(
+    return Scaffold(
           backgroundColor: theme.backgroundColor,
-          body: CustomScrollView(
+      body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(child: _HeroHeader()),
           SliverToBoxAdapter(child: _AskDalmaTrendsButton()),
@@ -780,13 +780,13 @@ class _TrendsPageState extends State<TrendsPage> {
                         ),
                       )
                     : ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _filteredJournalists.length,
-                        itemBuilder: (context, index) {
-                          return _buildJournalistCard(_filteredJournalists[index]);
-                        },
-                      ),
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _filteredJournalists.length,
+              itemBuilder: (context, index) {
+                return _buildJournalistCard(_filteredJournalists[index]);
+              },
+            ),
           ),
         ],
       ),
@@ -856,15 +856,15 @@ class _TrendsPageState extends State<TrendsPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            journalist['name'],
-                            style: GoogleFonts.cairo(
+                      journalist['name'],
+                      style: GoogleFonts.cairo(
                               fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                               color: theme.textPrimaryColor,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                         ),
                         Icon(
                           Icons.verified,
@@ -875,16 +875,16 @@ class _TrendsPageState extends State<TrendsPage> {
                     ),
                     SizedBox(height: 2),
                     if (journalist['bio'] != null && journalist['bio'].toString().isNotEmpty)
-                      Text(
+                    Text(
                         journalist['bio'],
-                        style: GoogleFonts.cairo(
+                      style: GoogleFonts.cairo(
                           fontSize: 11,
                           color: theme.textSecondaryColor,
                           fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     SizedBox(height: 4),
                     Row(
                       children: [
@@ -894,9 +894,9 @@ class _TrendsPageState extends State<TrendsPage> {
                           color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
                         ),
                         SizedBox(width: 4),
-                        Text(
+                    Text(
                           '${journalist['followers_count'] ?? 0} متابع',
-                          style: GoogleFonts.cairo(
+                      style: GoogleFonts.cairo(
                             fontSize: 10,
                             color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
                             fontWeight: FontWeight.w600,
@@ -995,9 +995,9 @@ class _TrendsPageState extends State<TrendsPage> {
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
-                    ),
                   ),
                 ),
+              ),
               ),
               SizedBox(width: 8),
               GestureDetector(
@@ -1067,10 +1067,7 @@ class _TrendsPageState extends State<TrendsPage> {
       );
     }
     
-    final List<Map<String, dynamic>> repeatedPosts = List.generate(
-      12,
-      (index) => journalistPosts[index % journalistPosts.length],
-    );
+    // ✅ عرض المنشورات بدون تكرار
     return Container(
       margin: EdgeInsets.all(16),
       child: Column(
@@ -1088,9 +1085,9 @@ class _TrendsPageState extends State<TrendsPage> {
           ListView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
-            itemCount: repeatedPosts.length,
+            itemCount: journalistPosts.length, // ✅ عرض المنشورات الفعلية فقط
             itemBuilder: (context, index) {
-              return _buildPostCard(repeatedPosts[index]);
+              return _buildPostCard(journalistPosts[index]);
             },
           ),
         ],
@@ -1120,9 +1117,19 @@ class _TrendsPageState extends State<TrendsPage> {
             padding: EdgeInsets.all(16),
             child: Row(
               children: [
+                // ✅ عرض صورة الإعلامي من الـ API
                 CircleAvatar(
                   radius: 20,
-                  backgroundImage: AssetImage(journalist['avatar']),
+                  backgroundImage: (journalist['profile_picture'] != null && journalist['profile_picture'].toString().isNotEmpty)
+                      ? NetworkImage(journalist['profile_picture'])
+                      : (journalist['profile_image'] != null && journalist['profile_image'].toString().isNotEmpty)
+                          ? NetworkImage(journalist['profile_image'])
+                          : null,
+                  child: (journalist['profile_picture'] == null || journalist['profile_picture'].toString().isEmpty) &&
+                          (journalist['profile_image'] == null || journalist['profile_image'].toString().isEmpty)
+                      ? Icon(Icons.person, color: Color(0xFF10B981))
+                      : null,
+                  backgroundColor: Color(0xFF10B981).withOpacity(0.1),
                 ),
                 SizedBox(width: 12),
                 Expanded(
@@ -1442,23 +1449,23 @@ class _TrendsPageState extends State<TrendsPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.8,
-          decoration: BoxDecoration(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
             color: isDark ? ThemeConfig.kNightSoft : Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
                   color: theme.textSecondaryColor.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+                borderRadius: BorderRadius.circular(2),
               ),
-              Expanded(
+            ),
+            Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async {
                     await _loadMediaFromBackend();
@@ -1466,12 +1473,12 @@ class _TrendsPageState extends State<TrendsPage> {
                     setModalState(() {}); // 🔄 تحديث UI البروفايل
                   },
                   color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
-                  child: SingleChildScrollView(
+              child: SingleChildScrollView(
                     physics: AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     // صورة الملف الشخصي (مثل صفحة حسابي)
                     Center(
                       child: Container(
@@ -1502,7 +1509,7 @@ class _TrendsPageState extends State<TrendsPage> {
                           ),
                           padding: EdgeInsets.all(4),
                           child: CircleAvatar(
-                            radius: 50,
+                      radius: 50,
                             backgroundImage: (journalist['profile_picture'] != null && journalist['profile_picture'].toString().isNotEmpty)
                                 ? NetworkImage(journalist['profile_picture'])
                                 : (journalist['profile_image'] != null && journalist['profile_image'].toString().isNotEmpty)
@@ -1640,41 +1647,41 @@ class _TrendsPageState extends State<TrendsPage> {
                     
                     // طرق التواصل (فقط المفعلة)
                     if (journalist['contact_email'] != null || journalist['contact_whatsapp'] != null) ...[
-                      Text(
-                        'طرق التواصل',
-                        style: GoogleFonts.cairo(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    Text(
+                      'طرق التواصل',
+                      style: GoogleFonts.cairo(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                           color: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),
-                        ),
                       ),
-                      
-                      SizedBox(height: 16),
-                      
-                      Row(
-                        children: [
+                    ),
+                    
+                    SizedBox(height: 16),
+                    
+                    Row(
+                      children: [
                           if (journalist['contact_whatsapp'] != null && journalist['contact_whatsapp'].toString().isNotEmpty)
-                            Expanded(
-                              child: _buildContactMethod(
-                                icon: Icons.phone,
+                        Expanded(
+                          child: _buildContactMethod(
+                            icon: Icons.phone,
                                 label: 'واتساب',
                                 onTap: () => _contactJournalist(journalist['contact_whatsapp'], 'whatsapp'),
-                              ),
-                            ),
+                          ),
+                        ),
                           if (journalist['contact_whatsapp'] != null && journalist['contact_email'] != null &&
                               journalist['contact_whatsapp'].toString().isNotEmpty && journalist['contact_email'].toString().isNotEmpty)
-                            SizedBox(width: 12),
+                        SizedBox(width: 12),
                           if (journalist['contact_email'] != null && journalist['contact_email'].toString().isNotEmpty)
-                            Expanded(
-                              child: _buildContactMethod(
-                                icon: Icons.email,
-                                label: 'بريد إلكتروني',
+                        Expanded(
+                          child: _buildContactMethod(
+                            icon: Icons.email,
+                            label: 'بريد إلكتروني',
                                 onTap: () => _contactJournalist(journalist['contact_email'], 'email'),
-                              ),
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 24),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24),
                     ],
 
                     // جميع منشورات الإعلامي
@@ -1693,10 +1700,10 @@ class _TrendsPageState extends State<TrendsPage> {
                         .toList(),
                   ],
                 ),
-                  ),
                 ),
               ),
-            ],
+            ),
+          ],
           ),
         ),
       ),
@@ -2275,11 +2282,11 @@ class _HeroHeader extends StatelessWidget {
     return AnimatedBuilder(
       animation: theme,
       builder: (context, child) {
-        return Container(
-          padding: const EdgeInsets.only(top: 12, bottom: 20),
+    return Container(
+      padding: const EdgeInsets.only(top: 12, bottom: 20),
           decoration: BoxDecoration(
             gradient: theme.headerGradient,
-          ),
+      ),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -2666,8 +2673,8 @@ class _TikTokVideoPlayer extends StatelessWidget {
               Icons.play_arrow_rounded,
               size: 40,
               color: Colors.black,
+              ),
             ),
-          ),
         ],
       ),
     );

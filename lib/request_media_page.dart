@@ -120,6 +120,13 @@ class _RequestMediaPageState extends State<RequestMediaPage> with TickerProvider
     }
     print('✅ [MEDIA REQUEST] التحقق من الحقول نجح\n');
 
+    // التحقق من طول النبذة (كما في التطبيقات الحقيقية)
+    if (_bioController.text.trim().length < 50) {
+      print('❌ [MEDIA REQUEST] فشل: النبذة قصيرة جداً');
+      NotificationsService.instance.toast('النبذة يجب أن تكون 50 حرفاً على الأقل', icon: Icons.warning, color: Colors.orange);
+      return;
+    }
+
     // التحقق من نوع المحتوى
     if (_selectedContentType == null || _selectedContentType!.isEmpty) {
       print('❌ [MEDIA REQUEST] فشل: نوع المحتوى غير محدد');
@@ -127,7 +134,31 @@ class _RequestMediaPageState extends State<RequestMediaPage> with TickerProvider
       return;
     }
 
-    // التحقق من صورة الهوية
+    // التحقق من حسابات التواصل (يجب أن يكون رابط أو اسم مستخدم صحيح)
+    final socialMedia = _socialMediaController.text.trim();
+    if (socialMedia.isEmpty || socialMedia.length < 3) {
+      print('❌ [MEDIA REQUEST] فشل: حسابات التواصل غير صالحة');
+      NotificationsService.instance.toast('يرجى إدخال اسم مستخدم أو رابط حسابك', icon: Icons.warning, color: Colors.orange);
+      return;
+    }
+
+    // التحقق من رقم الواتساب (رقم سعودي صحيح)
+    final whatsapp = _whatsappController.text.trim();
+    if (!RegExp(r'^(05|5)[0-9]{8}$').hasMatch(whatsapp)) {
+      print('❌ [MEDIA REQUEST] فشل: رقم واتساب غير صحيح');
+      NotificationsService.instance.toast('يرجى إدخال رقم واتساب سعودي صحيح', icon: Icons.warning, color: Colors.orange);
+      return;
+    }
+
+    // التحقق من البريد الإلكتروني (إذا تم إدخاله)
+    final email = _emailController.text.trim();
+    if (email.isNotEmpty && !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      print('❌ [MEDIA REQUEST] فشل: البريد الإلكتروني غير صحيح');
+      NotificationsService.instance.toast('يرجى إدخال بريد إلكتروني صحيح', icon: Icons.warning, color: Colors.orange);
+      return;
+    }
+
+    // التحقق من صورة الهوية (إلزامي للتوثيق)
     if (_wantsVerification && _idImage == null) {
       print('❌ [MEDIA REQUEST] فشل: صورة الهوية مطلوبة للتوثيق');
       NotificationsService.instance.toast('يرجى إرفاق صورة الهوية للتوثيق', icon: Icons.warning, color: Colors.orange);
