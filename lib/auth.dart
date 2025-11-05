@@ -174,9 +174,9 @@ class AuthState extends ChangeNotifier {
       try {
         final u = _users.firstWhere(
           (e) => e is Map && e['phone'] == _phone,
-          orElse: () => null,
+          orElse: () => <String, dynamic>{},
         );
-        if (u != null && u is Map) _userName = (u['name'] as String?) ?? _userName;
+        if (u.isNotEmpty) _userName = (u['name'] as String?) ?? _userName;
       } catch (e) {
         print('❌ [AUTH] Error finding user in list: $e');
       }
