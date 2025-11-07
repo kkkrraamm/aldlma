@@ -585,24 +585,25 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Opacity(
                     opacity: isZero ? 0.3 : 1.0,
                     child: Text(
                       nutrient['emoji'] as String,
-                      style: const TextStyle(fontSize: 32),
+                      style: const TextStyle(fontSize: 28),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     nutrient['name'] as String,
                     style: GoogleFonts.cairo(
                       color: theme.textSecondaryColor,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -611,7 +612,7 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
                         '$animatedValue',
                         style: GoogleFonts.cairo(
                           color: isZero ? Colors.grey : (nutrient['color'] as Color),
-                          fontSize: 24,
+                          fontSize: 22,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -619,7 +620,7 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
                         ' ${nutrient['unit']}',
                         style: GoogleFonts.cairo(
                           color: theme.textSecondaryColor,
-                          fontSize: 14,
+                          fontSize: 12,
                         ),
                       ),
                     ],
