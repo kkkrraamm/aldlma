@@ -10,10 +10,16 @@ class ApiConfig {
   // API Base URL
   static const String baseUrl = 'https://dalma-api.onrender.com';
   
-  // API Key - يُقرأ من Backend Environment Variables فقط
-  // لا يُحفظ في Flutter للأمان
-  // Backend سيتحقق من APP_API_KEY في Render Environment
-  static String get apiKey => ''; // سيتم إزالة التحقق من Flutter
+  // API Key - مُشفّر بطريقة آمنة (obfuscated)
+  // يُعاد بناؤه في Runtime فقط
+  // لا يظهر بنص واضح في compiled app
+  static String get _k1 => String.fromCharCodes([70, 75, 83, 79, 69, 52, 52, 53, 68, 70, 76, 67, 68]);
+  static String get _k2 => String.fromCharCodes([36, 37, 67, 68, 35, 35, 103, 52, 56, 100, 35]);
+  static String get _k3 => String.fromCharCodes([100, 51, 79, 76, 53, 38, 37, 107, 100, 107, 102, 38, 53]);
+  static String get _k4 => String.fromCharCodes([103, 100, 79, 100, 75, 101, 75, 75, 68, 83]);
+  
+  // Reconstruct API key at runtime
+  static String get apiKey => _k1 + _k2 + _k3 + _k4;
   
   // Get or generate Device ID (persisted)
   static Future<String> getDeviceId() async {
@@ -65,6 +71,7 @@ class ApiConfig {
     final deviceId = await getDeviceId();
     return {
       'Content-Type': 'application/json',
+      'X-API-Key': apiKey,
       'X-Device-ID': deviceId,
     };
   }
@@ -74,6 +81,7 @@ class ApiConfig {
     final deviceId = await getDeviceId();
     return {
       'Content-Type': 'application/json',
+      'X-API-Key': apiKey,
       'X-Device-ID': deviceId,
       'Authorization': 'Bearer $token',
     };
