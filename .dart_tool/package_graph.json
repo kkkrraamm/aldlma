@@ -12,6 +12,7 @@
         "device_info_plus",
         "firebase_core",
         "firebase_messaging",
+        "fl_chart",
         "flutter",
         "flutter_local_notifications",
         "flutter_localizations",
@@ -233,6 +234,14 @@
         "collection",
         "flutter",
         "nested"
+      ]
+    },
+    {
+      "name": "fl_chart",
+      "version": "0.68.0",
+      "dependencies": [
+        "equatable",
+        "flutter"
       ]
     },
     {
@@ -1248,6 +1257,14 @@
       "name": "synchronized",
       "version": "3.4.0",
       "dependencies": []
+    },
+    {
+      "name": "equatable",
+      "version": "2.0.7",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
     }
   ],
   "configVersion": 1

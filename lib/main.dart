@@ -19,6 +19,7 @@ import 'orders_service.dart';
 import 'my_account_page.dart';
 import 'my_account_oasis.dart';
 import 'media_dashboard.dart';
+import 'ai_tools_page.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
 import 'theme_aware_widgets.dart';
@@ -229,6 +230,12 @@ class _HomeScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _AskDalmaButton(),
+                ),
+                const SizedBox(height: 16),
+                // زر أدوات الذكاء الاصطناعي
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _AIToolsButton(),
                 ),
                 const SizedBox(height: 24),
                 // Content with proper spacing
@@ -749,6 +756,69 @@ class _AskDalmaButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AIToolsButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: ThemeConfig.instance,
+      builder: (context, _) {
+        final themeConfig = ThemeConfig.instance;
+        final primaryColor = themeConfig.primaryColor;
+        
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.purple.shade600,
+                Colors.deepPurple.shade700,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.purple.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AIToolsPage()),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('🤖', style: TextStyle(fontSize: 24)),
+                    const SizedBox(width: 12),
+                    Text(
+                      'أدوات الذكاء الاصطناعي',
+                      style: GoogleFonts.cairo(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
