@@ -13,6 +13,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 import 'theme_config.dart';
 import 'notifications.dart';
@@ -106,12 +108,47 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
     }
   }
   
+  // حفظ الصورة في التخزين الداخلي
+  Future<String?> _saveImageToStorage(File imageFile) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final imagesDir = Directory('${directory.path}/calorie_images');
+      
+      // إنشاء المجلد إذا لم يكن موجوداً
+      if (!await imagesDir.exists()) {
+        await imagesDir.create(recursive: true);
+      }
+      
+      // إنشاء اسم فريد للصورة
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final extension = path.extension(imageFile.path);
+      final fileName = 'food_$timestamp$extension';
+      final savedImagePath = '${imagesDir.path}/$fileName';
+      
+      // نسخ الصورة
+      await imageFile.copy(savedImagePath);
+      
+      print('✅ [IMAGE] تم حفظ الصورة: $savedImagePath');
+      return savedImagePath;
+    } catch (e) {
+      print('❌ [IMAGE] فشل حفظ الصورة: $e');
+      return null;
+    }
+  }
+  
   // إضافة تحليل جديد للسجل
   Future<void> _addToHistory(Map<String, dynamic> analysis) async {
+    // حفظ الصورة إذا كانت موجودة
+    String? savedImagePath;
+    if (_image != null) {
+      savedImagePath = await _saveImageToStorage(_image!);
+    }
+    
     final historyItem = {
       ...analysis,
       'timestamp': DateTime.now().toIso8601String(),
       'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'image_path': savedImagePath, // إضافة مسار الصورة
     };
     
     setState(() {
@@ -120,16 +157,42 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
       
       // الاحتفاظ بآخر 50 تحليل فقط
       if (_analysisHistory.length > 50) {
+        // حذف الصور القديمة
+        for (int i = 50; i < _analysisHistory.length; i++) {
+          final oldImagePath = _analysisHistory[i]['image_path'];
+          if (oldImagePath != null) {
+            _deleteImage(oldImagePath);
+          }
+        }
         _analysisHistory = _analysisHistory.sublist(0, 50);
       }
     });
     
     await _saveHistory();
-    print('✅ [HISTORY] تم إضافة تحليل جديد للسجل');
+    print('✅ [HISTORY] تم إضافة تحليل جديد للسجل مع الصورة');
+  }
+  
+  // حذف صورة من التخزين
+  Future<void> _deleteImage(String imagePath) async {
+    try {
+      final file = File(imagePath);
+      if (await file.exists()) {
+        await file.delete();
+        print('✅ [IMAGE] تم حذف الصورة: $imagePath');
+      }
+    } catch (e) {
+      print('❌ [IMAGE] فشل حذف الصورة: $e');
+    }
   }
   
   // حذف تحليل من السجل
   Future<void> _deleteFromHistory(String id) async {
+    // العثور على التحليل وحذف صورته
+    final item = _analysisHistory.firstWhere((item) => item['id'] == id, orElse: () => {});
+    if (item.isNotEmpty && item['image_path'] != null) {
+      await _deleteImage(item['image_path']);
+    }
+    
     setState(() {
       _analysisHistory.removeWhere((item) => item['id'] == id);
     });
@@ -143,6 +206,13 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
   
   // مسح السجل بالكامل
   Future<void> _clearHistory() async {
+    // حذف جميع الصور
+    for (final item in _analysisHistory) {
+      if (item['image_path'] != null) {
+        await _deleteImage(item['image_path']);
+      }
+    }
+    
     setState(() {
       _analysisHistory.clear();
     });
@@ -1388,21 +1458,40 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // أيقونة
+                // صورة الطعام أو أيقونة
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.orange.shade600, Colors.deepOrange.shade700],
-                    ),
                     borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Center(
-                    child: Text(
-                      '🍽️',
-                      style: TextStyle(fontSize: 30),
-                    ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: item['image_path'] != null && File(item['image_path']).existsSync()
+                      ? Image.file(
+                          File(item['image_path']),
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.orange.shade600, Colors.deepOrange.shade700],
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '🍽️',
+                              style: TextStyle(fontSize: 40),
+                            ),
+                          ),
+                        ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -1500,31 +1589,16 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _NavBarItem(
-                icon: Icons.home_rounded,
-                label: 'الرئيسية',
+                icon: Icons.analytics_rounded,
+                label: 'تحليل',
                 isActive: _currentNavIndex == 0,
                 onTap: () => setState(() => _currentNavIndex = 0),
-              ),
-              _NavBarItem(
-                icon: Icons.camera_alt_rounded,
-                label: 'التقاط',
-                isActive: _currentNavIndex == 1,
-                onTap: () {
-                  setState(() => _currentNavIndex = 1);
-                  _pickImage(ImageSource.camera);
-                },
               ),
               _NavBarItem(
                 icon: Icons.history_rounded,
                 label: 'السجل',
                 isActive: _currentNavIndex == 2,
                 onTap: () => setState(() => _currentNavIndex = 2),
-              ),
-              _NavBarItem(
-                icon: Icons.settings_rounded,
-                label: 'الإعدادات',
-                isActive: _currentNavIndex == 3,
-                onTap: () => setState(() => _currentNavIndex = 3),
               ),
             ],
           ),
