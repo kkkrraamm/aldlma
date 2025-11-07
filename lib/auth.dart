@@ -207,10 +207,9 @@ class AuthState extends ChangeNotifier {
     
     try {
       print('📤 [HTTP] إرسال طلب POST إلى /login');
-      print('🔑 [SECURITY] إرسال X-API-Key: ${ApiConfig.apiKey.substring(0, 10)}...');
       
       final headers = await ApiConfig.getHeaders();
-      print('🆔 [SECURITY] إرسال X-Device-ID: ${headers['X-Device-ID']?.substring(0, 15)}...');
+      print('🆔 [DEVICE ID] إرسال X-Device-ID: ${headers['X-Device-ID']?.substring(0, 15)}...');
       
       // جمع معلومات الجهاز الحقيقية
       final deviceInfo = await _getDeviceInfo();
@@ -297,10 +296,9 @@ class AuthState extends ChangeNotifier {
     
     try {
       print('📤 [HTTP] إرسال طلب POST إلى /user');
-      print('🔑 [SECURITY] إرسال X-API-Key مع الطلب');
       
       final headers = await ApiConfig.getHeaders();
-      print('🆔 [SECURITY] إرسال X-Device-ID: ${headers['X-Device-ID']?.substring(0, 15)}...');
+      print('🆔 [DEVICE ID] إرسال X-Device-ID: ${headers['X-Device-ID']?.substring(0, 15)}...');
       
       // جمع معلومات الجهاز الحقيقية
       final deviceInfo = await _getDeviceInfo();
