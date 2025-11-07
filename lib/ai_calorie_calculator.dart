@@ -510,8 +510,12 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
   }
 
   Widget _buildTotalCaloriesCard(ThemeConfig theme) {
-    final calories = _result['total_calories'];
-    final healthScore = _result['health_score'];
+    // تحويل آمن للقيم (قد تكون int أو double)
+    final caloriesRaw = _result['total_calories'];
+    final healthScoreRaw = _result['health_score'];
+    
+    final calories = caloriesRaw is int ? caloriesRaw : (caloriesRaw is double ? caloriesRaw.toInt() : 0);
+    final healthScore = healthScoreRaw is int ? healthScoreRaw : (healthScoreRaw is double ? healthScoreRaw.toInt() : 0);
     final isAnalyzed = calories > 0;
     
     return AnimatedBuilder(
@@ -642,7 +646,9 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
           itemCount: nutrients.length,
           itemBuilder: (context, index) {
             final nutrient = nutrients[index];
-            final value = nutrient['value'] as int;
+            // تحويل آمن للقيمة (قد تكون int أو double)
+            final rawValue = nutrient['value'];
+            final value = rawValue is int ? rawValue : (rawValue is double ? rawValue.toInt() : 0);
             final isZero = value == 0;
             final animatedValue = isZero ? 0 : (_numberAnimationController.value * value).toInt();
             
@@ -717,9 +723,15 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
   }
 
   Widget _buildNutrientsChart(ThemeConfig theme, bool isDark) {
-    final protein = _result['protein'].toDouble();
-    final fats = _result['fats'].toDouble();
-    final carbs = _result['carbs'].toDouble();
+    // تحويل آمن للقيم (قد تكون int أو double)
+    final proteinRaw = _result['protein'];
+    final fatsRaw = _result['fats'];
+    final carbsRaw = _result['carbs'];
+    
+    final protein = (proteinRaw is int ? proteinRaw.toDouble() : (proteinRaw is double ? proteinRaw : 0.0));
+    final fats = (fatsRaw is int ? fatsRaw.toDouble() : (fatsRaw is double ? fatsRaw : 0.0));
+    final carbs = (carbsRaw is int ? carbsRaw.toDouble() : (carbsRaw is double ? carbsRaw : 0.0));
+    
     final total = protein + fats + carbs;
     final isZero = total == 0;
 
@@ -839,7 +851,9 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
 
   Widget _buildHealthIndicator(ThemeConfig theme, Color primaryColor) {
     final isHealthy = _result['is_healthy'] as bool;
-    final score = _result['health_score'] as int;
+    // تحويل آمن للقيمة (قد تكون int أو double)
+    final scoreRaw = _result['health_score'];
+    final score = scoreRaw is int ? scoreRaw : (scoreRaw is double ? scoreRaw.toInt() : 0);
     final isZero = score == 0;
 
     return AnimatedBuilder(
@@ -1021,9 +1035,14 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
   }
 
   Widget _buildBurnSteps(ThemeConfig theme, Color primaryColor) {
-    final steps = _result['steps'] as int;
-    final walking = _result['walking_minutes'] as int;
-    final running = _result['running_minutes'] as int;
+    // تحويل آمن للقيم (قد تكون int أو double)
+    final stepsRaw = _result['steps'];
+    final walkingRaw = _result['walking_minutes'];
+    final runningRaw = _result['running_minutes'];
+    
+    final steps = stepsRaw is int ? stepsRaw : (stepsRaw is double ? stepsRaw.toInt() : 0);
+    final walking = walkingRaw is int ? walkingRaw : (walkingRaw is double ? walkingRaw.toInt() : 0);
+    final running = runningRaw is int ? runningRaw : (runningRaw is double ? runningRaw.toInt() : 0);
     final isZero = steps == 0;
 
     return AnimatedBuilder(
