@@ -226,52 +226,24 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
                       _buildTotalCaloriesCard(theme),
                       const SizedBox(height: 20),
 
-                      // Tabs
-                      Container(
-                        decoration: BoxDecoration(
-                          color: theme.cardColor,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: TabBar(
-                          controller: _tabController,
-                          indicator: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          labelColor: Colors.orange,
-                          unselectedLabelColor: theme.textSecondaryColor,
-                          labelStyle: GoogleFonts.cairo(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                          ),
-                          tabs: const [
-                            Tab(text: 'القيم الغذائية'),
-                            Tab(text: 'الفوائد'),
-                            Tab(text: 'الحرق'),
-                          ],
-                        ),
-                      ),
+                      // القيم الغذائية
+                      _buildNutrientsGrid(theme),
                       const SizedBox(height: 20),
 
-                      // محتوى الـ Tabs
-                      SizedBox(
-                        height: 600,
-                        child: TabBarView(
-                          controller: _tabController,
-                          children: [
-                            _buildNutrientsTab(theme, isDark),
-                            _buildBenefitsTab(theme),
-                            _buildBurnTab(theme),
-                          ],
-                        ),
-                      ),
+                      // الرسم البياني
+                      _buildNutrientsChart(theme, isDark),
+                      const SizedBox(height: 20),
+
+                      // مؤشر الصحة
+                      _buildHealthIndicator(theme, Colors.orange),
+                      const SizedBox(height: 20),
+
+                      // الوصف والفوائد
+                      _buildDescription(theme),
+                      const SizedBox(height: 20),
+
+                      // خطوات الحرق
+                      _buildBurnSteps(theme, Colors.orange),
                     ],
                   ),
                 ),
@@ -327,7 +299,7 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
   Widget _buildImageSection(ThemeConfig theme, Color primaryColor) {
     if (_image == null) {
       return Container(
-        height: 200,
+        height: 180,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -345,34 +317,34 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
                 color: Colors.orange.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
               child: const Center(
-                child: Text('🍽️', style: TextStyle(fontSize: 40)),
+                child: Text('🍽️', style: TextStyle(fontSize: 32)),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'التقط صورة وجبتك',
               style: GoogleFonts.cairo(
                 color: theme.textPrimaryColor,
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'للحصول على تحليل كامل',
               style: GoogleFonts.cairo(
                 color: theme.textSecondaryColor,
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -562,36 +534,6 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
           ),
         );
       },
-    );
-  }
-
-  Widget _buildNutrientsTab(ThemeConfig theme, bool isDark) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildNutrientsGrid(theme),
-          const SizedBox(height: 20),
-          _buildNutrientsChart(theme, isDark),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBenefitsTab(ThemeConfig theme) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildHealthIndicator(theme, Colors.orange),
-          const SizedBox(height: 20),
-          _buildDescription(theme),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBurnTab(ThemeConfig theme) {
-    return SingleChildScrollView(
-      child: _buildBurnSteps(theme, Colors.orange),
     );
   }
 
