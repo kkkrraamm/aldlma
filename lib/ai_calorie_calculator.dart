@@ -1,5 +1,5 @@
 // lib/ai_calorie_calculator.dart
-// حاسبة السعرات الحرارية بالذكاء الاصطناعي
+// حاسبة السعرات الحرارية بالذكاء الاصطناعي - تطبيق كامل
 // تحليل كامل للطعام مع رسوم بيانية وخطوات الحرق
 // by Abdulkarim ✨
 
@@ -23,10 +23,24 @@ class AICalorieCalculatorPage extends StatefulWidget {
   State<AICalorieCalculatorPage> createState() => _AICalorieCalculatorPageState();
 }
 
-class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
+class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with SingleTickerProviderStateMixin {
   File? _image;
   bool _isAnalyzing = false;
   Map<String, dynamic>? _result;
+  int _currentNavIndex = 0;
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -40,9 +54,8 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
       if (pickedFile != null) {
         setState(() {
           _image = File(pickedFile.path);
-          _result = null; // مسح النتائج السابقة
+          _result = null;
         });
-        // تحليل الصورة تلقائياً
         _analyzeImage();
       }
     } catch (e) {
@@ -60,23 +73,19 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
     setState(() => _isAnalyzing = true);
 
     try {
-      // TODO: في التطبيق الحقيقي، سترسل الصورة لـ Vision API
-      // هنا سنستخدم بيانات تجريبية واقعية
-      
-      await Future.delayed(const Duration(seconds: 2)); // محاكاة التحليل
+      await Future.delayed(const Duration(seconds: 2));
 
-      // نتائج تجريبية واقعية
       setState(() {
         _result = {
           'food_name': 'دجاج مشوي مع أرز وخضار',
           'total_calories': 650,
-          'protein': 45,      // جرام
-          'fats': 18,         // جرام
-          'carbs': 72,        // جرام
-          'fiber': 8,         // جرام
-          'sugar': 5,         // جرام
+          'protein': 45,
+          'fats': 18,
+          'carbs': 72,
+          'fiber': 8,
+          'sugar': 5,
           'is_healthy': true,
-          'health_score': 82, // من 100
+          'health_score': 82,
           'description': 'وجبة متوازنة وصحية تحتوي على البروتين اللازم للعضلات، كربوهيدرات معقدة للطاقة، وخضروات غنية بالألياف والفيتامينات.',
           'benefits': [
             'غني بالبروتين عالي الجودة',
@@ -88,9 +97,9 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
             'انتبه للملح المضاف',
             'تجنب الإكثار في حالة اتباع حمية منخفضة الكربوهيدرات',
           ],
-          'walking_minutes': 130,  // دقيقة مشي لحرق السعرات
-          'running_minutes': 65,   // دقيقة جري
-          'steps': 9000,           // عدد الخطوات
+          'walking_minutes': 130,
+          'running_minutes': 65,
+          'steps': 9000,
         };
       });
 
@@ -118,104 +127,232 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
 
     return Scaffold(
       backgroundColor: theme.backgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textPrimaryColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          '🍽️ حاسبة السعرات',
-          style: GoogleFonts.cairo(
-            color: theme.textPrimaryColor,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: _image == null ? _buildEmptyState(theme, primaryColor) : _buildResultView(theme, primaryColor, isDark),
+      body: _image == null 
+        ? _buildWelcomeScreen(theme, primaryColor)
+        : _buildAnalysisScreen(theme, primaryColor, isDark),
+      bottomNavigationBar: _buildBottomNav(theme, isDark, primaryColor),
     );
   }
 
-  Widget _buildEmptyState(ThemeConfig theme, Color primaryColor) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // أيقونة كبيرة
-            Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                color: primaryColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Text('🍽️', style: TextStyle(fontSize: 80)),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'التقط صورة وجبتك',
-              style: GoogleFonts.cairo(
-                color: theme.textPrimaryColor,
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'سيقوم الذكاء الاصطناعي بتحليل\nالقيم الغذائية والسعرات الحرارية',
-              style: GoogleFonts.cairo(
-                color: theme.textSecondaryColor,
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
-            // أزرار الاختيار
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildWelcomeScreen(ThemeConfig theme, Color primaryColor) {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // AppBar مميز
+        SliverAppBar(
+          expandedHeight: 200,
+          floating: false,
+          pinned: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textPrimaryColor),
+            onPressed: () => Navigator.pop(context),
+          ),
+          flexibleSpace: FlexibleSpaceBar(
+            background: Stack(
+              fit: StackFit.expand,
               children: [
-                _ActionButton(
-                  icon: Icons.camera_alt_rounded,
-                  label: 'كاميرا',
-                  color: primaryColor,
-                  onTap: () => _pickImage(ImageSource.camera),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.orange.withOpacity(0.4),
+                        Colors.deepOrange.withOpacity(0.2),
+                        theme.backgroundColor,
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 16),
-                _ActionButton(
-                  icon: Icons.photo_library_rounded,
-                  label: 'معرض',
-                  color: primaryColor,
-                  onTap: () => _pickImage(ImageSource.gallery),
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(color: theme.backgroundColor.withOpacity(0.3)),
+                ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.orange.withOpacity(0.3), width: 2),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('🍽️', style: TextStyle(fontSize: 18)),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Dalma Calorie AI',
+                                style: GoogleFonts.cairo(
+                                  color: Colors.orange,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'حاسبة السعرات',
+                          style: GoogleFonts.cairo(
+                            color: theme.textPrimaryColor,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'اكتشف القيم الغذائية لوجباتك بالذكاء الاصطناعي',
+                          style: GoogleFonts.cairo(
+                            color: theme.textSecondaryColor,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
-          ],
+          ),
         ),
-      ),
+
+        // المحتوى
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                // الأيقونة الكبيرة
+                Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.orange.withOpacity(0.3), width: 3),
+                  ),
+                  child: const Center(
+                    child: Text('🍽️', style: TextStyle(fontSize: 90)),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                // العنوان
+                Text(
+                  'التقط صورة وجبتك',
+                  style: GoogleFonts.cairo(
+                    color: theme.textPrimaryColor,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                
+                // الوصف
+                Text(
+                  'سيقوم الذكاء الاصطناعي بتحليل\nالقيم الغذائية والسعرات الحرارية بدقة عالية',
+                  style: GoogleFonts.cairo(
+                    color: theme.textSecondaryColor,
+                    fontSize: 14,
+                    height: 1.6,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 40),
+                
+                // الأزرار
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionButton(
+                        icon: Icons.camera_alt_rounded,
+                        label: 'التقط صورة',
+                        color: Colors.orange,
+                        onTap: () => _pickImage(ImageSource.camera),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _ActionButton(
+                        icon: Icons.photo_library_rounded,
+                        label: 'من المعرض',
+                        color: Colors.deepOrange,
+                        onTap: () => _pickImage(ImageSource.gallery),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 40),
+                
+                // الميزات
+                _FeatureItem(
+                  icon: '📊',
+                  title: 'تحليل شامل',
+                  subtitle: 'بروتين، دهون، كربوهيدرات، وأكثر',
+                ),
+                const SizedBox(height: 16),
+                _FeatureItem(
+                  icon: '🔥',
+                  title: 'خطوات الحرق',
+                  subtitle: 'احسب المشي والجري والخطوات المطلوبة',
+                ),
+                const SizedBox(height: 16),
+                _FeatureItem(
+                  icon: '💡',
+                  title: 'نصائح ذكية',
+                  subtitle: 'فوائد وتحذيرات لكل وجبة',
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+      ],
     );
   }
 
-  Widget _buildResultView(ThemeConfig theme, Color primaryColor, bool isDark) {
+  Widget _buildAnalysisScreen(ThemeConfig theme, Color primaryColor, bool isDark) {
     if (_isAnalyzing) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: primaryColor),
-            const SizedBox(height: 20),
+            SizedBox(
+              width: 80,
+              height: 80,
+              child: CircularProgressIndicator(
+                color: Colors.orange,
+                strokeWidth: 6,
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
               'جارٍ التحليل... 🤖',
               style: GoogleFonts.cairo(
                 color: theme.textPrimaryColor,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'يرجى الانتظار',
+              style: GoogleFonts.cairo(
+                color: theme.textSecondaryColor,
+                fontSize: 14,
               ),
             ),
           ],
@@ -225,131 +362,260 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
 
     if (_result == null) return const SizedBox.shrink();
 
-    return SingleChildScrollView(
+    return CustomScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // صورة الطعام
-          _buildFoodImage(),
-          const SizedBox(height: 20),
+      slivers: [
+        // AppBar مع صورة الطعام
+        SliverAppBar(
+          expandedHeight: 300,
+          floating: false,
+          pinned: true,
+          backgroundColor: theme.backgroundColor,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textPrimaryColor),
+            onPressed: () {
+              setState(() {
+                _image = null;
+                _result = null;
+              });
+            },
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.share_rounded, color: theme.textPrimaryColor),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: Icon(Icons.favorite_border_rounded, color: theme.textPrimaryColor),
+              onPressed: () {},
+            ),
+          ],
+          flexibleSpace: FlexibleSpaceBar(
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.file(
+                  _image!,
+                  fit: BoxFit.cover,
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        theme.backgroundColor.withOpacity(0.8),
+                        theme.backgroundColor,
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
 
-          // اسم الوجبة
-          _buildFoodName(theme),
-          const SizedBox(height: 20),
+        // المحتوى
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // اسم الوجبة
+                Text(
+                  _result!['food_name'],
+                  style: GoogleFonts.cairo(
+                    color: theme.textPrimaryColor,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 24),
 
-          // إجمالي السعرات (بطاقة كبيرة)
-          _buildTotalCaloriesCard(theme, primaryColor),
-          const SizedBox(height: 20),
+                // إجمالي السعرات
+                _buildTotalCaloriesCard(theme),
+                const SizedBox(height: 20),
 
-          // القيم الغذائية (بروتين، دهون، كربوهيدرات)
-          _buildNutrientsGrid(theme),
-          const SizedBox(height: 20),
+                // Tabs للتبديل بين الأقسام
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    labelColor: Colors.orange,
+                    unselectedLabelColor: theme.textSecondaryColor,
+                    labelStyle: GoogleFonts.cairo(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                    ),
+                    tabs: const [
+                      Tab(text: 'القيم الغذائية'),
+                      Tab(text: 'الفوائد'),
+                      Tab(text: 'الحرق'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
 
-          // الرسم البياني
-          _buildNutrientsChart(theme, isDark),
-          const SizedBox(height: 20),
+                // محتوى الـ Tabs
+                SizedBox(
+                  height: 600,
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildNutrientsTab(theme, isDark),
+                      _buildBenefitsTab(theme),
+                      _buildBurnTab(theme),
+                    ],
+                  ),
+                ),
 
-          // مؤشر الصحة
-          _buildHealthIndicator(theme, primaryColor),
-          const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-          // الوصف والفوائد
-          _buildDescription(theme),
-          const SizedBox(height: 20),
+                // زر تحليل جديد
+                _buildNewAnalysisButton(Colors.orange),
+              ],
+            ),
+          ),
+        ),
 
-          // خطوات الحرق
-          _buildBurnSteps(theme, primaryColor),
-          const SizedBox(height: 20),
-
-          // زر تحليل صورة جديدة
-          _buildNewAnalysisButton(primaryColor),
-          const SizedBox(height: 40),
-        ],
-      ),
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+      ],
     );
   }
 
-  Widget _buildFoodImage() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Image.file(
-        _image!,
-        width: double.infinity,
-        height: 250,
-        fit: BoxFit.cover,
-      ),
-    );
-  }
-
-  Widget _buildFoodName(ThemeConfig theme) {
-    return Text(
-      _result!['food_name'],
-      style: GoogleFonts.cairo(
-        color: theme.textPrimaryColor,
-        fontSize: 22,
-        fontWeight: FontWeight.w900,
-      ),
-    );
-  }
-
-  Widget _buildTotalCaloriesCard(ThemeConfig theme, Color primaryColor) {
+  Widget _buildTotalCaloriesCard(ThemeConfig theme) {
     final calories = _result!['total_calories'];
+    final healthScore = _result!['health_score'];
     
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [primaryColor.withOpacity(0.8), primaryColor],
+          colors: [Colors.orange.shade600, Colors.deepOrange.shade700],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withOpacity(0.3),
+            color: Colors.orange.withOpacity(0.4),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          Text(
-            'إجمالي السعرات الحرارية',
-            style: GoogleFonts.cairo(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '$calories',
-                style: GoogleFonts.cairo(
-                  color: Colors.white,
-                  fontSize: 48,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8, right: 4),
-                child: Text(
-                  'سعرة',
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'إجمالي السعرات',
                   style: GoogleFonts.cairo(
                     color: Colors.white.withOpacity(0.9),
-                    fontSize: 18,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '$calories',
+                      style: GoogleFonts.cairo(
+                        color: Colors.white,
+                        fontSize: 42,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6, right: 4),
+                      child: Text(
+                        'سعرة',
+                        style: GoogleFonts.cairo(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$healthScore',
+                  style: GoogleFonts.cairo(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  'صحي',
+                  style: GoogleFonts.cairo(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildNutrientsTab(ThemeConfig theme, bool isDark) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // القيم الغذائية
+          _buildNutrientsGrid(theme),
+          const SizedBox(height: 20),
+          // الرسم البياني
+          _buildNutrientsChart(theme, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBenefitsTab(ThemeConfig theme) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildHealthIndicator(theme, Colors.orange),
+          const SizedBox(height: 20),
+          _buildDescription(theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBurnTab(ThemeConfig theme) {
+    return SingleChildScrollView(
+      child: _buildBurnSteps(theme, Colors.orange),
     );
   }
 
@@ -366,77 +632,59 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.5,
+        childAspectRatio: 1.3,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
       ),
       itemCount: nutrients.length,
       itemBuilder: (context, index) {
         final nutrient = nutrients[index];
-        return _buildNutrientCard(
-          theme,
-          nutrient['emoji'] as String,
-          nutrient['name'] as String,
-          nutrient['value'] as int,
-          nutrient['unit'] as String,
-          nutrient['color'] as Color,
-        );
-      },
-    );
-  }
-
-  Widget _buildNutrientCard(ThemeConfig theme, String emoji, String name, int value, String unit, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: (nutrient['color'] as Color).withOpacity(0.3), width: 2),
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 32)),
-          const SizedBox(height: 8),
-          Text(
-            name,
-            style: GoogleFonts.cairo(
-              color: theme.textSecondaryColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              Text(nutrient['emoji'] as String, style: const TextStyle(fontSize: 32)),
+              const SizedBox(height: 8),
               Text(
-                '$value',
-                style: GoogleFonts.cairo(
-                  color: color,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Text(
-                ' $unit',
+                nutrient['name'] as String,
                 style: GoogleFonts.cairo(
                   color: theme.textSecondaryColor,
-                  fontSize: 14,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                 ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${nutrient['value']}',
+                    style: GoogleFonts.cairo(
+                      color: nutrient['color'] as Color,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    ' ${nutrient['unit']}',
+                    style: GoogleFonts.cairo(
+                      color: theme.textSecondaryColor,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -451,16 +699,8 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             '📊 توزيع القيم الغذائية',
@@ -515,43 +755,8 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          // Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildLegendItem('🥩 بروتين', Colors.red, theme),
-              _buildLegendItem('🧈 دهون', Colors.orange, theme),
-              _buildLegendItem('🍞 كربوهيدرات', Colors.amber, theme),
-            ],
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLegendItem(String label, Color color, ThemeConfig theme) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: GoogleFonts.cairo(
-            color: theme.textSecondaryColor,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
     );
   }
 
@@ -570,7 +775,6 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -601,7 +805,6 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
             ],
           ),
           const SizedBox(height: 12),
-          // شريط التقدم
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
@@ -808,6 +1011,58 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> {
       ),
     );
   }
+
+  Widget _buildBottomNav(ThemeConfig theme, bool isDark, Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavBarItem(
+                icon: Icons.home_rounded,
+                label: 'الرئيسية',
+                isActive: _currentNavIndex == 0,
+                onTap: () => setState(() => _currentNavIndex = 0),
+              ),
+              _NavBarItem(
+                icon: Icons.camera_alt_rounded,
+                label: 'التقاط',
+                isActive: _currentNavIndex == 1,
+                onTap: () {
+                  setState(() => _currentNavIndex = 1);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              _NavBarItem(
+                icon: Icons.history_rounded,
+                label: 'السجل',
+                isActive: _currentNavIndex == 2,
+                onTap: () => setState(() => _currentNavIndex = 2),
+              ),
+              _NavBarItem(
+                icon: Icons.settings_rounded,
+                label: 'الإعدادات',
+                isActive: _currentNavIndex == 3,
+                onTap: () => setState(() => _currentNavIndex = 3),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ActionButton extends StatelessWidget {
@@ -830,21 +1085,30 @@ class _ActionButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          gradient: LinearGradient(
+            colors: [color, color.withOpacity(0.8)],
+          ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 32),
+            Icon(icon, color: Colors.white, size: 32),
             const SizedBox(height: 8),
             Text(
               label,
               style: GoogleFonts.cairo(
-                color: theme.textPrimaryColor,
-                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
               ),
             ),
           ],
@@ -854,3 +1118,120 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
+class _FeatureItem extends StatelessWidget {
+  final String icon;
+  final String title;
+  final String subtitle;
+
+  const _FeatureItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeConfig>(context);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.orange.withOpacity(0.2),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(icon, style: const TextStyle(fontSize: 24)),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.cairo(
+                    color: theme.textPrimaryColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.cairo(
+                    color: theme.textSecondaryColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavBarItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _NavBarItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeConfig>(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.orange.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? Colors.orange : theme.textSecondaryColor,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.cairo(
+                color: isActive ? Colors.orange : theme.textSecondaryColor,
+                fontSize: 11,
+                fontWeight: isActive ? FontWeight.w900 : FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -805,7 +805,7 @@ class _AIToolsButton extends StatelessWidget {
                     const Text('🤖', style: TextStyle(fontSize: 24)),
                     const SizedBox(width: 12),
                     Text(
-                      'أدوات الذكاء الاصطناعي',
+                      'أدوات الدلما',
                       style: GoogleFonts.cairo(
                         color: Colors.white,
                         fontSize: 16,
