@@ -137,6 +137,41 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
         print('✅ [CALORIE] تم التحليل بنجاح');
         print('📊 [CALORIE] البيانات: ${data.toString().substring(0, 100)}...');
 
+        // التحقق من أن الصورة تحتوي على طعام
+        final isFood = data['is_food'] ?? true;
+        
+        if (!isFood) {
+          // الصورة لا تحتوي على طعام
+          print('⚠️ [CALORIE] الصورة لا تحتوي على طعام');
+          
+          setState(() {
+            _result = {
+              'food_name': data['food_name'] ?? 'ليس طعاماً',
+              'total_calories': 0,
+              'protein': 0,
+              'fats': 0,
+              'carbs': 0,
+              'fiber': 0,
+              'sugar': 0,
+              'is_healthy': true,
+              'health_score': 0,
+              'description': data['description'] ?? 'عذراً، هذه الصورة لا تحتوي على طعام. نظام كارمار الذكي مصمم لتحليل الأطعمة فقط.',
+              'benefits': [],
+              'warnings': List<String>.from(data['warnings'] ?? ['يرجى تصوير وجبة غذائية للحصول على التحليل']),
+              'walking_minutes': 0,
+              'running_minutes': 0,
+              'steps': 0,
+            };
+          });
+          
+          NotificationsService.instance.toast(
+            '⚠️ هذه الصورة لا تحتوي على طعام',
+            icon: Icons.warning_amber_rounded,
+            color: Colors.orange,
+          );
+          return;
+        }
+
         setState(() {
           _result = {
             'food_name': data['food_name'] ?? 'وجبة غير معروفة',
@@ -318,7 +353,7 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'جارٍ التحليل... 🤖',
+                      'جارٍ التحليل... 🔬',
                       style: GoogleFonts.cairo(
                         color: theme.textPrimaryColor,
                         fontSize: 20,
@@ -327,7 +362,7 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'يرجى الانتظار',
+                      'نظام كارمار الذكي يحلل الصورة',
                       style: GoogleFonts.cairo(
                         color: theme.textSecondaryColor,
                         fontSize: 14,
