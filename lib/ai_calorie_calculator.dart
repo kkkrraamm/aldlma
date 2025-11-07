@@ -1,6 +1,6 @@
 // lib/ai_calorie_calculator.dart
 // حاسبة السعرات الحرارية بالذكاء الاصطناعي - تطبيق كامل
-// تحليل كامل للطعام مع رسوم بيانية وخطوات الحرق
+// تحليل كامل للطعام مع رسوم بيانية وخطوات الحرق + انيميشن مبهر
 // by Abdulkarim ✨
 
 import 'dart:ui';
@@ -23,12 +23,16 @@ class AICalorieCalculatorPage extends StatefulWidget {
   State<AICalorieCalculatorPage> createState() => _AICalorieCalculatorPageState();
 }
 
-class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with SingleTickerProviderStateMixin {
+class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with TickerProviderStateMixin {
   File? _image;
   bool _isAnalyzing = false;
   late TabController _tabController;
   int _currentNavIndex = 0;
 
+  // Animation Controllers
+  late AnimationController _numberAnimationController;
+  late AnimationController _chartAnimationController;
+  
   // البيانات الافتراضية (قبل التحليل)
   Map<String, dynamic> _result = {
     'food_name': 'في انتظار التحليل...',
@@ -52,11 +56,24 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    
+    // تهيئة Animation Controllers
+    _numberAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    
+    _chartAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _numberAnimationController.dispose();
+    _chartAnimationController.dispose();
     super.dispose();
   }
 
@@ -119,6 +136,10 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
           'steps': 9000,
         };
       });
+
+      // تشغيل الانيميشن
+      _numberAnimationController.forward(from: 0);
+      _chartAnimationController.forward(from: 0);
 
       NotificationsService.instance.toast(
         'تم التحليل بنجاح! 🎉',
@@ -409,6 +430,8 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
                     'running_minutes': 0,
                     'steps': 0,
                   };
+                  _numberAnimationController.reset();
+                  _chartAnimationController.reset();
                 });
               },
               child: Container(
@@ -437,96 +460,108 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
     final healthScore = _result['health_score'];
     final isAnalyzed = calories > 0;
     
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isAnalyzed 
-            ? [Colors.orange.shade600, Colors.deepOrange.shade700]
-            : [Colors.grey.shade400, Colors.grey.shade500],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: (isAnalyzed ? Colors.orange : Colors.grey).withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+    return AnimatedBuilder(
+      animation: _numberAnimationController,
+      builder: (context, child) {
+        final animatedCalories = isAnalyzed 
+          ? (_numberAnimationController.value * calories).toInt()
+          : 0;
+        final animatedScore = isAnalyzed
+          ? (_numberAnimationController.value * healthScore).toInt()
+          : 0;
+        
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isAnalyzed 
+                ? [Colors.orange.shade600, Colors.deepOrange.shade700]
+                : [Colors.grey.shade400, Colors.grey.shade500],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: (isAnalyzed ? Colors.orange : Colors.grey).withOpacity(0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'إجمالي السعرات',
-                  style: GoogleFonts.cairo(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$calories',
+                      'إجمالي السعرات',
+                      style: GoogleFonts.cairo(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '$animatedCalories',
+                          style: GoogleFonts.cairo(
+                            color: Colors.white,
+                            fontSize: 42,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6, right: 4),
+                          child: Text(
+                            'سعرة',
+                            style: GoogleFonts.cairo(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '$animatedScore',
                       style: GoogleFonts.cairo(
                         color: Colors.white,
-                        fontSize: 42,
+                        fontSize: 28,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6, right: 4),
-                      child: Text(
-                        'سعرة',
-                        style: GoogleFonts.cairo(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    Text(
+                      'صحي',
+                      style: GoogleFonts.cairo(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$healthScore',
-                  style: GoogleFonts.cairo(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                Text(
-                  'صحي',
-                  style: GoogleFonts.cairo(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -568,83 +603,89 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
       {'emoji': '🌾', 'name': 'الألياف', 'value': _result['fiber'], 'unit': 'جم', 'color': Colors.brown},
     ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.3,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-      ),
-      itemCount: nutrients.length,
-      itemBuilder: (context, index) {
-        final nutrient = nutrients[index];
-        final value = nutrient['value'] as int;
-        final isZero = value == 0;
-        
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isZero 
-                ? Colors.grey.withOpacity(0.3)
-                : (nutrient['color'] as Color).withOpacity(0.3),
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
+    return AnimatedBuilder(
+      animation: _numberAnimationController,
+      builder: (context, child) {
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 1.3,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                nutrient['emoji'] as String,
-                style: TextStyle(
-                  fontSize: 32,
-                  opacity: isZero ? 0.3 : 1.0,
+          itemCount: nutrients.length,
+          itemBuilder: (context, index) {
+            final nutrient = nutrients[index];
+            final value = nutrient['value'] as int;
+            final isZero = value == 0;
+            final animatedValue = isZero ? 0 : (_numberAnimationController.value * value).toInt();
+            
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isZero 
+                    ? Colors.grey.withOpacity(0.3)
+                    : (nutrient['color'] as Color).withOpacity(0.3),
+                  width: 2,
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                nutrient['name'] as String,
-                style: GoogleFonts.cairo(
-                  color: theme.textSecondaryColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '$value',
-                    style: GoogleFonts.cairo(
-                      color: isZero ? Colors.grey : (nutrient['color'] as Color),
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  Text(
-                    ' ${nutrient['unit']}',
-                    style: GoogleFonts.cairo(
-                      color: theme.textSecondaryColor,
-                      fontSize: 14,
-                    ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
-            ],
-          ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Opacity(
+                    opacity: isZero ? 0.3 : 1.0,
+                    child: Text(
+                      nutrient['emoji'] as String,
+                      style: const TextStyle(fontSize: 32),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    nutrient['name'] as String,
+                    style: GoogleFonts.cairo(
+                      color: theme.textSecondaryColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '$animatedValue',
+                        style: GoogleFonts.cairo(
+                          color: isZero ? Colors.grey : (nutrient['color'] as Color),
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        ' ${nutrient['unit']}',
+                        style: GoogleFonts.cairo(
+                          color: theme.textSecondaryColor,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -696,9 +737,9 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
                           shape: BoxShape.circle,
                         ),
                         child: Center(
-                          child: Text(
-                            '📊',
-                            style: TextStyle(fontSize: 50, opacity: 0.3),
+                          child: Opacity(
+                            opacity: 0.3,
+                            child: const Text('📊', style: TextStyle(fontSize: 50)),
                           ),
                         ),
                       ),
@@ -713,46 +754,57 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
                     ],
                   ),
                 )
-              : PieChart(
-                  PieChartData(
-                    sections: [
-                      PieChartSectionData(
-                        value: protein,
-                        color: Colors.red,
-                        title: '${(protein / total * 100).toStringAsFixed(0)}%',
-                        radius: 80,
-                        titleStyle: GoogleFonts.cairo(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                        ),
+              : AnimatedBuilder(
+                  animation: _chartAnimationController,
+                  builder: (context, child) {
+                    return PieChart(
+                      PieChartData(
+                        sections: [
+                          PieChartSectionData(
+                            value: protein * _chartAnimationController.value,
+                            color: Colors.red,
+                            title: _chartAnimationController.value > 0.8
+                              ? '${(protein / total * 100).toStringAsFixed(0)}%'
+                              : '',
+                            radius: 80 * _chartAnimationController.value,
+                            titleStyle: GoogleFonts.cairo(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                            ),
+                          ),
+                          PieChartSectionData(
+                            value: fats * _chartAnimationController.value,
+                            color: Colors.orange,
+                            title: _chartAnimationController.value > 0.8
+                              ? '${(fats / total * 100).toStringAsFixed(0)}%'
+                              : '',
+                            radius: 80 * _chartAnimationController.value,
+                            titleStyle: GoogleFonts.cairo(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                            ),
+                          ),
+                          PieChartSectionData(
+                            value: carbs * _chartAnimationController.value,
+                            color: Colors.amber,
+                            title: _chartAnimationController.value > 0.8
+                              ? '${(carbs / total * 100).toStringAsFixed(0)}%'
+                              : '',
+                            radius: 80 * _chartAnimationController.value,
+                            titleStyle: GoogleFonts.cairo(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                        centerSpaceRadius: 40,
+                        sectionsSpace: 2,
                       ),
-                      PieChartSectionData(
-                        value: fats,
-                        color: Colors.orange,
-                        title: '${(fats / total * 100).toStringAsFixed(0)}%',
-                        radius: 80,
-                        titleStyle: GoogleFonts.cairo(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                        ),
-                      ),
-                      PieChartSectionData(
-                        value: carbs,
-                        color: Colors.amber,
-                        title: '${(carbs / total * 100).toStringAsFixed(0)}%',
-                        radius: 80,
-                        titleStyle: GoogleFonts.cairo(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                    centerSpaceRadius: 40,
-                    sectionsSpace: 2,
-                  ),
+                    );
+                  },
                 ),
           ),
         ],
@@ -765,71 +817,78 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
     final score = _result['health_score'] as int;
     final isZero = score == 0;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isZero 
-            ? Colors.grey.withOpacity(0.3)
-            : (isHealthy ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3)),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Text(
-                isZero ? '⏳ في انتظار التحليل' : (isHealthy ? '🥗 وجبة صحية' : '🍔 غير صحية'),
-                style: GoogleFonts.cairo(
-                  color: theme.textPrimaryColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
+    return AnimatedBuilder(
+      animation: _numberAnimationController,
+      builder: (context, child) {
+        final animatedScore = isZero ? 0 : (_numberAnimationController.value * score).toInt();
+        
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isZero 
+                ? Colors.grey.withOpacity(0.3)
+                : (isHealthy ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3)),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
               ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isZero 
-                    ? Colors.grey.withOpacity(0.2)
-                    : (isHealthy ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2)),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '$score/100',
-                  style: GoogleFonts.cairo(
-                    color: isZero ? Colors.grey : (isHealthy ? Colors.green : Colors.red),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Text(
+                    isZero ? '⏳ في انتظار التحليل' : (isHealthy ? '🥗 وجبة صحية' : '🍔 غير صحية'),
+                    style: GoogleFonts.cairo(
+                      color: theme.textPrimaryColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isZero 
+                        ? Colors.grey.withOpacity(0.2)
+                        : (isHealthy ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2)),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '$animatedScore/100',
+                      style: GoogleFonts.cairo(
+                        color: isZero ? Colors.grey : (isHealthy ? Colors.green : Colors.red),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: animatedScore / 100,
+                  minHeight: 8,
+                  backgroundColor: Colors.grey.withOpacity(0.2),
+                  valueColor: AlwaysStoppedAnimation(
+                    isZero ? Colors.grey : (isHealthy ? Colors.green : Colors.orange)
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: score / 100,
-              minHeight: 8,
-              backgroundColor: Colors.grey.withOpacity(0.2),
-              valueColor: AlwaysStoppedAnimation(
-                isZero ? Colors.grey : (isHealthy ? Colors.green : Colors.orange)
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -942,38 +1001,47 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
     final running = _result['running_minutes'] as int;
     final isZero = steps == 0;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+    return AnimatedBuilder(
+      animation: _numberAnimationController,
+      builder: (context, child) {
+        final animatedWalking = isZero ? 0 : (_numberAnimationController.value * walking).toInt();
+        final animatedRunning = isZero ? 0 : (_numberAnimationController.value * running).toInt();
+        final animatedSteps = isZero ? 0 : (_numberAnimationController.value * steps).toInt();
+        
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '🔥 كيف تحرق هذه السعرات؟',
-            style: GoogleFonts.cairo(
-              color: theme.textPrimaryColor,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '🔥 كيف تحرق هذه السعرات؟',
+                style: GoogleFonts.cairo(
+                  color: theme.textPrimaryColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildBurnOption('🚶', 'المشي', '$animatedWalking دقيقة', Colors.blue, theme, isZero),
+              const SizedBox(height: 12),
+              _buildBurnOption('🏃', 'الجري', '$animatedRunning دقيقة', Colors.orange, theme, isZero),
+              const SizedBox(height: 12),
+              _buildBurnOption('👟', 'الخطوات', '${(animatedSteps / 1000).toStringAsFixed(1)}K خطوة', Colors.green, theme, isZero),
+            ],
           ),
-          const SizedBox(height: 16),
-          _buildBurnOption('🚶', 'المشي', '$walking دقيقة', Colors.blue, theme, isZero),
-          const SizedBox(height: 12),
-          _buildBurnOption('🏃', 'الجري', '$running دقيقة', Colors.orange, theme, isZero),
-          const SizedBox(height: 12),
-          _buildBurnOption('👟', 'الخطوات', '${(steps / 1000).toStringAsFixed(1)}K خطوة', Colors.green, theme, isZero),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -989,12 +1057,9 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
       ),
       child: Row(
         children: [
-          Text(
-            emoji,
-            style: TextStyle(
-              fontSize: 28,
-              opacity: isZero ? 0.3 : 1.0,
-            ),
+          Opacity(
+            opacity: isZero ? 0.3 : 1.0,
+            child: Text(emoji, style: const TextStyle(fontSize: 28)),
           ),
           const SizedBox(width: 12),
           Expanded(
