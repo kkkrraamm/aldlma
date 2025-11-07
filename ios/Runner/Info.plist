@@ -34,6 +34,14 @@
 	<string>نحتاج موقعك لتسجيل الجهاز المتصل وتحسين تجربتك في تطبيق دلما</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>نحتاج موقعك لتسجيل الجهاز المتصل وتحسين تجربتك في تطبيق دلما</string>
+	<key>NSCameraUsageDescription</key>
+	<string>نحتاج الوصول للكاميرا لالتقاط الصور وتحليل الطعام ورفع الصور الشخصية في تطبيق دلما</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>نحتاج الوصول لمكتبة الصور لرفع الصور في تطبيق دلما</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>نحتاج حفظ الصور في مكتبة الصور في تطبيق دلما</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>نحتاج الوصول للميكروفون لتسجيل مقاطع الفيديو في تطبيق دلما</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
