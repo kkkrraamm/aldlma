@@ -12,13 +12,13 @@ class ApiConfig {
   
   // Obfuscated API Key parts (will be reconstructed at runtime)
   // This prevents the key from appearing in plain text in the compiled app
-  static String get _part1 => String.fromCharCodes([70, 75, 83, 79, 69, 52, 52, 53, 68, 70, 76, 67, 68]);
-  static String get _part2 => String.fromCharCodes([36, 37, 67, 68, 35, 35, 103, 52, 56, 100, 35]);
-  static String get _part3 => String.fromCharCodes([100, 51, 79, 76, 53, 38, 37, 107, 100, 107, 102, 38, 53]);
-  static String get _part4 => String.fromCharCodes([103, 100, 79, 100, 75, 101, 75, 75, 68, 83]);
+  // dalma_app_2025_secure_key
+  static String get _part1 => String.fromCharCodes([100, 97, 108, 109, 97, 95, 97, 112, 112]);
+  static String get _part2 => String.fromCharCodes([95, 50, 48, 50, 53, 95]);
+  static String get _part3 => String.fromCharCodes([115, 101, 99, 117, 114, 101, 95, 107, 101, 121]);
   
   // Reconstruct API key at runtime
-  static String get apiKey => _part1 + _part2 + _part3 + _part4;
+  static String get apiKey => _part1 + _part2 + _part3;
   
   // Get or generate Device ID (persisted)
   static Future<String> getDeviceId() async {
