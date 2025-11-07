@@ -1163,23 +1163,29 @@ class _PartnersSectionState extends State<_PartnersSection> with TickerProviderS
       
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        setState(() {
-          partners = data;
-          _loading = false;
-          if (partners.isNotEmpty) {
-            _animation = Tween<double>(begin: 0, end: -partners.length.toDouble()).animate(
-              CurvedAnimation(parent: _controller, curve: Curves.linear),
-            );
-            _controller.repeat();
-          }
-        });
+        if (mounted) {
+          setState(() {
+            partners = data;
+            _loading = false;
+            if (partners.isNotEmpty) {
+              _animation = Tween<double>(begin: 0, end: -partners.length.toDouble()).animate(
+                CurvedAnimation(parent: _controller, curve: Curves.linear),
+              );
+              _controller.repeat();
+            }
+          });
+        }
         print('✅ [PARTNERS] Loaded ${partners.length} partners');
       } else {
-        setState(() => _loading = false);
+        if (mounted) {
+          setState(() => _loading = false);
+        }
       }
     } catch (e) {
       print('❌ [PARTNERS] Error: $e');
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
