@@ -107,51 +107,98 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
     setState(() => _isAnalyzing = true);
 
     try {
-      await Future.delayed(const Duration(seconds: 2));
+      // قراءة الصورة وتحويلها إلى Base64
+      final bytes = await _image!.readAsBytes();
+      final base64Image = base64Encode(bytes);
 
-      setState(() {
-        _result = {
-          'food_name': 'دجاج مشوي مع أرز وخضار',
-          'total_calories': 650,
-          'protein': 45,
-          'fats': 18,
-          'carbs': 72,
-          'fiber': 8,
-          'sugar': 5,
-          'is_healthy': true,
-          'health_score': 82,
-          'description': 'وجبة متوازنة وصحية تحتوي على البروتين اللازم للعضلات، كربوهيدرات معقدة للطاقة، وخضروات غنية بالألياف والفيتامينات.',
-          'benefits': [
-            'غني بالبروتين عالي الجودة',
-            'مصدر جيد للطاقة المستدامة',
-            'يحتوي على فيتامينات ومعادن مهمة',
-            'منخفض الدهون المشبعة',
-          ],
-          'warnings': [
-            'انتبه للملح المضاف',
-            'تجنب الإكثار في حالة اتباع حمية منخفضة الكربوهيدرات',
-          ],
-          'walking_minutes': 130,
-          'running_minutes': 65,
-          'steps': 9000,
-        };
-      });
+      print('📸 [CALORIE] بدء تحليل الصورة...');
+      print('📸 [CALORIE] حجم الصورة: ${bytes.length} bytes');
 
-      // تشغيل الانيميشن
-      _numberAnimationController.forward(from: 0);
-      _chartAnimationController.forward(from: 0);
-
-      NotificationsService.instance.toast(
-        'تم التحليل بنجاح! 🎉',
-        icon: Icons.check_circle,
-        color: Colors.green,
+      // إرسال الصورة إلى Backend API
+      final response = await http.post(
+        Uri.parse('https://dalma-api.onrender.com/api/ai/analyze-food'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'image': base64Image,
+        }),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.');
+        },
       );
+
+      print('📸 [CALORIE] استجابة API: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('✅ [CALORIE] تم التحليل بنجاح');
+        print('📊 [CALORIE] البيانات: ${data.toString().substring(0, 100)}...');
+
+        setState(() {
+          _result = {
+            'food_name': data['food_name'] ?? 'وجبة غير معروفة',
+            'total_calories': data['total_calories'] ?? 0,
+            'protein': data['protein'] ?? 0,
+            'fats': data['fats'] ?? 0,
+            'carbs': data['carbs'] ?? 0,
+            'fiber': data['fiber'] ?? 0,
+            'sugar': data['sugar'] ?? 0,
+            'is_healthy': data['is_healthy'] ?? true,
+            'health_score': data['health_score'] ?? 0,
+            'description': data['description'] ?? 'لا يوجد وصف متاح',
+            'benefits': List<String>.from(data['benefits'] ?? []),
+            'warnings': List<String>.from(data['warnings'] ?? []),
+            'walking_minutes': data['walking_minutes'] ?? 0,
+            'running_minutes': data['running_minutes'] ?? 0,
+            'steps': data['steps'] ?? 0,
+          };
+        });
+
+        // تشغيل الانيميشن
+        _numberAnimationController.forward(from: 0);
+        _chartAnimationController.forward(from: 0);
+
+        NotificationsService.instance.toast(
+          'تم التحليل بنجاح! 🎉',
+          icon: Icons.check_circle,
+          color: Colors.green,
+        );
+      } else {
+        print('❌ [CALORIE] فشل التحليل: ${response.statusCode}');
+        print('❌ [CALORIE] الرسالة: ${response.body}');
+        throw Exception('فشل تحليل الصورة. الرجاء المحاولة مرة أخرى.');
+      }
     } catch (e) {
+      print('❌ [CALORIE] خطأ: $e');
       NotificationsService.instance.toast(
-        'فشل التحليل: $e',
+        'فشل التحليل: ${e.toString()}',
         icon: Icons.error,
         color: Colors.red,
       );
+      
+      // في حالة الفشل، استخدم بيانات تجريبية
+      setState(() {
+        _result = {
+          'food_name': 'فشل التحليل - بيانات تجريبية',
+          'total_calories': 500,
+          'protein': 30,
+          'fats': 15,
+          'carbs': 60,
+          'fiber': 5,
+          'sugar': 3,
+          'is_healthy': true,
+          'health_score': 70,
+          'description': 'لم نتمكن من تحليل الصورة. يرجى التأكد من اتصالك بالإنترنت والمحاولة مرة أخرى.',
+          'benefits': ['يرجى المحاولة مرة أخرى'],
+          'warnings': ['فشل الاتصال بالخادم'],
+          'walking_minutes': 100,
+          'running_minutes': 50,
+          'steps': 7000,
+        };
+      });
     } finally {
       setState(() => _isAnalyzing = false);
     }
