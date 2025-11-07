@@ -30,17 +30,31 @@ class _AIToolsPageState extends State<AIToolsPage> {
       'page': const AICalorieCalculatorPage(),
     },
     {
+      'icon': '👨‍🍳',
+      'title': 'مساعد الطبخ الذكي',
+      'subtitle': 'وصفات من المكونات المتاحة لديك',
+      'color': const Color(0xFFFF6B6B),
+      'page': null, // سيتم إضافتها
+    },
+    {
+      'icon': '📚',
+      'title': 'مساعد التعليم',
+      'subtitle': 'حل المسائل وشرح المفاهيم الدراسية',
+      'color': const Color(0xFF4ECDC4),
+      'page': null, // سيتم إضافتها
+    },
+    {
+      'icon': '🌱',
+      'title': 'محلل النباتات',
+      'subtitle': 'التعرف على النباتات ونصائح العناية',
+      'color': const Color(0xFF95E1D3),
+      'page': null, // سيتم إضافتها
+    },
+    {
       'icon': '🩺',
       'title': 'محلل الأشعة',
       'subtitle': 'تحليل ذكي للأشعة الطبية',
       'color': Colors.blue,
-      'page': null,
-    },
-    {
-      'icon': '🌿',
-      'title': 'معرّف النباتات',
-      'subtitle': 'اكتشف اسم ونوع النبات',
-      'color': Colors.green,
       'page': null,
     },
     {
