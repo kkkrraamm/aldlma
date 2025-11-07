@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'theme_config.dart';
 import 'notifications.dart';
@@ -28,6 +29,9 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
   bool _isAnalyzing = false;
   late TabController _tabController;
   int _currentNavIndex = 0;
+  
+  // سجل التحليلات
+  List<Map<String, dynamic>> _analysisHistory = [];
 
   // Animation Controllers
   late AnimationController _numberAnimationController;
@@ -66,6 +70,87 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
     _chartAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
+    );
+    
+    // تحميل السجل من التخزين
+    _loadHistory();
+  }
+  
+  // تحميل السجل من SharedPreferences
+  Future<void> _loadHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = prefs.getString('calorie_analysis_history');
+      
+      if (historyJson != null) {
+        final List<dynamic> decoded = json.decode(historyJson);
+        setState(() {
+          _analysisHistory = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+        });
+        print('📚 [HISTORY] تم تحميل ${_analysisHistory.length} تحليل من السجل');
+      }
+    } catch (e) {
+      print('❌ [HISTORY] فشل تحميل السجل: $e');
+    }
+  }
+  
+  // حفظ السجل في SharedPreferences
+  Future<void> _saveHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = json.encode(_analysisHistory);
+      await prefs.setString('calorie_analysis_history', historyJson);
+      print('✅ [HISTORY] تم حفظ ${_analysisHistory.length} تحليل في السجل');
+    } catch (e) {
+      print('❌ [HISTORY] فشل حفظ السجل: $e');
+    }
+  }
+  
+  // إضافة تحليل جديد للسجل
+  Future<void> _addToHistory(Map<String, dynamic> analysis) async {
+    final historyItem = {
+      ...analysis,
+      'timestamp': DateTime.now().toIso8601String(),
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+    };
+    
+    setState(() {
+      // إضافة في البداية (الأحدث أولاً)
+      _analysisHistory.insert(0, historyItem);
+      
+      // الاحتفاظ بآخر 50 تحليل فقط
+      if (_analysisHistory.length > 50) {
+        _analysisHistory = _analysisHistory.sublist(0, 50);
+      }
+    });
+    
+    await _saveHistory();
+    print('✅ [HISTORY] تم إضافة تحليل جديد للسجل');
+  }
+  
+  // حذف تحليل من السجل
+  Future<void> _deleteFromHistory(String id) async {
+    setState(() {
+      _analysisHistory.removeWhere((item) => item['id'] == id);
+    });
+    await _saveHistory();
+    NotificationsService.instance.toast(
+      'تم حذف التحليل من السجل',
+      icon: Icons.delete,
+      color: Colors.red,
+    );
+  }
+  
+  // مسح السجل بالكامل
+  Future<void> _clearHistory() async {
+    setState(() {
+      _analysisHistory.clear();
+    });
+    await _saveHistory();
+    NotificationsService.instance.toast(
+      'تم مسح السجل بالكامل',
+      icon: Icons.delete_sweep,
+      color: Colors.orange,
     );
   }
 
@@ -195,6 +280,9 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
         // تشغيل الانيميشن
         _numberAnimationController.forward(from: 0);
         _chartAnimationController.forward(from: 0);
+        
+        // إضافة للسجل
+        await _addToHistory(_result);
 
         NotificationsService.instance.toast(
           'تم التحليل بنجاح! 🎉',
@@ -250,7 +338,9 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
       body: Stack(
         children: [
           // المحتوى الرئيسي
-          CustomScrollView(
+          _currentNavIndex == 2
+            ? _buildHistoryPage(theme, isDark, primaryColor)
+            : CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
               // AppBar مصغر
@@ -1125,6 +1215,268 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // صفحة السجل
+  Widget _buildHistoryPage(ThemeConfig theme, bool isDark, Color primaryColor) {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // AppBar
+        SliverAppBar(
+          floating: true,
+          pinned: false,
+          backgroundColor: theme.backgroundColor,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textPrimaryColor),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('📚', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Text(
+                'سجل التحليلات',
+                style: GoogleFonts.cairo(
+                  color: theme.textPrimaryColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          centerTitle: true,
+          actions: [
+            if (_analysisHistory.isNotEmpty)
+              IconButton(
+                icon: Icon(Icons.delete_sweep_rounded, color: Colors.red),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('مسح السجل', style: GoogleFonts.cairo(fontWeight: FontWeight.w900)),
+                      content: Text('هل تريد مسح جميع التحليلات؟', style: GoogleFonts.cairo()),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('إلغاء', style: GoogleFonts.cairo()),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            _clearHistory();
+                            Navigator.pop(context);
+                          },
+                          child: Text('مسح', style: GoogleFonts.cairo(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+        
+        // المحتوى
+        _analysisHistory.isEmpty
+          ? SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text('📚', style: TextStyle(fontSize: 60)),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'لا يوجد تحليلات محفوظة',
+                      style: GoogleFonts.cairo(
+                        color: theme.textPrimaryColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'ابدأ بتحليل وجبتك الأولى!',
+                      style: GoogleFonts.cairo(
+                        color: theme.textSecondaryColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = _analysisHistory[index];
+                    return _buildHistoryCard(item, theme, isDark);
+                  },
+                  childCount: _analysisHistory.length,
+                ),
+              ),
+            ),
+        
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+      ],
+    );
+  }
+  
+  // بطاقة تحليل في السجل
+  Widget _buildHistoryCard(Map<String, dynamic> item, ThemeConfig theme, bool isDark) {
+    final timestamp = DateTime.parse(item['timestamp']);
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+    
+    String timeAgo;
+    if (difference.inMinutes < 1) {
+      timeAgo = 'الآن';
+    } else if (difference.inHours < 1) {
+      timeAgo = 'منذ ${difference.inMinutes} دقيقة';
+    } else if (difference.inDays < 1) {
+      timeAgo = 'منذ ${difference.inHours} ساعة';
+    } else if (difference.inDays < 7) {
+      timeAgo = 'منذ ${difference.inDays} يوم';
+    } else {
+      timeAgo = '${timestamp.day}/${timestamp.month}/${timestamp.year}';
+    }
+    
+    final calories = item['total_calories'] is int 
+      ? item['total_calories'] 
+      : (item['total_calories'] is double ? (item['total_calories'] as double).toInt() : 0);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            // عرض التفاصيل
+            setState(() {
+              _result = Map<String, dynamic>.from(item);
+              _currentNavIndex = 0;
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // أيقونة
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.orange.shade600, Colors.deepOrange.shade700],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '🍽️',
+                      style: TextStyle(fontSize: 30),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                
+                // المعلومات
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item['food_name'] ?? 'وجبة',
+                        style: GoogleFonts.cairo(
+                          color: theme.textPrimaryColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            '$calories سعرة',
+                            style: GoogleFonts.cairo(
+                              color: Colors.orange,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            timeAgo,
+                            style: GoogleFonts.cairo(
+                              color: theme.textSecondaryColor,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // زر الحذف
+                IconButton(
+                  icon: Icon(Icons.delete_outline_rounded, color: Colors.red),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('حذف التحليل', style: GoogleFonts.cairo(fontWeight: FontWeight.w900)),
+                        content: Text('هل تريد حذف هذا التحليل؟', style: GoogleFonts.cairo()),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('إلغاء', style: GoogleFonts.cairo()),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              _deleteFromHistory(item['id']);
+                              Navigator.pop(context);
+                            },
+                            child: Text('حذف', style: GoogleFonts.cairo(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
