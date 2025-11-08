@@ -340,162 +340,197 @@ class _AIToolsPageState extends State<AIToolsPage> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // Compact Header with Logo and Back Button
+          // Hero Header مثل الصفحة الرئيسية
           SliverToBoxAdapter(
             child: Container(
-              margin: const EdgeInsets.fromLTRB(20, 50, 20, 10),
-              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+              padding: const EdgeInsets.only(top: 12, bottom: 20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                  colors: isDark
-                      ? [
-                          ThemeConfig.kGoldNight.withOpacity(0.2),
-                          ThemeConfig.kGoldNight.withOpacity(0.05),
-                        ]
-                      : [
-                          ThemeConfig.kGreen.withOpacity(0.2),
-                          ThemeConfig.kGreen.withOpacity(0.05),
-                        ],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: primaryColor.withOpacity(0.3),
-                  width: 1.5,
-                ),
+                gradient: theme.headerGradient,
               ),
-              child: Row(
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  // Back Button
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: primaryColor.withOpacity(0.1),
-                        border: Border.all(
-                          color: primaryColor.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: primaryColor,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Dalma Logo
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          primaryColor.withOpacity(0.3),
-                          primaryColor.withOpacity(0.1),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryColor.withOpacity(0.3),
-                          blurRadius: 15,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/logo.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  primaryColor,
-                                  primaryColor.withOpacity(0.7),
-                                ],
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'د',
-                                style: GoogleFonts.cairo(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 48),
+                        // Top row with back button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Back Button
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: theme.cardColor.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: primaryColor.withOpacity(0.3),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.arrow_back_ios_new_rounded,
+                                      color: primaryColor,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'رجوع',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: theme.textPrimaryColor,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  // Title and Subtitle
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'أدوات الدلما',
-                          style: GoogleFonts.cairo(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: theme.textPrimaryColor,
+                            // AI Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    primaryColor.withOpacity(0.3),
+                                    primaryColor.withOpacity(0.2),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(
+                                  color: primaryColor.withOpacity(0.4),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '✨',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'AI Tools',
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        // Logo with glow effect
+                        Center(
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Soft radial glow
+                              Container(
+                                width: 250,
+                                height: 250,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      primaryColor.withOpacity(0.25),
+                                      primaryColor.withOpacity(0.15),
+                                      primaryColor.withOpacity(0.08),
+                                      primaryColor.withOpacity(0.03),
+                                      Colors.transparent,
+                                    ],
+                                    stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
+                                  ),
+                                ),
+                              ),
+                              // Logo
+                              Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: primaryColor.withOpacity(0.3),
+                                      blurRadius: 20,
+                                      spreadRadius: 5,
+                                    ),
+                                  ],
+                                ),
+                                child: ClipOval(
+                                  child: Image.asset(
+                                    'assets/logo.png',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              primaryColor,
+                                              primaryColor.withOpacity(0.7),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            'د',
+                                            style: GoogleFonts.cairo(
+                                              fontSize: 48,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Text(
-                          'أدوات ذكية لتسهيل حياتك',
-                          style: GoogleFonts.cairo(
-                            fontSize: 12,
-                            color: theme.textPrimaryColor.withOpacity(0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // AI Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          primaryColor.withOpacity(0.3),
-                          primaryColor.withOpacity(0.2),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                        color: primaryColor.withOpacity(0.4),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '✨',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'AI',
-                          style: GoogleFonts.cairo(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: primaryColor,
+                        const SizedBox(height: 20),
+                        // Title
+                        Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                'أدوات الدلما الذكية',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.textPrimaryColor,
+                                  shadows: [
+                                    Shadow(
+                                      color: primaryColor.withOpacity(0.3),
+                                      blurRadius: 10,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'أدوات ذكية لتسهيل حياتك اليومية',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 14,
+                                  color: theme.textPrimaryColor.withOpacity(0.7),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ),
                       ],
