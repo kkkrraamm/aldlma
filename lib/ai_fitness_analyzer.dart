@@ -34,6 +34,15 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
   // سجل التحليلات
   List<Map<String, dynamic>> _analysisHistory = [];
   
+  // بيانات المستخدم الاختيارية
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  String _gender = 'ذكر';
+  String _activityLevel = 'متوسط';
+  String _goal = 'بناء عضلات';
+  bool _showUserDataForm = false;
+  
   // البيانات الافتراضية (قبل التحليل)
   Map<String, dynamic> _result = {
     'body_type': 'في انتظار التحليل...',
@@ -60,6 +69,48 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
   void initState() {
     super.initState();
     _loadHistory();
+    _loadUserData();
+  }
+
+  @override
+  void dispose() {
+    _weightController.dispose();
+    _heightController.dispose();
+    _ageController.dispose();
+    super.dispose();
+  }
+
+  // تحميل بيانات المستخدم المحفوظة
+  Future<void> _loadUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _weightController.text = prefs.getString('user_weight') ?? '';
+        _heightController.text = prefs.getString('user_height') ?? '';
+        _ageController.text = prefs.getString('user_age') ?? '';
+        _gender = prefs.getString('user_gender') ?? 'ذكر';
+        _activityLevel = prefs.getString('user_activity_level') ?? 'متوسط';
+        _goal = prefs.getString('user_goal') ?? 'بناء عضلات';
+      });
+    } catch (e) {
+      print('❌ فشل تحميل بيانات المستخدم: $e');
+    }
+  }
+
+  // حفظ بيانات المستخدم
+  Future<void> _saveUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_weight', _weightController.text);
+      await prefs.setString('user_height', _heightController.text);
+      await prefs.setString('user_age', _ageController.text);
+      await prefs.setString('user_gender', _gender);
+      await prefs.setString('user_activity_level', _activityLevel);
+      await prefs.setString('user_goal', _goal);
+      print('✅ تم حفظ بيانات المستخدم');
+    } catch (e) {
+      print('❌ فشل حفظ بيانات المستخدم: $e');
+    }
   }
 
   // تحميل السجل
@@ -170,11 +221,27 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       final bytes = await _image!.readAsBytes();
       final base64Image = base64Encode(bytes);
 
+      // إعداد البيانات الشخصية (اختياري)
+      Map<String, dynamic> userData = {};
+      if (_weightController.text.isNotEmpty) {
+        userData['weight'] = _weightController.text;
+      }
+      if (_heightController.text.isNotEmpty) {
+        userData['height'] = _heightController.text;
+      }
+      if (_ageController.text.isNotEmpty) {
+        userData['age'] = _ageController.text;
+      }
+      userData['gender'] = _gender;
+      userData['activity_level'] = _activityLevel;
+      userData['goal'] = _goal;
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/api/ai/fitness-analyzer'),
         headers: await ApiConfig.getHeaders(),
         body: json.encode({
           'image': base64Image,
+          'user_data': userData,
         }),
       );
 
@@ -274,6 +341,17 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
+          // User Data Form Toggle Button
+          _buildUserDataToggleButton(theme, primaryColor, isDark),
+          
+          const SizedBox(height: 15),
+          
+          // User Data Form (اختياري)
+          if (_showUserDataForm) ...[
+            _buildUserDataForm(theme, primaryColor, isDark),
+            const SizedBox(height: 20),
+          ],
+          
           // Image Picker Section
           if (_image == null) ...[
             _buildImagePickerSection(theme, primaryColor, isDark),
@@ -287,6 +365,376 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           _buildAnalysisResult(theme, primaryColor, isDark),
         ],
       ),
+    );
+  }
+
+  Widget _buildUserDataToggleButton(ThemeConfig theme, Color primaryColor, bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _showUserDataForm = !_showUserDataForm;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: _showUserDataForm
+                ? [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.1)]
+                : [primaryColor.withOpacity(0.1), primaryColor.withOpacity(0.05)],
+          ),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: primaryColor.withOpacity(_showUserDataForm ? 0.5 : 0.3),
+            width: _showUserDataForm ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                _showUserDataForm ? Icons.expand_less : Icons.expand_more,
+                color: primaryColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'بياناتي الشخصية (اختياري)',
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textPrimaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _showUserDataForm ? 'إخفاء النموذج' : 'أضف بياناتك لتحليل أدق',
+                    style: GoogleFonts.cairo(
+                      fontSize: 11,
+                      color: theme.textPrimaryColor.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.info_outline,
+              color: primaryColor.withOpacity(0.7),
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserDataForm(ThemeConfig theme, Color primaryColor, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.textPrimaryColor.withOpacity(0.1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Text('📝', style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'بياناتك الشخصية',
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textPrimaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'أضف بياناتك لتحليل أكثر دقة (جميع الحقول اختيارية)',
+            style: GoogleFonts.cairo(
+              fontSize: 11,
+              color: theme.textPrimaryColor.withOpacity(0.6),
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // Weight & Height
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: _weightController,
+                  label: 'الوزن (كجم)',
+                  hint: 'مثال: 75',
+                  icon: Icons.monitor_weight_outlined,
+                  theme: theme,
+                  primaryColor: primaryColor,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: _buildTextField(
+                  controller: _heightController,
+                  label: 'الطول (سم)',
+                  hint: 'مثال: 175',
+                  icon: Icons.height,
+                  theme: theme,
+                  primaryColor: primaryColor,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 15),
+          
+          // Age
+          _buildTextField(
+            controller: _ageController,
+            label: 'العمر (سنة)',
+            hint: 'مثال: 25',
+            icon: Icons.cake_outlined,
+            theme: theme,
+            primaryColor: primaryColor,
+            keyboardType: TextInputType.number,
+          ),
+          
+          const SizedBox(height: 15),
+          
+          // Gender
+          _buildDropdown(
+            label: 'الجنس',
+            value: _gender,
+            items: ['ذكر', 'أنثى'],
+            icon: Icons.person_outline,
+            onChanged: (value) {
+              setState(() {
+                _gender = value!;
+              });
+            },
+            theme: theme,
+            primaryColor: primaryColor,
+          ),
+          
+          const SizedBox(height: 15),
+          
+          // Activity Level
+          _buildDropdown(
+            label: 'مستوى النشاط',
+            value: _activityLevel,
+            items: ['قليل جداً', 'قليل', 'متوسط', 'نشط', 'نشط جداً'],
+            icon: Icons.directions_run,
+            onChanged: (value) {
+              setState(() {
+                _activityLevel = value!;
+              });
+            },
+            theme: theme,
+            primaryColor: primaryColor,
+          ),
+          
+          const SizedBox(height: 15),
+          
+          // Goal
+          _buildDropdown(
+            label: 'الهدف',
+            value: _goal,
+            items: ['خسارة دهون', 'بناء عضلات', 'تنشيف', 'صيانة'],
+            icon: Icons.flag_outlined,
+            onChanged: (value) {
+              setState(() {
+                _goal = value!;
+              });
+            },
+            theme: theme,
+            primaryColor: primaryColor,
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Save Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                await _saveUserData();
+                NotificationsService.instance.toast(
+                  'تم حفظ بياناتك بنجاح',
+                  icon: Icons.check_circle,
+                  color: Colors.green,
+                );
+              },
+              icon: const Icon(Icons.save),
+              label: Text(
+                'حفظ البيانات',
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required ThemeConfig theme,
+    required Color primaryColor,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: primaryColor),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GoogleFonts.cairo(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: theme.textPrimaryColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: GoogleFonts.cairo(
+            fontSize: 14,
+            color: theme.textPrimaryColor,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.cairo(
+              fontSize: 12,
+              color: theme.textPrimaryColor.withOpacity(0.4),
+            ),
+            filled: true,
+            fillColor: primaryColor.withOpacity(0.05),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: theme.textPrimaryColor.withOpacity(0.1),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: theme.textPrimaryColor.withOpacity(0.1),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: primaryColor,
+                width: 2,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required IconData icon,
+    required Function(String?) onChanged,
+    required ThemeConfig theme,
+    required Color primaryColor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: primaryColor),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GoogleFonts.cairo(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: theme.textPrimaryColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.textPrimaryColor.withOpacity(0.1),
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              icon: Icon(Icons.arrow_drop_down, color: primaryColor),
+              style: GoogleFonts.cairo(
+                fontSize: 14,
+                color: theme.textPrimaryColor,
+              ),
+              dropdownColor: theme.cardColor,
+              items: items.map((String item) {
+                return DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(item),
+                );
+              }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
