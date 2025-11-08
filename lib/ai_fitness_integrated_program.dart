@@ -761,6 +761,133 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
     );
   }
 
+  void _showDeleteProgramDialog(ThemeConfig theme, Color primaryColor) {
+    if (_currentProgramId == null || _allPrograms.isEmpty) return;
+    
+    final currentProgram = _allPrograms.firstWhere((p) => p['id'] == _currentProgramId);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: Colors.red, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'حذف البرنامج',
+                style: GoogleFonts.cairo(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textPrimaryColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'هل أنت متأكد من حذف برنامج "${currentProgram['name']}"؟\n\nسيتم حذف جميع البيانات والتقدم المرتبط بهذا البرنامج.',
+          style: GoogleFonts.cairo(
+            fontSize: 14,
+            color: theme.textPrimaryColor,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'إلغاء',
+              style: GoogleFonts.cairo(
+                fontSize: 16,
+                color: theme.textPrimaryColor.withOpacity(0.7),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deleteProgram(_currentProgramId!);
+            },
+            child: Text(
+              'حذف',
+              style: GoogleFonts.cairo(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteProgram(String programId) async {
+    try {
+      final programIndex = _allPrograms.indexWhere((p) => p['id'] == programId);
+      if (programIndex == -1) return;
+      
+      _allPrograms.removeAt(programIndex);
+      
+      // حفظ التغييرات
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('all_fitness_programs', json.encode(_allPrograms));
+      
+      // إعادة تحميل البرامج
+      if (_allPrograms.isEmpty) {
+        setState(() {
+          _currentProgramId = null;
+          _programStartDate = null;
+          _monthlyGoal = null;
+          _weeklyGoals.clear();
+          _expectedResults = null;
+          _dailyProgress.clear();
+          _weeklySnapshots.clear();
+          _tabController?.dispose();
+          _tabController = null;
+        });
+      } else {
+        // الانتقال لآخر برنامج
+        _currentProgramId = _allPrograms.last['id'];
+        await _loadSpecificProgram(_currentProgramId!);
+        
+        // إعادة إنشاء TabController
+        _tabController?.dispose();
+        _tabController = TabController(
+          length: _allPrograms.length,
+          vsync: this,
+          initialIndex: _allPrograms.length - 1,
+        );
+        _tabController!.addListener(() {
+          if (_tabController!.indexIsChanging) {
+            setState(() {
+              _selectedTabIndex = _tabController!.index;
+              _currentProgramId = _allPrograms[_selectedTabIndex]['id'];
+              _loadSpecificProgram(_currentProgramId!);
+            });
+          }
+        });
+        
+        setState(() {});
+      }
+      
+      NotificationsService.instance.toast(
+        'تم حذف البرنامج بنجاح',
+        icon: Icons.check_circle,
+        color: Colors.green,
+      );
+    } catch (e) {
+      print('❌ فشل حذف البرنامج: $e');
+      NotificationsService.instance.toast(
+        'حدث خطأ أثناء الحذف',
+        icon: Icons.error,
+        color: Colors.red,
+      );
+    }
+  }
+
   void _toggleTask(String day, String task) {
     setState(() {
       if (!_dailyProgress.containsKey(day)) {
@@ -1224,7 +1351,7 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
 
     return Column(
       children: [
-        // Program Tabs
+        // Program Tabs with Actions
         if (_allPrograms.isNotEmpty && _tabController != null)
           Container(
             decoration: BoxDecoration(
@@ -1237,32 +1364,51 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
                 ),
               ],
             ),
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              labelColor: primaryColor,
-              unselectedLabelColor: theme.textPrimaryColor.withOpacity(0.5),
-              indicatorColor: primaryColor,
-              indicatorWeight: 3,
-              labelStyle: GoogleFonts.cairo(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-              unselectedLabelStyle: GoogleFonts.cairo(
-                fontSize: 14,
-                fontWeight: FontWeight.normal,
-              ),
-              tabs: _allPrograms.map((program) {
-                return Tab(
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today, size: 16),
-                      const SizedBox(width: 5),
-                      Text(program['name'] ?? 'برنامج'),
-                    ],
+            child: Row(
+              children: [
+                Expanded(
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    labelColor: primaryColor,
+                    unselectedLabelColor: theme.textPrimaryColor.withOpacity(0.5),
+                    indicatorColor: primaryColor,
+                    indicatorWeight: 3,
+                    labelStyle: GoogleFonts.cairo(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    unselectedLabelStyle: GoogleFonts.cairo(
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                    ),
+                    tabs: _allPrograms.map((program) {
+                      return Tab(
+                        child: Row(
+                          children: [
+                            Icon(Icons.calendar_today, size: 16),
+                            const SizedBox(width: 5),
+                            Text(program['name'] ?? 'برنامج'),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
-                );
-              }).toList(),
+                ),
+                // New Program Button
+                IconButton(
+                  icon: Icon(Icons.add_circle, color: primaryColor, size: 28),
+                  onPressed: () => _startProgram(),
+                  tooltip: 'برنامج جديد',
+                ),
+                // Delete Program Button
+                if (_allPrograms.isNotEmpty)
+                  IconButton(
+                    icon: Icon(Icons.delete_outline, color: Colors.red.withOpacity(0.7), size: 24),
+                    onPressed: () => _showDeleteProgramDialog(theme, primaryColor),
+                    tooltip: 'حذف البرنامج',
+                  ),
+              ],
             ),
           ),
         
