@@ -118,6 +118,11 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
         
         _weeklySnapshots = (program['snapshots'] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
         
+        // تحميل الأهداف
+        _monthlyGoal = program['monthly_goal'] as Map<String, dynamic>?;
+        _weeklyGoals = (program['weekly_goals'] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+        _expectedResults = program['expected_results'] as Map<String, dynamic>?;
+        
         if (program['startDate'] != null) {
           _programStartDate = DateTime.parse(program['startDate']);
           final daysPassed = DateTime.now().difference(_programStartDate!).inDays + 1;
@@ -739,6 +744,203 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
     );
   }
 
+  Widget _buildGoalsSection(ThemeConfig theme, Color primaryColor, bool isDark) {
+    final currentWeekGoal = _weeklyGoals.isNotEmpty && _currentWeek <= _weeklyGoals.length
+        ? _weeklyGoals[_currentWeek - 1]
+        : null;
+
+    return Container(
+      margin: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            primaryColor.withOpacity(0.1),
+            primaryColor.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: primaryColor.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Monthly Goal
+          if (_monthlyGoal != null) ...[
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.emoji_events, color: primaryColor, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'الهدف الشهري',
+                        style: GoogleFonts.cairo(
+                          fontSize: 12,
+                          color: theme.textPrimaryColor.withOpacity(0.6),
+                        ),
+                      ),
+                      Text(
+                        _monthlyGoal!['title'] ?? 'هدف الشهر',
+                        style: GoogleFonts.cairo(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textPrimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildGoalMetric(
+                    'الوزن المستهدف',
+                    '${_monthlyGoal!['target_weight_change'] ?? 0} كجم',
+                    Icons.monitor_weight,
+                    theme,
+                    primaryColor,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildGoalMetric(
+                    'نسبة الدهون',
+                    '${_monthlyGoal!['target_body_fat_change'] ?? 0}%',
+                    Icons.trending_down,
+                    theme,
+                    primaryColor,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildGoalMetric(
+                    'نسبة العضلات',
+                    '+${_monthlyGoal!['target_muscle_change'] ?? 0}%',
+                    Icons.fitness_center,
+                    theme,
+                    primaryColor,
+                  ),
+                ],
+              ),
+            ),
+          ],
+          
+          // Weekly Goal
+          if (currentWeekGoal != null) ...[
+            const SizedBox(height: 20),
+            Divider(color: primaryColor.withOpacity(0.3)),
+            const SizedBox(height: 15),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.calendar_today, color: primaryColor, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'هدف الأسبوع $_currentWeek',
+                        style: GoogleFonts.cairo(
+                          fontSize: 12,
+                          color: theme.textPrimaryColor.withOpacity(0.6),
+                        ),
+                      ),
+                      Text(
+                        currentWeekGoal['title'] ?? 'هدف الأسبوع',
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textPrimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '🎯 التركيز: ${currentWeekGoal['focus'] ?? ''}',
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      color: theme.textPrimaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '🍽️ التغذية: ${currentWeekGoal['nutrition_focus'] ?? ''}',
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      color: theme.textPrimaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoalMetric(String label, String value, IconData icon, ThemeConfig theme, Color primaryColor) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: primaryColor.withOpacity(0.7)),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: GoogleFonts.cairo(
+            fontSize: 12,
+            color: theme.textPrimaryColor.withOpacity(0.7),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.cairo(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: primaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildProgramScreen(ThemeConfig theme, Color primaryColor, bool isDark) {
     final weekPlan = _getCurrentWeekPlan();
     final totalDays = (_currentWeek - 1) * 7 + _currentDayInWeek;
@@ -786,6 +988,10 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
               }).toList(),
             ),
           ),
+        
+        // Goals Section
+        if (_monthlyGoal != null || (_weeklyGoals.isNotEmpty && _currentWeek <= _weeklyGoals.length))
+          _buildGoalsSection(theme, primaryColor, isDark),
         
         // Header
         Container(
