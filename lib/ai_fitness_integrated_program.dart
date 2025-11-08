@@ -233,6 +233,9 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
         }),
       );
       
+      print('📊 [30-DAY PLAN] Status Code: ${response.statusCode}');
+      print('📊 [30-DAY PLAN] Response Body: ${response.body}');
+      
       if (response.statusCode == 200) {
         final planData = json.decode(response.body);
         
@@ -247,7 +250,8 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
           color: Colors.green,
         );
       } else {
-        throw Exception('فشل توليد الخطة');
+        print('❌ [30-DAY PLAN] Error Response: ${response.body}');
+        throw Exception('فشل توليد الخطة: ${response.statusCode}');
       }
     } catch (e) {
       print('❌ خطأ في توليد الخطة: $e');
