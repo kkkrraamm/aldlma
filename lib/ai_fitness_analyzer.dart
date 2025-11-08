@@ -381,32 +381,10 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       case 1:
         return _buildHistoryPage(theme, primaryColor, isDark);
       case 2:
-        if (_result['is_body'] == true && _result['workout_plan'] != null) {
-          return AIFitnessIntegratedProgramPage(
-            initialAnalysis: _result,
-          );
-        } else {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(30),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.calendar_today, size: 80, color: primaryColor.withOpacity(0.3)),
-                  const SizedBox(height: 20),
-                  Text(
-                    'يرجى إجراء التحليل أولاً',
-                    style: GoogleFonts.cairo(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textPrimaryColor.withOpacity(0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
+        // السماح بالدخول حتى بدون تحليل حالي (سيعرض البرامج المحفوظة)
+        return AIFitnessIntegratedProgramPage(
+          initialAnalysis: _result['is_body'] == true ? _result : null,
+        );
       default:
         return _buildAnalysisPage(theme, primaryColor, isDark);
     }
@@ -2384,17 +2362,9 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
                 label: '30 يوم',
                 isActive: _currentNavIndex == 2,
                 onTap: () {
-                  if (_result['is_body'] == true && _result['workout_plan'] != null) {
-                    setState(() {
-                      _currentNavIndex = 2;
-                    });
-                  } else {
-                    NotificationsService.instance.toast(
-                      'يرجى إجراء التحليل أولاً',
-                      icon: Icons.warning,
-                      color: Colors.orange,
-                    );
-                  }
+                  setState(() {
+                    _currentNavIndex = 2;
+                  });
                 },
                 theme: theme,
                 primaryColor: primaryColor,

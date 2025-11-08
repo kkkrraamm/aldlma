@@ -557,7 +557,7 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: _programStartDate == null
+      body: _allPrograms.isEmpty
           ? _buildStartScreen(theme, primaryColor, isDark)
           : _buildProgramScreen(theme, primaryColor, isDark),
     );
