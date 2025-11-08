@@ -680,6 +680,48 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
 
     return Column(
       children: [
+        // Program Tabs
+        if (_allPrograms.isNotEmpty && _tabController != null)
+          Container(
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              labelColor: primaryColor,
+              unselectedLabelColor: theme.textPrimaryColor.withOpacity(0.5),
+              indicatorColor: primaryColor,
+              indicatorWeight: 3,
+              labelStyle: GoogleFonts.cairo(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+              unselectedLabelStyle: GoogleFonts.cairo(
+                fontSize: 14,
+                fontWeight: FontWeight.normal,
+              ),
+              tabs: _allPrograms.map((program) {
+                return Tab(
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 16),
+                      const SizedBox(width: 5),
+                      Text(program['name'] ?? 'برنامج'),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        
         // Header
         Container(
           padding: const EdgeInsets.all(20),
