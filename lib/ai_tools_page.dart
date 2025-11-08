@@ -291,6 +291,52 @@ class _AIToolsPageState extends State<AIToolsPage> {
 
     return Scaffold(
       backgroundColor: theme.backgroundColor,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(
+                  icon: Icons.home_rounded,
+                  label: 'الرئيسية',
+                  isActive: false,
+                  onTap: () => Navigator.pop(context),
+                  theme: theme,
+                  primaryColor: primaryColor,
+                ),
+                _buildNavItem(
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'الأدوات',
+                  isActive: true,
+                  onTap: () {},
+                  theme: theme,
+                  primaryColor: primaryColor,
+                ),
+                _buildNavItem(
+                  icon: Icons.explore_rounded,
+                  label: 'استكشف',
+                  isActive: false,
+                  onTap: () {},
+                  theme: theme,
+                  primaryColor: primaryColor,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -781,53 +827,6 @@ class _AIToolsPageState extends State<AIToolsPage> {
                     ),
                 ],
               ),
-            ),
-          ),
-        ),
-      ),
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(
-                  icon: Icons.home_rounded,
-                  label: 'الرئيسية',
-                  isActive: false,
-                  onTap: () => Navigator.pop(context),
-                  theme: theme,
-                  primaryColor: primaryColor,
-                ),
-                _buildNavItem(
-                  icon: Icons.auto_awesome_rounded,
-                  label: 'الأدوات',
-                  isActive: true,
-                  onTap: () {},
-                  theme: theme,
-                  primaryColor: primaryColor,
-                ),
-                _buildNavItem(
-                  icon: Icons.explore_rounded,
-                  label: 'استكشف',
-                  isActive: false,
-                  onTap: () {},
-                  theme: theme,
-                  primaryColor: primaryColor,
-                ),
-              ],
             ),
           ),
         ),
