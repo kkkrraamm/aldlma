@@ -17,6 +17,7 @@ import 'package:path_provider/path_provider.dart';
 import 'theme_config.dart';
 import 'api_config.dart';
 import 'notifications.dart';
+import 'ai_fitness_weekly_tracking.dart';
 
 class AIFitnessAnalyzerPage extends StatefulWidget {
   const AIFitnessAnalyzerPage({Key? key}) : super(key: key);
@@ -365,6 +366,43 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           ),
         ),
         centerTitle: true,
+        actions: [
+          // زر التتبع الأسبوعي
+          Container(
+            margin: const EdgeInsets.only(right: 10),
+            child: IconButton(
+              icon: Stack(
+                children: [
+                  Icon(Icons.calendar_month, color: primaryColor, size: 28),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '📊',
+                        style: TextStyle(fontSize: 8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AIFitnessWeeklyTrackingPage(),
+                  ),
+                );
+              },
+              tooltip: 'التتبع الأسبوعي',
+            ),
+          ),
+        ],
       ),
       body: _currentNavIndex == 0 ? _buildAnalysisPage(theme, primaryColor, isDark) : _buildHistoryPage(theme, primaryColor, isDark),
       bottomNavigationBar: _buildBottomNav(theme, primaryColor),
