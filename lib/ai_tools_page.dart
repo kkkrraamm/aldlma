@@ -412,7 +412,7 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
                             style: GoogleFonts.cairo(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: theme.textColor,
+                              color: theme.textPrimaryColor,
                               shadows: [
                                 Shadow(
                                   color: primaryColor.withOpacity(0.3),
@@ -426,7 +426,7 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
                             'أدوات ذكية لتسهيل حياتك',
                             style: GoogleFonts.cairo(
                               fontSize: 14,
-                              color: theme.textColor.withOpacity(0.7),
+                              color: theme.textPrimaryColor.withOpacity(0.7),
                             ),
                           ),
                         ],
@@ -477,7 +477,7 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
                         border: Border.all(
                           color: isSelected
                               ? Colors.white.withOpacity(0.3)
-                              : theme.textColor.withOpacity(0.1),
+                              : theme.textPrimaryColor.withOpacity(0.1),
                           width: 2,
                         ),
                         boxShadow: isSelected
@@ -513,7 +513,7 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
                                       : FontWeight.w600,
                                   color: isSelected
                                       ? Colors.white
-                                      : theme.textColor,
+                                      : theme.textPrimaryColor,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -539,7 +539,7 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: theme.textColor.withOpacity(0.7),
+                    color: theme.textPrimaryColor.withOpacity(0.7),
                   ),
                 ),
               ),
@@ -599,7 +599,7 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
                 style: GoogleFonts.cairo(),
                 textAlign: TextAlign.center,
               ),
-              backgroundColor: theme.textColor.withOpacity(0.9),
+              backgroundColor: theme.textPrimaryColor.withOpacity(0.9),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
