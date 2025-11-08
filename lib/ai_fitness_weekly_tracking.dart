@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'theme_config.dart';
 import 'api_config.dart';
 import 'notifications_service.dart';
+import 'ai_fitness_progress_comparison.dart';
 
 class AIFitnessWeeklyTrackingPage extends StatefulWidget {
   const AIFitnessWeeklyTrackingPage({Key? key}) : super(key: key);
@@ -200,6 +201,22 @@ class _AIFitnessWeeklyTrackingPageState extends State<AIFitnessWeeklyTrackingPag
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          // زر المقارنة والرسوم البيانية
+          if (_weeklyRecords.length >= 2)
+            IconButton(
+              icon: const Icon(Icons.compare_arrows, color: Colors.white, size: 28),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AIFitnessProgressComparisonPage(),
+                  ),
+                );
+              },
+              tooltip: 'مقارنة التقدم',
+            ),
+        ],
       ),
       body: _isLoading
           ? Center(

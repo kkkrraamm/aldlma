@@ -26,6 +26,9 @@ dependencies:
   # Network & API
   http: ^1.1.0
   
+  # Date & Time
+  intl: ^0.18.1
+  
   # Image & Media
   image_picker: ^1.0.4
   cached_network_image: ^3.3.0
