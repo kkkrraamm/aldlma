@@ -20,8 +20,8 @@ class AIToolsPage extends StatefulWidget {
 
 class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin {
   int _selectedCategoryIndex = 0;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
+  AnimationController? _animationController;
+  Animation<double>? _fadeAnimation;
 
   // التصنيفات مع الأدوات
   final List<Map<String, dynamic>> _categories = [
@@ -284,14 +284,14 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
       vsync: this,
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _animationController!, curve: Curves.easeInOut),
     );
-    _animationController.forward();
+    _animationController!.forward();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _animationController?.dispose();
     super.dispose();
   }
 
@@ -457,8 +457,8 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
                       setState(() {
                         _selectedCategoryIndex = index;
                       });
-                      _animationController.reset();
-                      _animationController.forward();
+                      _animationController?.reset();
+                      _animationController?.forward();
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
@@ -533,7 +533,7 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: FadeTransition(
-                opacity: _fadeAnimation,
+                opacity: _fadeAnimation ?? const AlwaysStoppedAnimation(1.0),
                 child: Text(
                   '${_getFilteredTools().length} أداة متاحة',
                   style: GoogleFonts.cairo(
@@ -550,7 +550,7 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
           SliverPadding(
             padding: const EdgeInsets.all(20),
             sliver: FadeTransition(
-              opacity: _fadeAnimation,
+              opacity: _fadeAnimation ?? const AlwaysStoppedAnimation(1.0),
               child: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
