@@ -370,7 +370,8 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
       userData['goal'] = prefs.getString('user_goal') ?? 'بناء عضلات';
       userData['fitness_level'] = prefs.getString('user_fitness_level') ?? 'مبتدئ';
 
-      final response = await http.post(
+      // أولاً: تحليل الجسم
+      final analysisResponse = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/api/ai/fitness-analyzer'),
         headers: await ApiConfig.getHeaders(),
         body: json.encode({
@@ -379,38 +380,113 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
         }),
       );
 
-      if (response.statusCode == 200) {
-        final result = json.decode(utf8.decode(response.bodyBytes));
+      if (analysisResponse.statusCode != 200) {
+        throw Exception('فشل تحليل الجسم');
+      }
 
-        if (result['is_body'] == true) {
-          // حفظ الـ snapshot
-          _weeklySnapshots.add({
-            'week': _currentWeek,
-            'date': DateTime.now().toIso8601String(),
-            'analysis': result,
-            'image': base64Image,
-          });
+      final bodyAnalysis = json.decode(utf8.decode(analysisResponse.bodyBytes));
 
-          await _saveProgramData();
+      if (bodyAnalysis['is_body'] != true) {
+        NotificationsService.instance.toast('⚠️ الصورة لا تحتوي على جسم واضح');
+        setState(() {
+          _weeklyImage = null;
+          _isLoading = false;
+        });
+        return;
+      }
 
-          setState(() {
-            _weeklyImage = null;
-            _currentWeek++;
-            _currentDayInWeek = 1;
-          });
+      // ثانياً: تحليل التقدم الأسبوعي
+      final previousSnapshot = _weeklySnapshots.isNotEmpty ? _weeklySnapshots.last : null;
+      final currentWeekGoal = _weeklyGoals.isNotEmpty && _currentWeek <= _weeklyGoals.length
+          ? _weeklyGoals[_currentWeek - 1]
+          : null;
 
-          NotificationsService.instance.toast('✅ تم حفظ تقدم الأسبوع بنجاح!');
-          
-          // عرض المقارنة
-          _showWeeklyComparison();
-        } else {
-          NotificationsService.instance.toast('⚠️ ${result['goal_recommendation']}');
-          setState(() {
-            _weeklyImage = null;
-          });
+      // حساب المهام المكتملة
+      final completedTasks = <String, bool>{};
+      for (int day = 1; day <= 7; day++) {
+        final dayKey = 'week${_currentWeek}_day$day';
+        if (_dailyProgress.containsKey(dayKey)) {
+          completedTasks.addAll(_dailyProgress[dayKey]!);
         }
-      } else {
-        NotificationsService.instance.toast('❌ فشل التحليل: ${response.statusCode}');
+      }
+
+      final weeklyAnalysisResponse = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/ai/fitness/analyze-weekly-progress'),
+        headers: await ApiConfig.getHeaders(),
+        body: json.encode({
+          'week_number': _currentWeek,
+          'image': base64Image,
+          'current_stats': {
+            'weight': userData['weight'],
+            'body_fat': bodyAnalysis['body_fat_percentage'],
+            'muscle_mass': bodyAnalysis['muscle_mass_percentage'],
+            'bmi': bodyAnalysis['bmi'],
+          },
+          'previous_stats': previousSnapshot != null ? {
+            'weight': previousSnapshot['analysis']['weight'] ?? userData['weight'],
+            'body_fat': previousSnapshot['analysis']['body_fat_percentage'],
+            'muscle_mass': previousSnapshot['analysis']['muscle_mass_percentage'],
+            'bmi': previousSnapshot['analysis']['bmi'],
+          } : {
+            'weight': userData['weight'],
+            'body_fat': bodyAnalysis['body_fat_percentage'],
+            'muscle_mass': bodyAnalysis['muscle_mass_percentage'],
+            'bmi': bodyAnalysis['bmi'],
+          },
+          'weekly_goal': currentWeekGoal,
+          'completed_tasks': completedTasks,
+          'program_history': {
+            'monthly_goal': _monthlyGoal,
+            'weekly_goals': _weeklyGoals,
+            'previous_weeks': _weeklySnapshots.map((s) => {
+              'week': s['week'],
+              'analysis': s['analysis'],
+            }).toList(),
+          },
+        }),
+      );
+
+      Map<String, dynamic>? weeklyAnalysisData;
+      if (weeklyAnalysisResponse.statusCode == 200) {
+        weeklyAnalysisData = json.decode(utf8.decode(weeklyAnalysisResponse.bodyBytes));
+        _weeklyAnalysis = weeklyAnalysisData;
+      }
+
+      // حفظ الـ snapshot
+      _weeklySnapshots.add({
+        'week': _currentWeek,
+        'date': DateTime.now().toIso8601String(),
+        'analysis': bodyAnalysis,
+        'image': base64Image,
+        'weekly_analysis': weeklyAnalysisData,
+      });
+
+      // حفظ التحليل الأسبوعي في البرنامج
+      final programIndex = _allPrograms.indexWhere((p) => p['id'] == _currentProgramId);
+      if (programIndex != -1) {
+        if (_allPrograms[programIndex]['weekly_analyses'] == null) {
+          _allPrograms[programIndex]['weekly_analyses'] = [];
+        }
+        (_allPrograms[programIndex]['weekly_analyses'] as List).add(weeklyAnalysisData);
+      }
+
+      await _saveProgramData();
+
+      setState(() {
+        _weeklyImage = null;
+        _currentWeek++;
+        _currentDayInWeek = 1;
+      });
+
+      NotificationsService.instance.toast(
+        '✅ تم تحليل الأسبوع بنجاح! نسبة النجاح: ${weeklyAnalysisData?['analysis']?['success_rate']?.toStringAsFixed(0) ?? '0'}%',
+        icon: Icons.check_circle,
+        color: Colors.green,
+      );
+      
+      // عرض التحليل الأسبوعي
+      if (weeklyAnalysisData != null) {
+        _showWeeklyAnalysisDialog(weeklyAnalysisData);
       }
     } catch (e) {
       NotificationsService.instance.toast('❌ حدث خطأ: $e');
@@ -481,6 +557,207 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
           ],
         ),
       ],
+    );
+  }
+
+  void _showWeeklyAnalysisDialog(Map<String, dynamic> analysisData) {
+    final theme = ThemeConfig.instance;
+    final isDark = theme.isDarkMode;
+    final primaryColor = isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
+    
+    final analysis = analysisData['analysis'];
+    final successRate = (analysis?['success_rate'] ?? 0).toDouble();
+    final performanceRating = analysis?['performance_rating'] ?? 'جيد';
+    final weekNumber = analysisData['week_number'] ?? _currentWeek;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.analytics, color: primaryColor, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'تحليل الأسبوع $weekNumber',
+                style: GoogleFonts.cairo(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textPrimaryColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Success Rate
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      primaryColor.withOpacity(0.2),
+                      primaryColor.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'نسبة النجاح',
+                      style: GoogleFonts.cairo(
+                        fontSize: 14,
+                        color: theme.textPrimaryColor.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${successRate.toStringAsFixed(0)}%',
+                      style: GoogleFonts.cairo(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      performanceRating,
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // Achievements
+              if (analysis?['achievements'] != null) ...[
+                Text(
+                  '🏆 الإنجازات',
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textPrimaryColor,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...((analysis['achievements'] as List).map((achievement) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          achievement.toString(),
+                          style: GoogleFonts.cairo(
+                            fontSize: 13,
+                            color: theme.textPrimaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ))),
+                const SizedBox(height: 15),
+              ],
+              
+              // Areas to Improve
+              if (analysis?['areas_to_improve'] != null && (analysis['areas_to_improve'] as List).isNotEmpty) ...[
+                Text(
+                  '📈 نقاط التحسين',
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textPrimaryColor,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...((analysis['areas_to_improve'] as List).map((area) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.trending_up, color: Colors.orange, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          area.toString(),
+                          style: GoogleFonts.cairo(
+                            fontSize: 13,
+                            color: theme.textPrimaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ))),
+                const SizedBox(height: 15),
+              ],
+              
+              // Motivation Message
+              if (analysis?['motivation_message'] != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: primaryColor.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.favorite, color: primaryColor, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          analysis['motivation_message'].toString(),
+                          style: GoogleFonts.cairo(
+                            fontSize: 13,
+                            fontStyle: FontStyle.italic,
+                            color: theme.textPrimaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'رائع! 💪',
+              style: GoogleFonts.cairo(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
