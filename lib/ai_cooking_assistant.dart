@@ -37,6 +37,10 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
   // للخطوات التفاعلية
   List<bool> _completedSteps = [];
   
+  // للمؤقتات (Timers)
+  Map<int, int> _stepTimers = {}; // index -> seconds remaining
+  Map<int, bool> _timerRunning = {}; // index -> is running
+  
   // البيانات الافتراضية (قبل التحليل)
   Map<String, dynamic> _result = {
     'recipe_name': 'في انتظار التحليل...',
@@ -225,6 +229,102 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
         backgroundColor: Colors.red,
       ),
     );
+  }
+
+  // استخراج الوقت من نص الخطوة
+  int? _extractTimeFromStep(String step) {
+    // البحث عن أنماط مثل: "5 دقائق", "10 دقيقة", "نصف ساعة", "ساعة"
+    final patterns = [
+      RegExp(r'(\d+)\s*دقيقة', caseSensitive: false),
+      RegExp(r'(\d+)\s*دقائق', caseSensitive: false),
+      RegExp(r'(\d+)\s*د', caseSensitive: false),
+      RegExp(r'(\d+)\s*min', caseSensitive: false),
+      RegExp(r'(\d+)\s*minutes?', caseSensitive: false),
+    ];
+
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(step);
+      if (match != null) {
+        return int.tryParse(match.group(1)!) ?? 0;
+      }
+    }
+
+    // البحث عن "نصف ساعة"
+    if (step.contains('نصف ساعة') || step.contains('نص ساعة')) {
+      return 30;
+    }
+
+    // البحث عن "ساعة"
+    if (step.contains('ساعة') && !step.contains('نصف')) {
+      final hourPattern = RegExp(r'(\d+)\s*ساعة');
+      final match = hourPattern.firstMatch(step);
+      if (match != null) {
+        final hours = int.tryParse(match.group(1)!) ?? 1;
+        return hours * 60;
+      }
+      return 60; // ساعة واحدة
+    }
+
+    return null;
+  }
+
+  // بدء/إيقاف المؤقت
+  void _toggleTimer(int stepIndex, int minutes) {
+    setState(() {
+      if (_timerRunning[stepIndex] == true) {
+        // إيقاف المؤقت
+        _timerRunning[stepIndex] = false;
+      } else {
+        // بدء المؤقت
+        if (!_stepTimers.containsKey(stepIndex)) {
+          _stepTimers[stepIndex] = minutes * 60; // تحويل إلى ثواني
+        }
+        _timerRunning[stepIndex] = true;
+        _runTimer(stepIndex);
+      }
+    });
+  }
+
+  // تشغيل المؤقت
+  void _runTimer(int stepIndex) {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (!mounted) return;
+      
+      if (_timerRunning[stepIndex] == true && _stepTimers[stepIndex]! > 0) {
+        setState(() {
+          _stepTimers[stepIndex] = _stepTimers[stepIndex]! - 1;
+        });
+        _runTimer(stepIndex);
+      } else if (_stepTimers[stepIndex] == 0) {
+        // انتهى المؤقت
+        setState(() {
+          _timerRunning[stepIndex] = false;
+        });
+        // إشعار
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('⏰ انتهى وقت الخطوة ${stepIndex + 1}!', style: GoogleFonts.cairo()),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    });
+  }
+
+  // إعادة تعيين المؤقت
+  void _resetTimer(int stepIndex, int minutes) {
+    setState(() {
+      _stepTimers[stepIndex] = minutes * 60;
+      _timerRunning[stepIndex] = false;
+    });
+  }
+
+  // تنسيق الوقت المتبقي
+  String _formatTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -784,6 +884,10 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
 
   Widget _buildStepItem(int index, String step, ThemeConfig theme, Color primaryColor) {
     final isCompleted = _completedSteps.length > index ? _completedSteps[index] : false;
+    final timeInMinutes = _extractTimeFromStep(step);
+    final hasTimer = timeInMinutes != null && timeInMinutes > 0;
+    final timerSeconds = _stepTimers[index] ?? (timeInMinutes != null ? timeInMinutes * 60 : 0);
+    final isTimerRunning = _timerRunning[index] ?? false;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
@@ -810,61 +914,169 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
           borderRadius: BorderRadius.circular(15),
           child: Padding(
             padding: const EdgeInsets.all(15),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
               children: [
-                // Checkbox
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: isCompleted ? primaryColor : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: primaryColor,
-                      width: 2,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Checkbox
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: isCompleted ? primaryColor : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: primaryColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: isCompleted
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 18,
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 15),
+                    // Step Number and Text
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'الخطوة ${index + 1}',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor,
+                                ),
+                              ),
+                              if (hasTimer) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.timer_outlined,
+                                        size: 12,
+                                        color: primaryColor,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '$timeInMinutes د',
+                                        style: GoogleFonts.cairo(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            step,
+                            style: GoogleFonts.cairo(
+                              fontSize: 14,
+                              color: theme.textPrimaryColor.withOpacity(
+                                isCompleted ? 0.6 : 1.0,
+                              ),
+                              decoration: isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                // Timer Controls
+                if (hasTimer) ...[
+                  const SizedBox(height: 15),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          primaryColor.withOpacity(0.1),
+                          primaryColor.withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: primaryColor.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Timer Display
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              color: isTimerRunning ? Colors.green : primaryColor,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              _formatTime(timerSeconds),
+                              style: GoogleFonts.cairo(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: isTimerRunning ? Colors.green : theme.textPrimaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Timer Buttons
+                        Row(
+                          children: [
+                            // Start/Pause Button
+                            IconButton(
+                              onPressed: () => _toggleTimer(index, timeInMinutes!),
+                              icon: Icon(
+                                isTimerRunning ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                                color: isTimerRunning ? Colors.orange : Colors.green,
+                                size: 32,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                            const SizedBox(width: 10),
+                            // Reset Button
+                            IconButton(
+                              onPressed: () => _resetTimer(index, timeInMinutes!),
+                              icon: Icon(
+                                Icons.refresh_rounded,
+                                color: primaryColor,
+                                size: 28,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  child: isCompleted
-                      ? const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 18,
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 15),
-                // Step Number and Text
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'الخطوة ${index + 1}',
-                        style: GoogleFonts.cairo(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        step,
-                        style: GoogleFonts.cairo(
-                          fontSize: 14,
-                          color: theme.textPrimaryColor.withOpacity(
-                            isCompleted ? 0.6 : 1.0,
-                          ),
-                          decoration: isCompleted
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ],
             ),
           ),
