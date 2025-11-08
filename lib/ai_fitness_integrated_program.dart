@@ -39,6 +39,12 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
   String? _currentProgramId;
   TabController? _tabController;
   int _selectedTabIndex = 0;
+  
+  // للأهداف والتحليل الذكي
+  Map<String, dynamic>? _monthlyGoal;
+  List<Map<String, dynamic>> _weeklyGoals = [];
+  Map<String, dynamic>? _expectedResults;
+  Map<String, dynamic>? _weeklyAnalysis;
 
   @override
   void initState() {
@@ -146,6 +152,15 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
   }
 
   Future<void> _startProgram() async {
+    if (widget.initialAnalysis == null) {
+      NotificationsService.instance.toast(
+        'يرجى إجراء التحليل أولاً',
+        icon: Icons.warning,
+        color: Colors.orange,
+      );
+      return;
+    }
+    
     // طلب اسم البرنامج
     final TextEditingController nameController = TextEditingController();
     final programName = await showDialog<String>(
@@ -180,6 +195,68 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
     
     if (programName == null || programName.isEmpty) return;
     
+    // عرض مؤشر التحميل
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      // استدعاء API لتوليد خطة 30 يوم
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/ai/fitness/generate-30day-plan'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'program_name': programName,
+          'initial_analysis': widget.initialAnalysis,
+          'user_data': {
+            'weight': prefs.getString('user_weight'),
+            'height': prefs.getString('user_height'),
+            'age': prefs.getString('user_age'),
+            'gender': prefs.getString('user_gender'),
+            'waist': prefs.getString('user_waist'),
+            'neck': prefs.getString('user_neck'),
+            'activity_level': prefs.getString('user_activity_level'),
+            'goal': prefs.getString('user_goal'),
+            'fitness_level': prefs.getString('user_fitness_level'),
+          },
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final planData = json.decode(response.body);
+        
+        // حفظ الأهداف
+        _monthlyGoal = planData['plan']['monthly_goal'];
+        _weeklyGoals = List<Map<String, dynamic>>.from(planData['plan']['weekly_goals'] ?? []);
+        _expectedResults = planData['plan']['expected_results'];
+        
+        NotificationsService.instance.toast(
+          'تم توليد خطة 30 يوم بنجاح! 🎯',
+          icon: Icons.check_circle,
+          color: Colors.green,
+        );
+      } else {
+        throw Exception('فشل توليد الخطة');
+      }
+    } catch (e) {
+      print('❌ خطأ في توليد الخطة: $e');
+      NotificationsService.instance.toast(
+        'حدث خطأ أثناء توليد الخطة',
+        icon: Icons.error,
+        color: Colors.red,
+      );
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+    
     // إنشاء برنامج جديد
     final newProgramId = DateTime.now().millisecondsSinceEpoch.toString();
     final newProgram = {
@@ -196,6 +273,10 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
           'image': null,
         }
       ],
+      'monthly_goal': _monthlyGoal,
+      'weekly_goals': _weeklyGoals,
+      'expected_results': _expectedResults,
+      'weekly_analyses': [],
     };
     
     _allPrograms.add(newProgram);
@@ -207,6 +288,7 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
       _currentDayInWeek = 1;
       _dailyProgress.clear();
       _weeklySnapshots = (newProgram['snapshots'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
+      _isLoading = false;
     });
     
     // إنشاء TabController جديد
