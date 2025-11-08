@@ -294,126 +294,146 @@ class _AIToolsPageState extends State<AIToolsPage> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // AppBar مبهر مع تأثير Glass
-          SliverAppBar(
-            expandedHeight: 200,
-            floating: false,
-            pinned: true,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            ThemeConfig.kGoldNight.withOpacity(0.3),
-                            ThemeConfig.kGoldNight.withOpacity(0.1),
-                          ]
-                        : [
-                            ThemeConfig.kGreen.withOpacity(0.3),
-                            ThemeConfig.kGreen.withOpacity(0.1),
-                          ],
-                  ),
+          // Compact Header with Logo
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: isDark
+                      ? [
+                          ThemeConfig.kGoldNight.withOpacity(0.2),
+                          ThemeConfig.kGoldNight.withOpacity(0.05),
+                        ]
+                      : [
+                          ThemeConfig.kGreen.withOpacity(0.2),
+                          ThemeConfig.kGreen.withOpacity(0.05),
+                        ],
                 ),
-                child: Stack(
-                  children: [
-                    // Animated circles background
-                    Positioned(
-                      top: -50,
-                      right: -50,
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              primaryColor.withOpacity(0.3),
-                              primaryColor.withOpacity(0.0),
-                            ],
-                          ),
-                        ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: primaryColor.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Dalma Logo
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          primaryColor.withOpacity(0.3),
+                          primaryColor.withOpacity(0.1),
+                        ],
                       ),
-                    ),
-                    Positioned(
-                      bottom: -30,
-                      left: -30,
-                      child: Container(
-                        width: 150,
-                        height: 150,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              primaryColor.withOpacity(0.2),
-                              primaryColor.withOpacity(0.0),
-                            ],
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primaryColor.withOpacity(0.3),
+                          blurRadius: 15,
+                          spreadRadius: 2,
                         ),
-                      ),
+                      ],
                     ),
-                    // Content
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 60),
-                          // Icon مع تأثير Glow
-                          Container(
-                            padding: const EdgeInsets.all(20),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/logo.png',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: [
-                                  primaryColor.withOpacity(0.3),
-                                  primaryColor.withOpacity(0.1),
+                                  primaryColor,
+                                  primaryColor.withOpacity(0.7),
                                 ],
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: primaryColor.withOpacity(0.3),
-                                  blurRadius: 30,
-                                  spreadRadius: 5,
+                            ),
+                            child: Center(
+                              child: Text(
+                                'د',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
-                              ],
+                              ),
                             ),
-                            child: Text(
-                              '🤖',
-                              style: const TextStyle(fontSize: 50),
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-                          // Title
-                          Text(
-                            'أدوات الدلما',
-                            style: GoogleFonts.cairo(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: theme.textPrimaryColor,
-                              shadows: [
-                                Shadow(
-                                  color: primaryColor.withOpacity(0.3),
-                                  blurRadius: 10,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            'أدوات ذكية لتسهيل حياتك',
-                            style: GoogleFonts.cairo(
-                              fontSize: 14,
-                              color: theme.textPrimaryColor.withOpacity(0.7),
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 15),
+                  // Title and Subtitle
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'أدوات الدلما',
+                          style: GoogleFonts.cairo(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textPrimaryColor,
+                          ),
+                        ),
+                        Text(
+                          'أدوات ذكية لتسهيل حياتك',
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            color: theme.textPrimaryColor.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // AI Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          primaryColor.withOpacity(0.3),
+                          primaryColor.withOpacity(0.2),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: primaryColor.withOpacity(0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '✨',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'AI',
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
