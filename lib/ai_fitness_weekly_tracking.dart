@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'theme_config.dart';
 import 'api_config.dart';
-import 'notifications_service.dart';
+import 'notifications.dart';
 import 'ai_fitness_progress_comparison.dart';
 
 class AIFitnessWeeklyTrackingPage extends StatefulWidget {
