@@ -418,17 +418,16 @@ class _AIToolsPageState extends State<AIToolsPage> {
             ),
           ),
 
-          // Categories Horizontal Scroll
+          // Categories Chips
           SliverToBoxAdapter(
             child: Container(
-              height: 120,
               margin: const EdgeInsets.symmetric(vertical: 20),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _categories.length,
-                itemBuilder: (context, index) {
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: List.generate(_categories.length, (index) {
                   final category = _categories[index];
                   final isSelected = _selectedCategoryIndex == index;
                   
@@ -440,68 +439,71 @@ class _AIToolsPageState extends State<AIToolsPage> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      width: 100,
-                      margin: const EdgeInsets.only(left: 15),
+                      curve: Curves.easeInOut,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         gradient: isSelected
                             ? category['gradient']
                             : LinearGradient(
                                 colors: [
-                                  theme.cardColor,
-                                  theme.cardColor,
+                                  theme.cardColor.withOpacity(0.5),
+                                  theme.cardColor.withOpacity(0.3),
                                 ],
                               ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(25),
                         border: Border.all(
                           color: isSelected
-                              ? Colors.white.withOpacity(0.3)
-                              : theme.textPrimaryColor.withOpacity(0.1),
-                          width: 2,
+                              ? Colors.white.withOpacity(0.4)
+                              : theme.textPrimaryColor.withOpacity(0.2),
+                          width: 1.5,
                         ),
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: (category['color'] as Color).withOpacity(0.4),
-                                  blurRadius: 20,
-                                  spreadRadius: 2,
+                                  color: (category['color'] as Color).withOpacity(0.3),
+                                  blurRadius: 15,
+                                  spreadRadius: 1,
+                                  offset: const Offset(0, 4),
                                 ),
                               ]
-                            : [],
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                category['icon'],
-                                style: TextStyle(
-                                  fontSize: isSelected ? 40 : 35,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                category['name'],
-                                style: GoogleFonts.cairo(
-                                  fontSize: 13,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.w600,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : theme.textPrimaryColor,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            category['icon'],
+                            style: TextStyle(
+                              fontSize: isSelected ? 22 : 20,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Text(
+                            category['name'],
+                            style: GoogleFonts.cairo(
+                              fontSize: isSelected ? 15 : 14,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w600,
+                              color: isSelected
+                                  ? Colors.white
+                                  : theme.textPrimaryColor,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
-                },
+                }),
               ),
             ),
           ),
