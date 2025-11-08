@@ -1035,9 +1035,111 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
 
     return Scaffold(
       backgroundColor: theme.backgroundColor,
-      body: _allPrograms.isEmpty
-          ? _buildStartScreen(theme, primaryColor, isDark)
-          : _buildProgramScreen(theme, primaryColor, isDark),
+      body: Stack(
+        children: [
+          // المحتوى الأساسي
+          _allPrograms.isEmpty
+              ? _buildStartScreen(theme, primaryColor, isDark)
+              : _buildProgramScreen(theme, primaryColor, isDark),
+          
+          // شاشة التحميل
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.7),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(30),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withOpacity(0.3),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // شعار الدلما
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [primaryColor, primaryColor.withOpacity(0.6)],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withOpacity(0.5),
+                              blurRadius: 15,
+                              spreadRadius: 3,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'د',
+                            style: GoogleFonts.cairo(
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 25),
+                      
+                      // Spinner
+                      SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 4,
+                          valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                        ),
+                      ),
+                      const SizedBox(height: 25),
+                      
+                      // رسالة التحميل
+                      Text(
+                        'الدلما تنشئ برنامجك...',
+                        style: GoogleFonts.cairo(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textPrimaryColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'جاري تحليل بياناتك وإنشاء خطة 30 يوم',
+                        style: GoogleFonts.cairo(
+                          fontSize: 14,
+                          color: theme.textPrimaryColor.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'قد يستغرق هذا بضع ثوانٍ...',
+                        style: GoogleFonts.cairo(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: theme.textPrimaryColor.withOpacity(0.5),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
