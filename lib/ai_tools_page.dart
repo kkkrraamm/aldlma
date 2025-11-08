@@ -541,143 +541,152 @@ class _AIToolsPageState extends State<AIToolsPage> {
             ),
           ),
 
-          // Modern Horizontal Scrollable Categories
+          // Elegant Categories Grid
           SliverToBoxAdapter(
             child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 20),
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Selected Category Display
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          (_categories[_selectedCategoryIndex]['color'] as Color).withOpacity(0.8),
-                          (_categories[_selectedCategoryIndex]['color'] as Color).withOpacity(0.5),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (_categories[_selectedCategoryIndex]['color'] as Color).withOpacity(0.3),
-                          blurRadius: 20,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
+                  // Section Title
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 15),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        TweenAnimationBuilder<double>(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.elasticOut,
-                          tween: Tween(begin: 0.8, end: 1.0),
-                          builder: (context, scale, child) {
-                            return Transform.scale(
-                              scale: scale,
-                              child: Text(
-                                _categories[_selectedCategoryIndex]['icon'],
-                                style: const TextStyle(fontSize: 50),
-                              ),
-                            );
-                          },
+                        Container(
+                          width: 4,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                                (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen).withOpacity(0.5),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
-                        const SizedBox(width: 15),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _categories[_selectedCategoryIndex]['name'],
-                              style: GoogleFonts.cairo(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              '${_getFilteredTools().length} أداة متاحة',
-                              style: GoogleFonts.cairo(
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
-                            ),
-                          ],
+                        const SizedBox(width: 10),
+                        Text(
+                          'التصنيفات',
+                          style: GoogleFonts.cairo(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textPrimaryColor,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${_getFilteredTools().length} أداة',
+                          style: GoogleFonts.cairo(
+                            fontSize: 14,
+                            color: theme.textPrimaryColor.withOpacity(0.6),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Horizontal Scrollable Categories
-                  SizedBox(
-                    height: 50,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: _categories.length,
-                      itemBuilder: (context, index) {
-                        final category = _categories[index];
-                        final isSelected = _selectedCategoryIndex == index;
-                        
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedCategoryIndex = index;
-                            });
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: const EdgeInsets.only(left: 10),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? (category['color'] as Color).withOpacity(0.2)
-                                  : theme.cardColor.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(25),
-                              border: Border.all(
-                                color: isSelected
-                                    ? (category['color'] as Color)
-                                    : theme.textPrimaryColor.withOpacity(0.2),
-                                width: 2,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  category['icon'],
-                                  style: TextStyle(
-                                    fontSize: isSelected ? 20 : 18,
-                                  ),
-                                ),
-                                if (isSelected) ...[
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    category['name'],
-                                    style: GoogleFonts.cairo(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: theme.textPrimaryColor,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                  // Categories Grid
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      childAspectRatio: 1.0,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
                     ),
+                    itemCount: _categories.length,
+                    itemBuilder: (context, index) {
+                      final category = _categories[index];
+                      final isSelected = _selectedCategoryIndex == index;
+                      
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedCategoryIndex = index;
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          decoration: BoxDecoration(
+                            gradient: isSelected
+                                ? LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      (category['color'] as Color).withOpacity(0.8),
+                                      (category['color'] as Color).withOpacity(0.5),
+                                    ],
+                                  )
+                                : LinearGradient(
+                                    colors: [
+                                      theme.cardColor.withOpacity(0.5),
+                                      theme.cardColor.withOpacity(0.3),
+                                    ],
+                                  ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected
+                                  ? (category['color'] as Color).withOpacity(0.6)
+                                  : theme.textPrimaryColor.withOpacity(0.1),
+                              width: isSelected ? 2 : 1,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: (category['color'] as Color).withOpacity(0.3),
+                                      blurRadius: 15,
+                                      spreadRadius: 2,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              TweenAnimationBuilder<double>(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.elasticOut,
+                                tween: Tween(
+                                  begin: isSelected ? 0.8 : 1.0,
+                                  end: isSelected ? 1.1 : 1.0,
+                                ),
+                                builder: (context, scale, child) {
+                                  return Transform.scale(
+                                    scale: scale,
+                                    child: Text(
+                                      category['icon'],
+                                      style: TextStyle(
+                                        fontSize: isSelected ? 32 : 28,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                category['name'],
+                                style: GoogleFonts.cairo(
+                                  fontSize: 11,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : theme.textPrimaryColor.withOpacity(0.8),
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
