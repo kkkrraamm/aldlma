@@ -19,6 +19,7 @@ import 'api_config.dart';
 import 'notifications.dart';
 import 'ai_fitness_weekly_tracking.dart';
 import 'ai_fitness_30day_plan.dart';
+import 'ai_fitness_integrated_program.dart';
 
 class AIFitnessAnalyzerPage extends StatefulWidget {
   const AIFitnessAnalyzerPage({Key? key}) : super(key: key);
@@ -383,10 +384,8 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
         return AIFitnessWeeklyTrackingPage();
       case 3:
         if (_result['is_body'] == true && _result['workout_plan'] != null) {
-          return AIFitness30DayPlanPage(
-            workoutPlan: _result,
-            nutritionPlan: _result['nutrition_plan'] ?? {},
-            goalRecommendation: _result['goal_recommendation'] ?? 'تحسين اللياقة',
+          return AIFitnessIntegratedProgramPage(
+            initialAnalysis: _result,
           );
         } else {
           return _buildAnalysisPage(theme, primaryColor, isDark);
@@ -1565,7 +1564,7 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'ابدأ برنامج 30 يوم وتتبع تقدمك يومياً',
+                  'برنامج 30 يوم متكامل مع تتبع أسبوعي',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.cairo(
                     fontSize: 14,
@@ -1580,17 +1579,15 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AIFitness30DayPlanPage(
-                            workoutPlan: _result,
-                            nutritionPlan: _result['nutrition_plan'] ?? {},
-                            goalRecommendation: _result['goal_recommendation'] ?? 'تحسين اللياقة',
+                          builder: (context) => AIFitnessIntegratedProgramPage(
+                            initialAnalysis: _result,
                           ),
                         ),
                       );
                     },
                     icon: const Icon(Icons.play_arrow, size: 24),
                     label: Text(
-                      'ابدأ برنامج 30 يوم',
+                      'ابدأ البرنامج المتكامل',
                       style: GoogleFonts.cairo(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
