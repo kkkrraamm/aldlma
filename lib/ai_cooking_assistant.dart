@@ -182,6 +182,15 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
       if (response.statusCode == 200) {
         final result = json.decode(utf8.decode(response.bodyBytes));
         
+        // التحقق من أن الصورة تحتوي على طعام/مكونات
+        if (result['is_food'] == false) {
+          setState(() {
+            _image = null;
+          });
+          _showError('⚠️ الصورة لا تحتوي على طعام أو مكونات. يرجى تصوير مكونات طعام.');
+          return;
+        }
+        
         // حفظ الصورة محلياً
         final imagePath = await _saveImageLocally(_image!);
         
@@ -660,9 +669,9 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
-              // X Button (Delete)
+              // X Button (Delete) - أسفل اليمين
               Positioned(
-                top: 12,
+                bottom: 12,
                 right: 12,
                 child: GestureDetector(
                   onTap: () {
