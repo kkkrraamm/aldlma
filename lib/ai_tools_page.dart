@@ -18,10 +18,8 @@ class AIToolsPage extends StatefulWidget {
   State<AIToolsPage> createState() => _AIToolsPageState();
 }
 
-class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin {
+class _AIToolsPageState extends State<AIToolsPage> {
   int _selectedCategoryIndex = 0;
-  AnimationController? _animationController;
-  Animation<double>? _fadeAnimation;
 
   // التصنيفات مع الأدوات
   final List<Map<String, dynamic>> _categories = [
@@ -276,24 +274,6 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
     },
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController!, curve: Curves.easeInOut),
-    );
-    _animationController!.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController?.dispose();
-    super.dispose();
-  }
 
   List<Map<String, dynamic>> _getFilteredTools() {
     if (_selectedCategoryIndex == 0) {
@@ -457,8 +437,6 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
                       setState(() {
                         _selectedCategoryIndex = index;
                       });
-                      _animationController?.reset();
-                      _animationController?.forward();
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
@@ -532,9 +510,10 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: FadeTransition(
-                opacity: _fadeAnimation ?? const AlwaysStoppedAnimation(1.0),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
                 child: Text(
+                  key: ValueKey(_selectedCategoryIndex),
                   '${_getFilteredTools().length} أداة متاحة',
                   style: GoogleFonts.cairo(
                     fontSize: 16,
@@ -549,22 +528,20 @@ class _AIToolsPageState extends State<AIToolsPage> with TickerProviderStateMixin
           // Tools Grid
           SliverPadding(
             padding: const EdgeInsets.all(20),
-            sliver: FadeTransition(
-              opacity: _fadeAnimation ?? const AlwaysStoppedAnimation(1.0),
-              child: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.85,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final tool = _getFilteredTools()[index];
-                    return _buildToolCard(context, tool, theme, isDark);
-                  },
-                  childCount: _getFilteredTools().length,
-                ),
+            sliver: SliverGrid(
+              key: ValueKey(_selectedCategoryIndex),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.85,
+                crossAxisSpacing: 15,
+                mainAxisSpacing: 15,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final tool = _getFilteredTools()[index];
+                  return _buildToolCard(context, tool, theme, isDark);
+                },
+                childCount: _getFilteredTools().length,
               ),
             ),
           ),
