@@ -42,6 +42,7 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
   String _activityLevel = 'متوسط';
   String _goal = 'بناء عضلات';
   bool _showUserDataForm = false;
+  bool _isDataFilled = false;
   
   // البيانات الافتراضية (قبل التحليل)
   Map<String, dynamic> _result = {
@@ -91,6 +92,7 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
         _gender = prefs.getString('user_gender') ?? 'ذكر';
         _activityLevel = prefs.getString('user_activity_level') ?? 'متوسط';
         _goal = prefs.getString('user_goal') ?? 'بناء عضلات';
+        _isDataFilled = prefs.getBool('user_data_filled') ?? false;
       });
     } catch (e) {
       print('❌ فشل تحميل بيانات المستخدم: $e');
@@ -107,6 +109,13 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       await prefs.setString('user_gender', _gender);
       await prefs.setString('user_activity_level', _activityLevel);
       await prefs.setString('user_goal', _goal);
+      await prefs.setBool('user_data_filled', true);
+      
+      setState(() {
+        _isDataFilled = true;
+        _showUserDataForm = false; // إخفاء النموذج بعد الحفظ
+      });
+      
       print('✅ تم حفظ بيانات المستخدم');
     } catch (e) {
       print('❌ فشل حفظ بيانات المستخدم: $e');
@@ -503,14 +512,18 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: _showUserDataForm
-                ? [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.1)]
-                : [primaryColor.withOpacity(0.1), primaryColor.withOpacity(0.05)],
+            colors: _isDataFilled
+                ? [Colors.green.withOpacity(0.15), Colors.green.withOpacity(0.08)]
+                : _showUserDataForm
+                    ? [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.1)]
+                    : [primaryColor.withOpacity(0.1), primaryColor.withOpacity(0.05)],
           ),
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: primaryColor.withOpacity(_showUserDataForm ? 0.5 : 0.3),
-            width: _showUserDataForm ? 2 : 1,
+            color: _isDataFilled
+                ? Colors.green.withOpacity(0.5)
+                : primaryColor.withOpacity(_showUserDataForm ? 0.5 : 0.3),
+            width: _isDataFilled || _showUserDataForm ? 2 : 1,
           ),
         ),
         child: Row(
@@ -518,12 +531,18 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: primaryColor.withOpacity(0.2),
+                color: _isDataFilled
+                    ? Colors.green.withOpacity(0.2)
+                    : primaryColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                _showUserDataForm ? Icons.expand_less : Icons.expand_more,
-                color: primaryColor,
+                _isDataFilled
+                    ? Icons.check_circle_rounded
+                    : _showUserDataForm
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                color: _isDataFilled ? Colors.green : primaryColor,
                 size: 24,
               ),
             ),
@@ -532,17 +551,58 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'بياناتي الشخصية (اختياري)',
-                    style: GoogleFonts.cairo(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textPrimaryColor,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'بياناتي الشخصية',
+                        style: GoogleFonts.cairo(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textPrimaryColor,
+                        ),
+                      ),
+                      if (_isDataFilled) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'تم التعبئة',
+                            style: GoogleFonts.cairo(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'اختياري',
+                            style: GoogleFonts.cairo(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _showUserDataForm ? 'إخفاء النموذج' : 'أضف بياناتك لتحليل أدق',
+                    _isDataFilled
+                        ? (_showUserDataForm ? 'إخفاء البيانات' : 'اضغط للتعديل')
+                        : (_showUserDataForm ? 'إخفاء النموذج' : 'أضف بياناتك لتحليل أدق'),
                     style: GoogleFonts.cairo(
                       fontSize: 11,
                       color: theme.textPrimaryColor.withOpacity(0.6),
@@ -552,8 +612,8 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
               ),
             ),
             Icon(
-              Icons.edit_outlined,
-              color: primaryColor.withOpacity(0.7),
+              _isDataFilled ? Icons.edit_outlined : Icons.add_circle_outline,
+              color: _isDataFilled ? Colors.green.withOpacity(0.7) : primaryColor.withOpacity(0.7),
               size: 20,
             ),
           ],
