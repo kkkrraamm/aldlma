@@ -471,7 +471,7 @@ class _AIToolsPageState extends State<AIToolsPage> {
                                 ),
                                 child: ClipOval(
                                   child: Image.asset(
-                                    'assets/logo.png',
+                                    'assets/img/aldlma.png',
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(
