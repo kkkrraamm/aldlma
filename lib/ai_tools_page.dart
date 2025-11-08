@@ -439,16 +439,16 @@ class _AIToolsPageState extends State<AIToolsPage> {
                             children: [
                               // Soft radial glow
                               Container(
-                                width: 250,
-                                height: 250,
+                                width: 300,
+                                height: 300,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   gradient: RadialGradient(
                                     colors: [
-                                      primaryColor.withOpacity(0.25),
-                                      primaryColor.withOpacity(0.15),
-                                      primaryColor.withOpacity(0.08),
-                                      primaryColor.withOpacity(0.03),
+                                      primaryColor.withOpacity(0.3),
+                                      primaryColor.withOpacity(0.2),
+                                      primaryColor.withOpacity(0.1),
+                                      primaryColor.withOpacity(0.05),
                                       Colors.transparent,
                                     ],
                                     stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
@@ -457,15 +457,15 @@ class _AIToolsPageState extends State<AIToolsPage> {
                               ),
                               // Logo
                               Container(
-                                width: 100,
-                                height: 100,
+                                width: 140,
+                                height: 140,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
                                       color: primaryColor.withOpacity(0.3),
-                                      blurRadius: 20,
-                                      spreadRadius: 5,
+                                      blurRadius: 25,
+                                      spreadRadius: 8,
                                     ),
                                   ],
                                 ),
