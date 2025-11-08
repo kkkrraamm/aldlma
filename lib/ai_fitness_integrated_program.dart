@@ -1906,9 +1906,8 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
                     ),
                     child: CheckboxListTile(
                       value: isCompleted,
-                      onChanged: (isFuture || (isPhotoTask && _weeklyImage == null))
-                          ? null
-                          : (value) => _toggleTask(dayKey, taskKey),
+                      // السماح بوضع ✓ على أي يوم للاختبار
+                      onChanged: (value) => _toggleTask(dayKey, taskKey),
                       title: Row(
                         children: [
                           Icon(

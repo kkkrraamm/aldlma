@@ -240,15 +240,18 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
   }
 
   Future<void> _analyzeBody() async {
-    if (_image == null) return;
+    // السماح بالتحليل بدون صورة (فقط البيانات)
+    String? base64Image;
+    if (_image != null) {
+      final bytes = await _image!.readAsBytes();
+      base64Image = base64Encode(bytes);
+    }
 
     setState(() {
       _isAnalyzing = true;
     });
 
     try {
-      final bytes = await _image!.readAsBytes();
-      final base64Image = base64Encode(bytes);
 
       // إعداد البيانات الشخصية (اختياري)
       Map<String, dynamic> userData = {};
@@ -1360,7 +1363,7 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
                   ),
                 ),
               ),
-              const SizedBox(width: 15),
+              const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () => _pickImage(ImageSource.gallery),
@@ -1381,6 +1384,47 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
                 ),
               ),
             ],
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // زر التحليل بدون صورة
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                // التحقق من البيانات الأساسية
+                if (_weightController.text.isEmpty || _heightController.text.isEmpty || _ageController.text.isEmpty) {
+                  NotificationsService.instance.toast(
+                    'يرجى إدخال الوزن والطول والعمر على الأقل',
+                    icon: Icons.warning,
+                    color: Colors.orange,
+                  );
+                  // فتح نموذج البيانات
+                  setState(() {
+                    _showUserDataForm = true;
+                  });
+                  return;
+                }
+                await _analyzeBody();
+              },
+              icon: const Icon(Icons.analytics_outlined, size: 20),
+              label: Text(
+                'تحليل بالبيانات فقط (بدون صورة)',
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primaryColor,
+                side: BorderSide(color: primaryColor.withOpacity(0.5), width: 1.5),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            ),
           ),
         ],
       ),
