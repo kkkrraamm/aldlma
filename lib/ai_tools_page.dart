@@ -418,241 +418,149 @@ class _AIToolsPageState extends State<AIToolsPage> {
             ),
           ),
 
-          // Innovative 3D Categories Carousel
+          // Modern Horizontal Scrollable Categories
           SliverToBoxAdapter(
             child: Container(
-              height: 160,
               margin: const EdgeInsets.symmetric(vertical: 20),
-              child: Stack(
+              child: Column(
                 children: [
-                  // Background Glow Effect
-                  Positioned.fill(
-                    child: Center(
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 500),
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              (_categories[_selectedCategoryIndex]['color'] as Color).withOpacity(0.2),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
+                  // Selected Category Display
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          (_categories[_selectedCategoryIndex]['color'] as Color).withOpacity(0.8),
+                          (_categories[_selectedCategoryIndex]['color'] as Color).withOpacity(0.5),
+                        ],
                       ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (_categories[_selectedCategoryIndex]['color'] as Color).withOpacity(0.3),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TweenAnimationBuilder<double>(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.elasticOut,
+                          tween: Tween(begin: 0.8, end: 1.0),
+                          builder: (context, scale, child) {
+                            return Transform.scale(
+                              scale: scale,
+                              child: Text(
+                                _categories[_selectedCategoryIndex]['icon'],
+                                style: const TextStyle(fontSize: 50),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 15),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _categories[_selectedCategoryIndex]['name'],
+                              style: GoogleFonts.cairo(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              '${_getFilteredTools().length} أداة متاحة',
+                              style: GoogleFonts.cairo(
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   
-                  // 3D Carousel
-                  PageView.builder(
-                    controller: PageController(
-                      viewportFraction: 0.35,
-                      initialPage: _selectedCategoryIndex,
-                    ),
-                    onPageChanged: (index) {
-                      setState(() {
-                        _selectedCategoryIndex = index;
-                      });
-                    },
-                    itemCount: _categories.length,
-                    itemBuilder: (context, index) {
-                      final category = _categories[index];
-                      final isSelected = _selectedCategoryIndex == index;
-                      final distance = (index - _selectedCategoryIndex).abs();
-                      final scale = isSelected ? 1.0 : 0.75 - (distance * 0.1);
-                      final opacity = isSelected ? 1.0 : 0.4 - (distance * 0.15);
-                      
-                      return TweenAnimationBuilder<double>(
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeOutCubic,
-                        tween: Tween(begin: 0, end: scale.clamp(0.5, 1.0)),
-                        builder: (context, scaleValue, child) {
-                          return Transform.scale(
-                            scale: scaleValue,
-                            child: Opacity(
-                              opacity: opacity.clamp(0.2, 1.0),
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedCategoryIndex = index;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 400),
-                                  curve: Curves.easeOutCubic,
-                                  margin: EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: isSelected ? 10 : 20,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: isSelected
-                                        ? LinearGradient(
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                            colors: [
-                                              (category['color'] as Color),
-                                              (category['color'] as Color).withOpacity(0.7),
-                                            ],
-                                          )
-                                        : LinearGradient(
-                                            colors: [
-                                              theme.cardColor.withOpacity(0.6),
-                                              theme.cardColor.withOpacity(0.4),
-                                            ],
-                                          ),
-                                    borderRadius: BorderRadius.circular(25),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? Colors.white.withOpacity(0.5)
-                                          : theme.textPrimaryColor.withOpacity(0.15),
-                                      width: isSelected ? 2.5 : 1.5,
-                                    ),
-                                    boxShadow: isSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: (category['color'] as Color).withOpacity(0.4),
-                                              blurRadius: 25,
-                                              spreadRadius: 3,
-                                              offset: const Offset(0, 8),
-                                            ),
-                                            BoxShadow(
-                                              color: Colors.white.withOpacity(0.1),
-                                              blurRadius: 10,
-                                              spreadRadius: -5,
-                                              offset: const Offset(0, -5),
-                                            ),
-                                          ]
-                                        : [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.1),
-                                              blurRadius: 10,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ],
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(25),
-                                    child: BackdropFilter(
-                                      filter: ImageFilter.blur(
-                                        sigmaX: isSelected ? 15 : 8,
-                                        sigmaY: isSelected ? 15 : 8,
-                                      ),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                            colors: [
-                                              Colors.white.withOpacity(isSelected ? 0.15 : 0.05),
-                                              Colors.white.withOpacity(isSelected ? 0.05 : 0.02),
-                                            ],
-                                          ),
-                                        ),
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            // Animated Icon
-                                            TweenAnimationBuilder<double>(
-                                              duration: const Duration(milliseconds: 400),
-                                              curve: Curves.elasticOut,
-                                              tween: Tween(
-                                                begin: 0,
-                                                end: isSelected ? 1.2 : 1.0,
-                                              ),
-                                              builder: (context, iconScale, child) {
-                                                return Transform.scale(
-                                                  scale: iconScale,
-                                                  child: Container(
-                                                    padding: const EdgeInsets.all(12),
-                                                    decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      color: isSelected
-                                                          ? Colors.white.withOpacity(0.2)
-                                                          : Colors.transparent,
-                                                    ),
-                                                    child: Text(
-                                                      category['icon'],
-                                                      style: TextStyle(
-                                                        fontSize: isSelected ? 40 : 32,
-                                                        shadows: isSelected
-                                                            ? [
-                                                                Shadow(
-                                                                  color: Colors.black.withOpacity(0.3),
-                                                                  blurRadius: 10,
-                                                                  offset: const Offset(0, 4),
-                                                                ),
-                                                              ]
-                                                            : [],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            
-                                            const SizedBox(height: 8),
-                                            
-                                            // Category Name
-                                            Text(
-                                              category['name'],
-                                              style: GoogleFonts.cairo(
-                                                fontSize: isSelected ? 16 : 13,
-                                                fontWeight: isSelected
-                                                    ? FontWeight.bold
-                                                    : FontWeight.w600,
-                                                color: isSelected
-                                                    ? Colors.white
-                                                    : theme.textPrimaryColor.withOpacity(0.8),
-                                                shadows: isSelected
-                                                    ? [
-                                                        Shadow(
-                                                          color: Colors.black.withOpacity(0.3),
-                                                          blurRadius: 8,
-                                                          offset: const Offset(0, 2),
-                                                        ),
-                                                      ]
-                                                    : [],
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                  const SizedBox(height: 20),
+                  
+                  // Horizontal Scrollable Categories
+                  SizedBox(
+                    height: 50,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: _categories.length,
+                      itemBuilder: (context, index) {
+                        final category = _categories[index];
+                        final isSelected = _selectedCategoryIndex == index;
+                        
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedCategoryIndex = index;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.only(left: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? (category['color'] as Color).withOpacity(0.2)
+                                  : theme.cardColor.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(25),
+                              border: Border.all(
+                                color: isSelected
+                                    ? (category['color'] as Color)
+                                    : theme.textPrimaryColor.withOpacity(0.2),
+                                width: 2,
                               ),
                             ),
-                          );
-                        },
-                      );
-                    },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  category['icon'],
+                                  style: TextStyle(
+                                    fontSize: isSelected ? 20 : 18,
+                                  ),
+                                ),
+                                if (isSelected) ...[
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    category['name'],
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.textPrimaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
           ),
 
-          // Tools Count
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Text(
-                  key: ValueKey(_selectedCategoryIndex),
-                  '${_getFilteredTools().length} أداة متاحة',
-                  style: GoogleFonts.cairo(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: theme.textPrimaryColor.withOpacity(0.7),
-                  ),
-                ),
-              ),
-            ),
-          ),
 
           // Tools Grid
           SliverPadding(
