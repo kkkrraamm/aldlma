@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'theme_config.dart';
 import 'ai_calorie_calculator.dart';
 import 'ai_cooking_assistant.dart';
+import 'ai_fitness_analyzer.dart';
 
 class AIToolsPage extends StatefulWidget {
   const AIToolsPage({super.key});
@@ -142,6 +143,16 @@ class _AIToolsPageState extends State<AIToolsPage> {
         colors: [Color(0xFFFF6B6B), Color(0xFFEE5A6F)],
       ),
       'page': const AICookingAssistantPage(),
+    },
+    {
+      'icon': '💪',
+      'title': 'محلل البناء العضلي',
+      'subtitle': 'تحليل الجسم وبرامج تمارين وتغذية رياضية',
+      'category': 'food',
+      'gradient': const LinearGradient(
+        colors: [Color(0xFFE74C3C), Color(0xFFC0392B)],
+      ),
+      'page': const AIFitnessAnalyzerPage(),
     },
     
     // التعليم
