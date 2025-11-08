@@ -564,14 +564,14 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
   }
 
   Widget _buildStartScreen(ThemeConfig theme, Color primaryColor, bool isDark) {
-    return Center(
+    return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(30),
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(30),
+              padding: const EdgeInsets.all(25),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -583,30 +583,30 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
               ),
               child: Icon(
                 Icons.calendar_today,
-                size: 100,
+                size: 80,
                 color: primaryColor,
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
             Text(
               'برنامج 30 يوم المتكامل',
               style: GoogleFonts.cairo(
-                fontSize: 28,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: theme.textPrimaryColor,
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 10),
             Text(
               '4 أسابيع × 7 أيام',
               textAlign: TextAlign.center,
               style: GoogleFonts.cairo(
-                fontSize: 16,
+                fontSize: 14,
                 color: primaryColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -617,25 +617,25 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
               child: Column(
                 children: [
                   _buildFeatureRow(Icons.calendar_view_week, 'جدول أسبوعي مفصل (7 أيام)', theme),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   _buildFeatureRow(Icons.camera_alt, 'صورة أسبوعية للتتبع', theme),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   _buildFeatureRow(Icons.trending_up, 'تحليل التقدم تلقائياً', theme),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   _buildFeatureRow(Icons.refresh, 'تحديث البرنامج كل أسبوع', theme),
                 ],
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 25),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _startProgram,
-                icon: const Icon(Icons.play_arrow, size: 28),
+                icon: const Icon(Icons.play_arrow, size: 24),
                 label: Text(
                   'ابدأ البرنامج الآن',
                   style: GoogleFonts.cairo(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -649,6 +649,7 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
                 ),
               ),
             ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
