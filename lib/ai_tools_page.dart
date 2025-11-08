@@ -418,92 +418,219 @@ class _AIToolsPageState extends State<AIToolsPage> {
             ),
           ),
 
-          // Categories Chips
+          // Innovative 3D Categories Carousel
           SliverToBoxAdapter(
             child: Container(
+              height: 160,
               margin: const EdgeInsets.symmetric(vertical: 20),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                alignment: WrapAlignment.center,
-                children: List.generate(_categories.length, (index) {
-                  final category = _categories[index];
-                  final isSelected = _selectedCategoryIndex == index;
+              child: Stack(
+                children: [
+                  // Background Glow Effect
+                  Positioned.fill(
+                    child: Center(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 500),
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              (_categories[_selectedCategoryIndex]['color'] as Color).withOpacity(0.2),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   
-                  return GestureDetector(
-                    onTap: () {
+                  // 3D Carousel
+                  PageView.builder(
+                    controller: PageController(
+                      viewportFraction: 0.35,
+                      initialPage: _selectedCategoryIndex,
+                    ),
+                    onPageChanged: (index) {
                       setState(() {
                         _selectedCategoryIndex = index;
                       });
                     },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: isSelected
-                            ? category['gradient']
-                            : LinearGradient(
-                                colors: [
-                                  theme.cardColor.withOpacity(0.5),
-                                  theme.cardColor.withOpacity(0.3),
-                                ],
+                    itemCount: _categories.length,
+                    itemBuilder: (context, index) {
+                      final category = _categories[index];
+                      final isSelected = _selectedCategoryIndex == index;
+                      final distance = (index - _selectedCategoryIndex).abs();
+                      final scale = isSelected ? 1.0 : 0.75 - (distance * 0.1);
+                      final opacity = isSelected ? 1.0 : 0.4 - (distance * 0.15);
+                      
+                      return TweenAnimationBuilder<double>(
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeOutCubic,
+                        tween: Tween(begin: 0, end: scale.clamp(0.5, 1.0)),
+                        builder: (context, scaleValue, child) {
+                          return Transform.scale(
+                            scale: scaleValue,
+                            child: Opacity(
+                              opacity: opacity.clamp(0.2, 1.0),
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedCategoryIndex = index;
+                                  });
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 400),
+                                  curve: Curves.easeOutCubic,
+                                  margin: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: isSelected ? 10 : 20,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: isSelected
+                                        ? LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              (category['color'] as Color),
+                                              (category['color'] as Color).withOpacity(0.7),
+                                            ],
+                                          )
+                                        : LinearGradient(
+                                            colors: [
+                                              theme.cardColor.withOpacity(0.6),
+                                              theme.cardColor.withOpacity(0.4),
+                                            ],
+                                          ),
+                                    borderRadius: BorderRadius.circular(25),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? Colors.white.withOpacity(0.5)
+                                          : theme.textPrimaryColor.withOpacity(0.15),
+                                      width: isSelected ? 2.5 : 1.5,
+                                    ),
+                                    boxShadow: isSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: (category['color'] as Color).withOpacity(0.4),
+                                              blurRadius: 25,
+                                              spreadRadius: 3,
+                                              offset: const Offset(0, 8),
+                                            ),
+                                            BoxShadow(
+                                              color: Colors.white.withOpacity(0.1),
+                                              blurRadius: 10,
+                                              spreadRadius: -5,
+                                              offset: const Offset(0, -5),
+                                            ),
+                                          ]
+                                        : [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.1),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(25),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(
+                                        sigmaX: isSelected ? 15 : 8,
+                                        sigmaY: isSelected ? 15 : 8,
+                                      ),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              Colors.white.withOpacity(isSelected ? 0.15 : 0.05),
+                                              Colors.white.withOpacity(isSelected ? 0.05 : 0.02),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            // Animated Icon
+                                            TweenAnimationBuilder<double>(
+                                              duration: const Duration(milliseconds: 400),
+                                              curve: Curves.elasticOut,
+                                              tween: Tween(
+                                                begin: 0,
+                                                end: isSelected ? 1.2 : 1.0,
+                                              ),
+                                              builder: (context, iconScale, child) {
+                                                return Transform.scale(
+                                                  scale: iconScale,
+                                                  child: Container(
+                                                    padding: const EdgeInsets.all(12),
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: isSelected
+                                                          ? Colors.white.withOpacity(0.2)
+                                                          : Colors.transparent,
+                                                    ),
+                                                    child: Text(
+                                                      category['icon'],
+                                                      style: TextStyle(
+                                                        fontSize: isSelected ? 40 : 32,
+                                                        shadows: isSelected
+                                                            ? [
+                                                                Shadow(
+                                                                  color: Colors.black.withOpacity(0.3),
+                                                                  blurRadius: 10,
+                                                                  offset: const Offset(0, 4),
+                                                                ),
+                                                              ]
+                                                            : [],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            
+                                            const SizedBox(height: 8),
+                                            
+                                            // Category Name
+                                            Text(
+                                              category['name'],
+                                              style: GoogleFonts.cairo(
+                                                fontSize: isSelected ? 16 : 13,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.bold
+                                                    : FontWeight.w600,
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : theme.textPrimaryColor.withOpacity(0.8),
+                                                shadows: isSelected
+                                                    ? [
+                                                        Shadow(
+                                                          color: Colors.black.withOpacity(0.3),
+                                                          blurRadius: 8,
+                                                          offset: const Offset(0, 2),
+                                                        ),
+                                                      ]
+                                                    : [],
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
-                        borderRadius: BorderRadius.circular(25),
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.white.withOpacity(0.4)
-                              : theme.textPrimaryColor.withOpacity(0.2),
-                          width: 1.5,
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: (category['color'] as Color).withOpacity(0.3),
-                                  blurRadius: 15,
-                                  spreadRadius: 1,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ]
-                            : [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            category['icon'],
-                            style: TextStyle(
-                              fontSize: isSelected ? 22 : 20,
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            category['name'],
-                            style: GoogleFonts.cairo(
-                              fontSize: isSelected ? 15 : 14,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w600,
-                              color: isSelected
-                                  ? Colors.white
-                                  : theme.textPrimaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ),
