@@ -201,7 +201,7 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
       _currentWeek = 1;
       _currentDayInWeek = 1;
       _dailyProgress.clear();
-      _weeklySnapshots = List<Map<String, dynamic>>.from(newProgram['snapshots']);
+      _weeklySnapshots = (newProgram['snapshots'] as List).map((e) => Map<String, dynamic>.from(e)).toList();
     });
     
     // إنشاء TabController جديد
