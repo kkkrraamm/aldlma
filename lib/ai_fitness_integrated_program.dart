@@ -1065,29 +1065,39 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
                     children: [
                       // شعار الدلما
                       Container(
-                        width: 80,
-                        height: 80,
+                        width: 100,
+                        height: 100,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [primaryColor, primaryColor.withOpacity(0.6)],
-                          ),
                           boxShadow: [
                             BoxShadow(
                               color: primaryColor.withOpacity(0.5),
-                              blurRadius: 15,
-                              spreadRadius: 3,
+                              blurRadius: 20,
+                              spreadRadius: 5,
                             ),
                           ],
                         ),
-                        child: Center(
-                          child: Text(
-                            'د',
-                            style: GoogleFonts.cairo(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/img/aldlma.png',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [primaryColor, primaryColor.withOpacity(0.6)],
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.fitness_center,
+                                    size: 50,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -1457,7 +1467,7 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
 
     return Column(
       children: [
-        // Program Tabs with Actions
+        // Program Tabs with Actions (Fixed at top)
         if (_allPrograms.isNotEmpty && _tabController != null)
           Container(
             decoration: BoxDecoration(
@@ -1518,9 +1528,14 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
             ),
           ),
         
-        // Goals Section
-        if (_monthlyGoal != null || (_weeklyGoals.isNotEmpty && _currentWeek <= _weeklyGoals.length))
-          _buildGoalsSection(theme, primaryColor, isDark),
+        // Scrollable Content
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Goals Section
+                if (_monthlyGoal != null || (_weeklyGoals.isNotEmpty && _currentWeek <= _weeklyGoals.length))
+                  _buildGoalsSection(theme, primaryColor, isDark),
         
         // Header
         Container(
@@ -1581,14 +1596,18 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
           ),
         ),
 
-        // Week days
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(15),
-            itemCount: weekPlan.length,
-            itemBuilder: (context, index) {
-              return _buildDayCard(weekPlan[index], theme, primaryColor, isDark);
-            },
+                // Week days
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(15),
+                  itemCount: weekPlan.length,
+                  itemBuilder: (context, index) {
+                    return _buildDayCard(weekPlan[index], theme, primaryColor, isDark);
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ],
