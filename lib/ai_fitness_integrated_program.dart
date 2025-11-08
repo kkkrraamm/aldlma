@@ -237,12 +237,38 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
       print('📊 [30-DAY PLAN] Response Body: ${response.body}');
       
       if (response.statusCode == 200) {
-        final planData = json.decode(response.body);
+        final planData = json.decode(utf8.decode(response.bodyBytes));
+        
+        print('📦 [30-DAY PLAN] Plan Data Keys: ${planData['plan']?.keys.toList()}');
         
         // حفظ الأهداف
         _monthlyGoal = planData['plan']['monthly_goal'];
         _weeklyGoals = List<Map<String, dynamic>>.from(planData['plan']['weekly_goals'] ?? []);
         _expectedResults = planData['plan']['expected_results'];
+        
+        // حفظ خطة التمارين والتغذية الكاملة
+        final workoutPlan = planData['plan']['workout_plan'];
+        final nutritionPlan = planData['plan']['nutrition_plan'];
+        final supplements = planData['plan']['supplements'];
+        final tips = planData['plan']['tips'];
+        
+        print('💪 [30-DAY PLAN] Workout Plan: ${workoutPlan != null ? "موجود" : "غير موجود"}');
+        print('🍽️ [30-DAY PLAN] Nutrition Plan: ${nutritionPlan != null ? "موجود" : "غير موجود"}');
+        print('💊 [30-DAY PLAN] Supplements: ${supplements != null ? "موجود" : "غير موجود"}');
+        
+        // دمج البيانات مع التحليل الأولي
+        final completeAnalysis = {
+          ...widget.initialAnalysis ?? {},
+          'workout_plan': workoutPlan,
+          'nutrition_plan': nutritionPlan,
+          'supplements': supplements,
+          'tips': tips,
+          'goal_recommendation': _monthlyGoal?['title'],
+          'areas_to_improve': _monthlyGoal?['success_criteria'],
+        };
+        
+        // تحديث التحليل الأولي
+        widget.initialAnalysis?.addAll(completeAnalysis);
         
         NotificationsService.instance.toast(
           'تم توليد خطة 30 يوم بنجاح! 🎯',
