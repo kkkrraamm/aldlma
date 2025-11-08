@@ -45,13 +45,13 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
     'cooking_time': '0 دقيقة',
     'servings': '0 أشخاص',
     'difficulty': 'سهل',
-    'ingredients': [],
-    'steps': [],
+    'ingredients': ['قم بتصوير المكونات المتاحة لديك'],
+    'steps': ['سيتم عرض خطوات التحضير بعد التحليل'],
     'calories': '0',
     'protein': '0',
     'carbs': '0',
     'fats': '0',
-    'tips': [],
+    'tips': ['سيتم عرض نصائح الطبخ بعد التحليل'],
     'health_benefits': 'قم بتصوير المكونات المتاحة لديك للحصول على وصفة مخصصة.',
   };
 
@@ -137,13 +137,13 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
             'cooking_time': '0 دقيقة',
             'servings': '0 أشخاص',
             'difficulty': 'سهل',
-            'ingredients': [],
-            'steps': [],
+            'ingredients': ['قم بتصوير المكونات المتاحة لديك'],
+            'steps': ['سيتم عرض خطوات التحضير بعد التحليل'],
             'calories': '0',
             'protein': '0',
             'carbs': '0',
             'fats': '0',
-            'tips': [],
+            'tips': ['سيتم عرض نصائح الطبخ بعد التحليل'],
             'health_benefits': 'قم بتصوير المكونات المتاحة لديك للحصول على وصفة مخصصة.',
           };
         });
@@ -271,10 +271,8 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
 
           const SizedBox(height: 20),
 
-          // Analysis Result
-          if (_result['recipe_name'] != 'في انتظار التحليل...') ...[
-            _buildAnalysisResult(theme, primaryColor, isDark),
-          ],
+          // Analysis Result - دائماً ظاهر
+          _buildAnalysisResult(theme, primaryColor, isDark),
         ],
       ),
     );
