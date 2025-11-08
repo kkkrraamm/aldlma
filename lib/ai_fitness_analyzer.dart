@@ -18,6 +18,7 @@ import 'theme_config.dart';
 import 'api_config.dart';
 import 'notifications.dart';
 import 'ai_fitness_weekly_tracking.dart';
+import 'ai_fitness_30day_plan.dart';
 
 class AIFitnessAnalyzerPage extends StatefulWidget {
   const AIFitnessAnalyzerPage({Key? key}) : super(key: key);
@@ -1544,6 +1545,84 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           _buildSectionTitle('💡 نصائح مهمة', theme, primaryColor),
           const SizedBox(height: 15),
           _buildTips(theme, primaryColor, isDark),
+          const SizedBox(height: 25),
+        ],
+        
+        // Start 30-Day Plan Button
+        if (_result['is_body'] == true && _result['workout_plan'] != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  primaryColor.withOpacity(0.2),
+                  primaryColor.withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: primaryColor.withOpacity(0.5), width: 2),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.calendar_month, size: 60, color: primaryColor),
+                const SizedBox(height: 15),
+                Text(
+                  'جاهز للبدء؟',
+                  style: GoogleFonts.cairo(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textPrimaryColor,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'ابدأ برنامج 30 يوم وتتبع تقدمك يومياً',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cairo(
+                    fontSize: 14,
+                    color: theme.textPrimaryColor.withOpacity(0.7),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AIFitness30DayPlanPage(
+                            workoutPlan: _result,
+                            nutritionPlan: _result['nutrition_plan'] ?? {},
+                            goalRecommendation: _result['goal_recommendation'] ?? 'تحسين اللياقة',
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.play_arrow, size: 24),
+                    label: Text(
+                      'ابدأ برنامج 30 يوم',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ],
     );
