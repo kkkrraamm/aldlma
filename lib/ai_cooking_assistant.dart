@@ -649,14 +649,69 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
   Widget _buildSelectedImageSection(ThemeConfig theme, Color primaryColor, bool isDark) {
     return Column(
       children: [
-        // Image Preview
+        // Image Preview with X button
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: Image.file(
-            _image!,
-            height: 250,
-            width: double.infinity,
-            fit: BoxFit.cover,
+          child: Stack(
+            children: [
+              Image.file(
+                _image!,
+                height: 250,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+              // X Button (Delete)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _image = null;
+                      _completedSteps = [];
+                      _stepTimers.clear();
+                      _timerRunning.clear();
+                      // إعادة تعيين النتيجة
+                      _result = {
+                        'recipe_name': 'في انتظار التحليل...',
+                        'icon': '👨‍🍳',
+                        'cuisine_type': 'مطبخ عالمي',
+                        'cooking_time': '0 دقيقة',
+                        'servings': '0 أشخاص',
+                        'difficulty': 'سهل',
+                        'ingredients': ['قم بتصوير المكونات المتاحة لديك'],
+                        'steps': ['سيتم عرض خطوات التحضير بعد التحليل'],
+                        'calories': '0',
+                        'protein': '0',
+                        'carbs': '0',
+                        'fats': '0',
+                        'tips': ['سيتم عرض نصائح الطبخ بعد التحليل'],
+                        'health_benefits': 'قم بتصوير المكونات المتاحة لديك للحصول على وصفة مخصصة.',
+                      };
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         if (_isAnalyzing) ...[
