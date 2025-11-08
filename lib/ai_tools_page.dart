@@ -763,7 +763,7 @@ class _AIToolsPageState extends State<AIToolsPage> {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -780,47 +780,49 @@ class _AIToolsPageState extends State<AIToolsPage> {
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Icon مع تأثير
                   Container(
-                    padding: const EdgeInsets.all(15),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Text(
                       tool['icon'],
-                      style: const TextStyle(fontSize: 40),
+                      style: const TextStyle(fontSize: 36),
                     ),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
                   // Title
                   Text(
                     tool['title'],
                     style: GoogleFonts.cairo(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                     textAlign: TextAlign.center,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  // Subtitle
+                  Flexible(
+                    child: Text(
+                      tool['subtitle'],
+                      style: GoogleFonts.cairo(
+                        fontSize: 10,
+                        color: Colors.white.withOpacity(0.9),
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  // Subtitle
-                  Text(
-                    tool['subtitle'],
-                    style: GoogleFonts.cairo(
-                      fontSize: 11,
-                      color: Colors.white.withOpacity(0.9),
-                      height: 1.3,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Spacer(),
                   // Badge إذا كانت جاهزة
                   if (tool['page'] != null)
                     Container(
