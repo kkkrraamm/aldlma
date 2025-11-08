@@ -367,47 +367,33 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           ),
         ),
         centerTitle: true,
-        actions: [
-          // زر التتبع الأسبوعي
-          Container(
-            margin: const EdgeInsets.only(right: 10),
-            child: IconButton(
-              icon: Stack(
-                children: [
-                  Icon(Icons.calendar_month, color: primaryColor, size: 28),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '📊',
-                        style: TextStyle(fontSize: 8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AIFitnessWeeklyTrackingPage(),
-                  ),
-                );
-              },
-              tooltip: 'التتبع الأسبوعي',
-            ),
-          ),
-        ],
       ),
-      body: _currentNavIndex == 0 ? _buildAnalysisPage(theme, primaryColor, isDark) : _buildHistoryPage(theme, primaryColor, isDark),
+      body: _buildCurrentPage(theme, primaryColor, isDark),
       bottomNavigationBar: _buildBottomNav(theme, primaryColor),
     );
+  }
+
+  Widget _buildCurrentPage(ThemeConfig theme, Color primaryColor, bool isDark) {
+    switch (_currentNavIndex) {
+      case 0:
+        return _buildAnalysisPage(theme, primaryColor, isDark);
+      case 1:
+        return _buildHistoryPage(theme, primaryColor, isDark);
+      case 2:
+        return AIFitnessWeeklyTrackingPage();
+      case 3:
+        if (_result['is_body'] == true && _result['workout_plan'] != null) {
+          return AIFitness30DayPlanPage(
+            workoutPlan: _result,
+            nutritionPlan: _result['nutrition_plan'] ?? {},
+            goalRecommendation: _result['goal_recommendation'] ?? 'تحسين اللياقة',
+          );
+        } else {
+          return _buildAnalysisPage(theme, primaryColor, isDark);
+        }
+      default:
+        return _buildAnalysisPage(theme, primaryColor, isDark);
+    }
   }
 
   Widget _buildAnalysisPage(ThemeConfig theme, Color primaryColor, bool isDark) {
@@ -2355,7 +2341,7 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -2383,6 +2369,38 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
                 theme: theme,
                 primaryColor: primaryColor,
               ),
+              _buildNavItem(
+                icon: Icons.calendar_month,
+                label: 'التتبع',
+                isActive: _currentNavIndex == 2,
+                onTap: () {
+                  setState(() {
+                    _currentNavIndex = 2;
+                  });
+                },
+                theme: theme,
+                primaryColor: primaryColor,
+              ),
+              _buildNavItem(
+                icon: Icons.today,
+                label: '30 يوم',
+                isActive: _currentNavIndex == 3,
+                onTap: () {
+                  if (_result['is_body'] == true && _result['workout_plan'] != null) {
+                    setState(() {
+                      _currentNavIndex = 3;
+                    });
+                  } else {
+                    NotificationsService.instance.toast(
+                      'يرجى إجراء التحليل أولاً',
+                      icon: Icons.warning,
+                      color: Colors.orange,
+                    );
+                  }
+                },
+                theme: theme,
+                primaryColor: primaryColor,
+              ),
             ],
           ),
         ),
@@ -2398,51 +2416,52 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
     required ThemeConfig theme,
     required Color primaryColor,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: EdgeInsets.symmetric(
-          horizontal: isActive ? 20 : 12,
-          vertical: 10,
-        ),
-        decoration: BoxDecoration(
-          gradient: isActive
-              ? LinearGradient(
-                  colors: [
-                    primaryColor.withOpacity(0.2),
-                    primaryColor.withOpacity(0.1),
-                  ],
-                )
-              : null,
-          borderRadius: BorderRadius.circular(15),
-          border: isActive
-              ? Border.all(
-                  color: primaryColor.withOpacity(0.3),
-                  width: 1.5,
-                )
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isActive ? primaryColor : theme.textPrimaryColor.withOpacity(0.5),
-              size: isActive ? 24 : 22,
-            ),
-            if (isActive) ...[
-              const SizedBox(width: 8),
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: EdgeInsets.symmetric(
+            horizontal: isActive ? 8 : 4,
+            vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            gradient: isActive
+                ? LinearGradient(
+                    colors: [
+                      primaryColor.withOpacity(0.2),
+                      primaryColor.withOpacity(0.1),
+                    ],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(12),
+            border: isActive
+                ? Border.all(
+                    color: primaryColor.withOpacity(0.3),
+                    width: 1.5,
+                  )
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: isActive ? primaryColor : theme.textPrimaryColor.withOpacity(0.5),
+                size: isActive ? 24 : 20,
+              ),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: GoogleFonts.cairo(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
+                  fontSize: isActive ? 11 : 10,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                  color: isActive ? primaryColor : theme.textPrimaryColor.withOpacity(0.5),
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
