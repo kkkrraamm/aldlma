@@ -70,6 +70,11 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
         // حمّل آخر برنامج
         _currentProgramId = _allPrograms.last['id'];
         _loadSpecificProgram(_currentProgramId!);
+      } else if (widget.initialAnalysis != null) {
+        // لا توجد برامج محفوظة، اطلب إنشاء برنامج جديد
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _startProgram();
+        });
       }
       
       // إنشاء TabController

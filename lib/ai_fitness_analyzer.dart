@@ -1593,14 +1593,10 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AIFitnessIntegratedProgramPage(
-                            initialAnalysis: _result,
-                          ),
-                        ),
-                      );
+                      // الانتقال إلى تبويب "30 يوم"
+                      setState(() {
+                        _currentNavIndex = 2;
+                      });
                     },
                     icon: const Icon(Icons.play_arrow, size: 24),
                     label: Text(
