@@ -478,17 +478,69 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
               color: theme.textPrimaryColor.withOpacity(0.6),
             ),
           ),
+          
+          const SizedBox(height: 15),
+          
+          // Info Card - لماذا نحتاج هذه البيانات؟
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  primaryColor.withOpacity(0.1),
+                  primaryColor.withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: primaryColor.withOpacity(0.3),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.lightbulb_outline, color: primaryColor, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'لماذا نحتاج هذه البيانات؟',
+                      style: GoogleFonts.cairo(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _buildInfoItem('⚖️ الوزن والطول', 'لحساب BMI الدقيق وتحديد السعرات المناسبة', theme, primaryColor),
+                const SizedBox(height: 6),
+                _buildInfoItem('🎂 العمر', 'لتخصيص البرنامج التدريبي حسب قدرتك البدنية', theme, primaryColor),
+                const SizedBox(height: 6),
+                _buildInfoItem('👤 الجنس', 'لحساب معدل الحرق والاحتياجات الغذائية', theme, primaryColor),
+                const SizedBox(height: 6),
+                _buildInfoItem('🏃 مستوى النشاط', 'لتحديد شدة التمارين والسعرات اليومية', theme, primaryColor),
+                const SizedBox(height: 6),
+                _buildInfoItem('🎯 الهدف', 'لتصميم برنامج مخصص يحقق هدفك', theme, primaryColor),
+              ],
+            ),
+          ),
+          
           const SizedBox(height: 20),
           
           // Weight & Height
           Row(
             children: [
               Expanded(
-                child: _buildTextField(
+                child: _buildTextFieldWithInfo(
                   controller: _weightController,
                   label: 'الوزن (كجم)',
                   hint: 'مثال: 75',
                   icon: Icons.monitor_weight_outlined,
+                  info: 'لحساب BMI',
                   theme: theme,
                   primaryColor: primaryColor,
                   keyboardType: TextInputType.number,
@@ -496,11 +548,12 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
               ),
               const SizedBox(width: 15),
               Expanded(
-                child: _buildTextField(
+                child: _buildTextFieldWithInfo(
                   controller: _heightController,
                   label: 'الطول (سم)',
                   hint: 'مثال: 175',
                   icon: Icons.height,
+                  info: 'لحساب BMI',
                   theme: theme,
                   primaryColor: primaryColor,
                   keyboardType: TextInputType.number,
@@ -512,11 +565,12 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           const SizedBox(height: 15),
           
           // Age
-          _buildTextField(
+          _buildTextFieldWithInfo(
             controller: _ageController,
             label: 'العمر (سنة)',
             hint: 'مثال: 25',
             icon: Icons.cake_outlined,
+            info: 'لتخصيص البرنامج',
             theme: theme,
             primaryColor: primaryColor,
             keyboardType: TextInputType.number,
@@ -525,11 +579,12 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           const SizedBox(height: 15),
           
           // Gender
-          _buildDropdown(
+          _buildDropdownWithInfo(
             label: 'الجنس',
             value: _gender,
             items: ['ذكر', 'أنثى'],
             icon: Icons.person_outline,
+            info: 'لحساب معدل الحرق',
             onChanged: (value) {
               setState(() {
                 _gender = value!;
@@ -542,11 +597,12 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           const SizedBox(height: 15),
           
           // Activity Level
-          _buildDropdown(
+          _buildDropdownWithInfo(
             label: 'مستوى النشاط',
             value: _activityLevel,
             items: ['قليل جداً', 'قليل', 'متوسط', 'نشط', 'نشط جداً'],
             icon: Icons.directions_run,
+            info: 'لتحديد شدة التمارين',
             onChanged: (value) {
               setState(() {
                 _activityLevel = value!;
@@ -559,11 +615,12 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           const SizedBox(height: 15),
           
           // Goal
-          _buildDropdown(
+          _buildDropdownWithInfo(
             label: 'الهدف',
             value: _goal,
             items: ['خسارة دهون', 'بناء عضلات', 'تنشيف', 'صيانة'],
             icon: Icons.flag_outlined,
+            info: 'لتصميم برنامج مخصص',
             onChanged: (value) {
               setState(() {
                 _goal = value!;
@@ -610,11 +667,39 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildInfoItem(String title, String description, ThemeConfig theme, Color primaryColor) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.cairo(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: primaryColor,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            description,
+            style: GoogleFonts.cairo(
+              fontSize: 10,
+              color: theme.textPrimaryColor.withOpacity(0.7),
+              height: 1.3,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextFieldWithInfo({
     required TextEditingController controller,
     required String label,
     required String hint,
     required IconData icon,
+    required String info,
     required ThemeConfig theme,
     required Color primaryColor,
     TextInputType keyboardType = TextInputType.text,
@@ -626,12 +711,29 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           children: [
             Icon(icon, size: 16, color: primaryColor),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: GoogleFonts.cairo(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: theme.textPrimaryColor,
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.cairo(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: theme.textPrimaryColor,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                info,
+                style: GoogleFonts.cairo(
+                  fontSize: 9,
+                  color: primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -678,11 +780,12 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
     );
   }
 
-  Widget _buildDropdown({
+  Widget _buildDropdownWithInfo({
     required String label,
     required String value,
     required List<String> items,
     required IconData icon,
+    required String info,
     required Function(String?) onChanged,
     required ThemeConfig theme,
     required Color primaryColor,
@@ -694,12 +797,29 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           children: [
             Icon(icon, size: 16, color: primaryColor),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: GoogleFonts.cairo(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: theme.textPrimaryColor,
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.cairo(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: theme.textPrimaryColor,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                info,
+                style: GoogleFonts.cairo(
+                  fontSize: 9,
+                  color: primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
