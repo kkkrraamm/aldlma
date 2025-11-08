@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import 'theme_config.dart';
 import 'ai_calorie_calculator.dart';
+import 'ai_cooking_assistant.dart';
 
 class AIToolsPage extends StatefulWidget {
   const AIToolsPage({super.key});
@@ -140,7 +141,7 @@ class _AIToolsPageState extends State<AIToolsPage> {
       'gradient': const LinearGradient(
         colors: [Color(0xFFFF6B6B), Color(0xFFEE5A6F)],
       ),
-      'page': null,
+      'page': const AICookingAssistantPage(),
     },
     
     // التعليم
