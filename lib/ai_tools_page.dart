@@ -294,10 +294,10 @@ class _AIToolsPageState extends State<AIToolsPage> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // Compact Header with Logo
+          // Compact Header with Logo and Back Button
           SliverToBoxAdapter(
             child: Container(
-              margin: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              margin: const EdgeInsets.fromLTRB(20, 50, 20, 10),
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -321,6 +321,28 @@ class _AIToolsPageState extends State<AIToolsPage> {
               ),
               child: Row(
                 children: [
+                  // Back Button
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: primaryColor.withOpacity(0.1),
+                        border: Border.all(
+                          color: primaryColor.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: primaryColor,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   // Dalma Logo
                   Container(
                     width: 50,
@@ -761,6 +783,111 @@ class _AIToolsPageState extends State<AIToolsPage> {
               ),
             ),
           ),
+        ),
+      ),
+      // Bottom Navigation Bar
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(
+                  icon: Icons.home_rounded,
+                  label: 'الرئيسية',
+                  isActive: false,
+                  onTap: () => Navigator.pop(context),
+                  theme: theme,
+                  primaryColor: primaryColor,
+                ),
+                _buildNavItem(
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'الأدوات',
+                  isActive: true,
+                  onTap: () {},
+                  theme: theme,
+                  primaryColor: primaryColor,
+                ),
+                _buildNavItem(
+                  icon: Icons.explore_rounded,
+                  label: 'استكشف',
+                  isActive: false,
+                  onTap: () {},
+                  theme: theme,
+                  primaryColor: primaryColor,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+    required ThemeConfig theme,
+    required Color primaryColor,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: EdgeInsets.symmetric(
+          horizontal: isActive ? 20 : 12,
+          vertical: 10,
+        ),
+        decoration: BoxDecoration(
+          gradient: isActive
+              ? LinearGradient(
+                  colors: [
+                    primaryColor.withOpacity(0.2),
+                    primaryColor.withOpacity(0.1),
+                  ],
+                )
+              : null,
+          borderRadius: BorderRadius.circular(15),
+          border: isActive
+              ? Border.all(
+                  color: primaryColor.withOpacity(0.3),
+                  width: 1.5,
+                )
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? primaryColor : theme.textPrimaryColor.withOpacity(0.5),
+              size: isActive ? 24 : 22,
+            ),
+            if (isActive) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: GoogleFonts.cairo(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
