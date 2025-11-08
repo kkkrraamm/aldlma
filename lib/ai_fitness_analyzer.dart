@@ -38,9 +38,14 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _waistController = TextEditingController();
+  final TextEditingController _neckController = TextEditingController();
   String _gender = 'ذكر';
   String _activityLevel = 'متوسط';
   String _goal = 'بناء عضلات';
+  String _fitnessLevel = 'مبتدئ';
+  String _medicalConditions = 'لا يوجد';
+  String _allergies = 'لا يوجد';
   bool _showUserDataForm = false;
   bool _isDataFilled = false;
   
@@ -78,6 +83,8 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
     _weightController.dispose();
     _heightController.dispose();
     _ageController.dispose();
+    _waistController.dispose();
+    _neckController.dispose();
     super.dispose();
   }
 
@@ -89,9 +96,14 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
         _weightController.text = prefs.getString('user_weight') ?? '';
         _heightController.text = prefs.getString('user_height') ?? '';
         _ageController.text = prefs.getString('user_age') ?? '';
+        _waistController.text = prefs.getString('user_waist') ?? '';
+        _neckController.text = prefs.getString('user_neck') ?? '';
         _gender = prefs.getString('user_gender') ?? 'ذكر';
         _activityLevel = prefs.getString('user_activity_level') ?? 'متوسط';
         _goal = prefs.getString('user_goal') ?? 'بناء عضلات';
+        _fitnessLevel = prefs.getString('user_fitness_level') ?? 'مبتدئ';
+        _medicalConditions = prefs.getString('user_medical_conditions') ?? 'لا يوجد';
+        _allergies = prefs.getString('user_allergies') ?? 'لا يوجد';
         _isDataFilled = prefs.getBool('user_data_filled') ?? false;
       });
     } catch (e) {
@@ -106,9 +118,14 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       await prefs.setString('user_weight', _weightController.text);
       await prefs.setString('user_height', _heightController.text);
       await prefs.setString('user_age', _ageController.text);
+      await prefs.setString('user_waist', _waistController.text);
+      await prefs.setString('user_neck', _neckController.text);
       await prefs.setString('user_gender', _gender);
       await prefs.setString('user_activity_level', _activityLevel);
       await prefs.setString('user_goal', _goal);
+      await prefs.setString('user_fitness_level', _fitnessLevel);
+      await prefs.setString('user_medical_conditions', _medicalConditions);
+      await prefs.setString('user_allergies', _allergies);
       await prefs.setBool('user_data_filled', true);
       
       setState(() {
@@ -241,9 +258,18 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       if (_ageController.text.isNotEmpty) {
         userData['age'] = _ageController.text;
       }
+      if (_waistController.text.isNotEmpty) {
+        userData['waist'] = _waistController.text;
+      }
+      if (_neckController.text.isNotEmpty) {
+        userData['neck'] = _neckController.text;
+      }
       userData['gender'] = _gender;
       userData['activity_level'] = _activityLevel;
       userData['goal'] = _goal;
+      userData['fitness_level'] = _fitnessLevel;
+      userData['medical_conditions'] = _medicalConditions;
+      userData['allergies'] = _allergies;
 
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/api/ai/fitness-analyzer'),
@@ -710,6 +736,39 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           
           const SizedBox(height: 15),
           
+          // Waist & Neck
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextFieldWithInfo(
+                  controller: _waistController,
+                  label: 'محيط الخصر (سم)',
+                  hint: 'مثال: 85',
+                  icon: Icons.straighten,
+                  info: 'لحساب نسبة الدهون',
+                  theme: theme,
+                  primaryColor: primaryColor,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: _buildTextFieldWithInfo(
+                  controller: _neckController,
+                  label: 'محيط الرقبة (سم)',
+                  hint: 'مثال: 38',
+                  icon: Icons.accessibility_new,
+                  info: 'لحساب نسبة الدهون',
+                  theme: theme,
+                  primaryColor: primaryColor,
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 15),
+          
           // Gender
           _buildDropdownWithInfo(
             label: 'الجنس',
@@ -756,6 +815,60 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
             onChanged: (value) {
               setState(() {
                 _goal = value!;
+              });
+            },
+            theme: theme,
+            primaryColor: primaryColor,
+          ),
+          
+          const SizedBox(height: 15),
+          
+          // Fitness Level
+          _buildDropdownWithInfo(
+            label: 'مستوى التمرين الحالي',
+            value: _fitnessLevel,
+            items: ['مبتدئ', 'متوسط', 'متقدم', 'محترف'],
+            icon: Icons.fitness_center,
+            info: 'لتحديد شدة التمارين',
+            onChanged: (value) {
+              setState(() {
+                _fitnessLevel = value!;
+              });
+            },
+            theme: theme,
+            primaryColor: primaryColor,
+          ),
+          
+          const SizedBox(height: 15),
+          
+          // Medical Conditions
+          _buildDropdownWithInfo(
+            label: 'الأمراض المزمنة',
+            value: _medicalConditions,
+            items: ['لا يوجد', 'سكري', 'ضغط دم', 'قلب', 'أخرى'],
+            icon: Icons.medical_services_outlined,
+            info: 'لتخصيص البرنامج',
+            onChanged: (value) {
+              setState(() {
+                _medicalConditions = value!;
+              });
+            },
+            theme: theme,
+            primaryColor: primaryColor,
+          ),
+          
+          const SizedBox(height: 15),
+          
+          // Allergies
+          _buildDropdownWithInfo(
+            label: 'الحساسية الغذائية',
+            value: _allergies,
+            items: ['لا يوجد', 'ألبان', 'بيض', 'مكسرات', 'جلوتين', 'أخرى'],
+            icon: Icons.no_meals_outlined,
+            info: 'لتخصيص النظام الغذائي',
+            onChanged: (value) {
+              setState(() {
+                _allergies = value!;
               });
             },
             theme: theme,
