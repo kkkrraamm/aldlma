@@ -1908,94 +1908,274 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       );
     }
     
-    return Column(
-      children: workoutPlan.take(7).map((day) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 15),
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: theme.textPrimaryColor.withOpacity(0.1),
+    // استخراج أيام الأسبوع الأول كجدول عام
+    List<dynamic> weekDays = [];
+    if (workoutPlan.isNotEmpty) {
+      final firstWeek = workoutPlan[0] as Map<String, dynamic>? ?? {};
+      weekDays = firstWeek['days'] as List? ?? [];
+    }
+    
+    // إذا كانت البيانات بالشكل القديم (مباشرة أيام)
+    if (weekDays.isEmpty && workoutPlan.isNotEmpty) {
+      weekDays = workoutPlan;
+    }
+    
+    if (weekDays.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Center(
+          child: Text(
+            'لا توجد تمارين متاحة',
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              color: theme.textPrimaryColor.withOpacity(0.5),
             ),
           ),
-          child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text('💪', style: const TextStyle(fontSize: 20)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        day['day'] ?? 'اليوم',
-                        style: GoogleFonts.cairo(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textPrimaryColor,
-                        ),
-                      ),
-                      Text(
-                        day['focus'] ?? '',
-                        style: GoogleFonts.cairo(
-                          fontSize: 12,
-                          color: primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+        ),
+      );
+    }
+    
+    return Column(
+      children: [
+        // عنوان الجدول
+        Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.1)],
             ),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Row(
             children: [
-              const SizedBox(height: 10),
-              ...(day['exercises'] as List? ?? []).map((exercise) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(12),
+              Icon(Icons.calendar_view_week, color: primaryColor, size: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'جدول التمارين الأسبوعي',
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textPrimaryColor,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        exercise['name'] ?? '',
-                        style: GoogleFonts.cairo(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textPrimaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _buildExerciseDetail('مجموعات', '${exercise['sets']}', theme),
-                          const SizedBox(width: 15),
-                          _buildExerciseDetail('تكرارات', exercise['reps'] ?? '', theme),
-                          const SizedBox(width: 15),
-                          _buildExerciseDetail('راحة', exercise['rest'] ?? '', theme),
-                        ],
-                      ),
-                    ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${weekDays.length} أيام',
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                );
-              }).toList(),
+                ),
+              ),
             ],
           ),
-        );
-      }).toList(),
+        ),
+        const SizedBox(height: 15),
+        
+        // الأيام
+        ...weekDays.asMap().entries.map((entry) {
+          final index = entry.key;
+          final day = entry.value as Map<String, dynamic>? ?? {};
+          final dayNumber = day['day'] ?? (index + 1);
+          final isRestDay = (day['exercises'] as List? ?? []).isEmpty;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: isRestDay ? theme.cardColor.withOpacity(0.5) : theme.cardColor,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: isRestDay 
+                    ? Colors.orange.withOpacity(0.3)
+                    : theme.textPrimaryColor.withOpacity(0.1),
+                width: isRestDay ? 2 : 1,
+              ),
+            ),
+            child: isRestDay
+                ? Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text('🌟', style: const TextStyle(fontSize: 24)),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'اليوم $dayNumber',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.textPrimaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'يوم راحة - استرخاء وتعافي',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 13,
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ExpansionTile(
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    title: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.1)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text('💪', style: const TextStyle(fontSize: 22)),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'اليوم $dayNumber',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.textPrimaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                day['focus'] ?? 'تمارين',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 13,
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${(day['exercises'] as List? ?? []).length} تمارين',
+                            style: GoogleFonts.cairo(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    children: [
+                      const SizedBox(height: 10),
+                      ...(day['exercises'] as List? ?? []).map((exercise) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: primaryColor.withOpacity(0.1),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text('🏋️', style: const TextStyle(fontSize: 16)),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      exercise['name'] ?? exercise['arabic_name'] ?? '',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.textPrimaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  _buildExerciseDetail('مجموعات', '${exercise['sets'] ?? 0}', theme),
+                                  const SizedBox(width: 12),
+                                  _buildExerciseDetail('تكرارات', '${exercise['reps'] ?? ''}', theme),
+                                  const SizedBox(width: 12),
+                                  _buildExerciseDetail('راحة', '${exercise['rest'] ?? ''}', theme),
+                                ],
+                              ),
+                              if (exercise['intensity'] != null) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'الشدة: ${exercise['intensity']}',
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 11,
+                                      color: primaryColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+          );
+        }).toList(),
+      ],
     );
   }
 
