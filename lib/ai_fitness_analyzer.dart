@@ -381,14 +381,31 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       case 1:
         return _buildHistoryPage(theme, primaryColor, isDark);
       case 2:
-        return AIFitnessWeeklyTrackingPage();
-      case 3:
         if (_result['is_body'] == true && _result['workout_plan'] != null) {
           return AIFitnessIntegratedProgramPage(
             initialAnalysis: _result,
           );
         } else {
-          return _buildAnalysisPage(theme, primaryColor, isDark);
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(30),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.calendar_today, size: 80, color: primaryColor.withOpacity(0.3)),
+                  const SizedBox(height: 20),
+                  Text(
+                    'يرجى إجراء التحليل أولاً',
+                    style: GoogleFonts.cairo(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textPrimaryColor.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
       default:
         return _buildAnalysisPage(theme, primaryColor, isDark);
@@ -2367,25 +2384,13 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
                 primaryColor: primaryColor,
               ),
               _buildNavItem(
-                icon: Icons.calendar_month,
-                label: 'التتبع',
-                isActive: _currentNavIndex == 2,
-                onTap: () {
-                  setState(() {
-                    _currentNavIndex = 2;
-                  });
-                },
-                theme: theme,
-                primaryColor: primaryColor,
-              ),
-              _buildNavItem(
-                icon: Icons.today,
+                icon: Icons.calendar_today,
                 label: '30 يوم',
-                isActive: _currentNavIndex == 3,
+                isActive: _currentNavIndex == 2,
                 onTap: () {
                   if (_result['is_body'] == true && _result['workout_plan'] != null) {
                     setState(() {
-                      _currentNavIndex = 3;
+                      _currentNavIndex = 2;
                     });
                   } else {
                     NotificationsService.instance.toast(

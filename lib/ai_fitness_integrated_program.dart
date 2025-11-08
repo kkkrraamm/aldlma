@@ -11,97 +11,214 @@ import 'api_config.dart';
 import 'notifications.dart';
 
 class AIFitnessIntegratedProgramPage extends StatefulWidget {
-  final Map<String, dynamic> initialAnalysis;
+  final Map<String, dynamic>? initialAnalysis;
+  final String? programId;
 
   const AIFitnessIntegratedProgramPage({
     Key? key,
-    required this.initialAnalysis,
+    this.initialAnalysis,
+    this.programId,
   }) : super(key: key);
 
   @override
   _AIFitnessIntegratedProgramPageState createState() => _AIFitnessIntegratedProgramPageState();
 }
 
-class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProgramPage> {
+class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProgramPage> with SingleTickerProviderStateMixin {
   Map<String, Map<String, bool>> _dailyProgress = {};
-  List<Map<String, dynamic>> _weeklySnapshots = []; // صور أسبوعية
+  List<Map<String, dynamic>> _weeklySnapshots = [];
   DateTime? _programStartDate;
   int _currentWeek = 1;
   int _currentDayInWeek = 1;
   bool _isLoading = false;
   File? _weeklyImage;
   final ImagePicker _picker = ImagePicker();
+  
+  // للبرامج المتعددة
+  List<Map<String, dynamic>> _allPrograms = [];
+  String? _currentProgramId;
+  TabController? _tabController;
+  int _selectedTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadProgramData();
+    _loadAllPrograms();
   }
 
-  Future<void> _loadProgramData() async {
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadAllPrograms() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final progressJson = prefs.getString('integrated_program_progress');
-      final snapshotsJson = prefs.getString('integrated_program_snapshots');
-      final startDateStr = prefs.getString('integrated_program_start_date');
+      final programsJson = prefs.getString('all_fitness_programs');
       
-      if (progressJson != null) {
-        final decoded = json.decode(progressJson) as Map<String, dynamic>;
-        setState(() {
-          _dailyProgress = decoded.map((key, value) => 
-            MapEntry(key, Map<String, bool>.from(value as Map))
-          );
+      if (programsJson != null) {
+        final decoded = json.decode(programsJson) as List;
+        _allPrograms = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+      
+      // إذا كان هناك برنامج محدد، حمّله
+      if (widget.programId != null) {
+        _currentProgramId = widget.programId;
+        _loadSpecificProgram(widget.programId!);
+      } else if (_allPrograms.isNotEmpty) {
+        // حمّل آخر برنامج
+        _currentProgramId = _allPrograms.last['id'];
+        _loadSpecificProgram(_currentProgramId!);
+      }
+      
+      // إنشاء TabController
+      if (_allPrograms.isNotEmpty) {
+        _tabController = TabController(
+          length: _allPrograms.length,
+          vsync: this,
+          initialIndex: _allPrograms.indexWhere((p) => p['id'] == _currentProgramId).clamp(0, _allPrograms.length - 1),
+        );
+        _tabController!.addListener(() {
+          if (_tabController!.indexIsChanging) {
+            setState(() {
+              _selectedTabIndex = _tabController!.index;
+              _currentProgramId = _allPrograms[_selectedTabIndex]['id'];
+              _loadSpecificProgram(_currentProgramId!);
+            });
+          }
         });
       }
       
-      if (snapshotsJson != null) {
-        final decoded = json.decode(snapshotsJson) as List;
-        setState(() {
-          _weeklySnapshots = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
-        });
-      }
+      setState(() {});
+    } catch (e) {
+      print('❌ فشل تحميل البرامج: $e');
+    }
+  }
+
+  Future<void> _loadSpecificProgram(String programId) async {
+    try {
+      final program = _allPrograms.firstWhere((p) => p['id'] == programId);
       
-      if (startDateStr != null) {
-        _programStartDate = DateTime.parse(startDateStr);
-        final daysPassed = DateTime.now().difference(_programStartDate!).inDays + 1;
-        setState(() {
+      setState(() {
+        _dailyProgress = (program['progress'] as Map<String, dynamic>?)?.map((key, value) => 
+          MapEntry(key, Map<String, bool>.from(value as Map))
+        ) ?? {};
+        
+        _weeklySnapshots = (program['snapshots'] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+        
+        if (program['startDate'] != null) {
+          _programStartDate = DateTime.parse(program['startDate']);
+          final daysPassed = DateTime.now().difference(_programStartDate!).inDays + 1;
           _currentWeek = ((daysPassed - 1) ~/ 7) + 1;
           _currentDayInWeek = ((daysPassed - 1) % 7) + 1;
-        });
-      }
+        }
+      });
     } catch (e) {
-      print('❌ فشل تحميل البيانات: $e');
+      print('❌ فشل تحميل البرنامج: $e');
     }
   }
 
   Future<void> _saveProgramData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('integrated_program_progress', json.encode(_dailyProgress));
-      await prefs.setString('integrated_program_snapshots', json.encode(_weeklySnapshots));
-      if (_programStartDate != null) {
-        await prefs.setString('integrated_program_start_date', _programStartDate!.toIso8601String());
+      if (_currentProgramId == null) return;
+      
+      // تحديث البرنامج الحالي
+      final programIndex = _allPrograms.indexWhere((p) => p['id'] == _currentProgramId);
+      if (programIndex != -1) {
+        _allPrograms[programIndex]['progress'] = _dailyProgress;
+        _allPrograms[programIndex]['snapshots'] = _weeklySnapshots;
+        _allPrograms[programIndex]['startDate'] = _programStartDate?.toIso8601String();
+        _allPrograms[programIndex]['lastUpdated'] = DateTime.now().toIso8601String();
       }
+      
+      // حفظ جميع البرامج
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('all_fitness_programs', json.encode(_allPrograms));
     } catch (e) {
       print('❌ فشل حفظ البيانات: $e');
     }
   }
 
   Future<void> _startProgram() async {
+    // طلب اسم البرنامج
+    final TextEditingController nameController = TextEditingController();
+    final programName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('اسم البرنامج', style: GoogleFonts.cairo()),
+        content: TextField(
+          controller: nameController,
+          decoration: InputDecoration(
+            hintText: 'مثال: برنامج بناء العضلات',
+            hintStyle: GoogleFonts.cairo(),
+          ),
+          style: GoogleFonts.cairo(),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء', style: GoogleFonts.cairo()),
+          ),
+          TextButton(
+            onPressed: () {
+              if (nameController.text.trim().isNotEmpty) {
+                Navigator.pop(context, nameController.text.trim());
+              }
+            },
+            child: Text('ابدأ', style: GoogleFonts.cairo()),
+          ),
+        ],
+      ),
+    );
+    
+    if (programName == null || programName.isEmpty) return;
+    
+    // إنشاء برنامج جديد
+    final newProgramId = DateTime.now().millisecondsSinceEpoch.toString();
+    final newProgram = {
+      'id': newProgramId,
+      'name': programName,
+      'startDate': DateTime.now().toIso8601String(),
+      'lastUpdated': DateTime.now().toIso8601String(),
+      'progress': <String, Map<String, bool>>{},
+      'snapshots': [
+        {
+          'week': 0,
+          'date': DateTime.now().toIso8601String(),
+          'analysis': widget.initialAnalysis,
+          'image': null,
+        }
+      ],
+    };
+    
+    _allPrograms.add(newProgram);
+    _currentProgramId = newProgramId;
+    
     setState(() {
       _programStartDate = DateTime.now();
       _currentWeek = 1;
       _currentDayInWeek = 1;
       _dailyProgress.clear();
-      _weeklySnapshots.clear();
+      _weeklySnapshots = List<Map<String, dynamic>>.from(newProgram['snapshots']);
     });
     
-    // حفظ التحليل الأولي كأول snapshot
-    _weeklySnapshots.add({
-      'week': 0,
-      'date': DateTime.now().toIso8601String(),
-      'analysis': widget.initialAnalysis,
-      'image': null,
+    // إنشاء TabController جديد
+    _tabController?.dispose();
+    _tabController = TabController(
+      length: _allPrograms.length,
+      vsync: this,
+      initialIndex: _allPrograms.length - 1,
+    );
+    _tabController!.addListener(() {
+      if (_tabController!.indexIsChanging) {
+        setState(() {
+          _selectedTabIndex = _tabController!.index;
+          _currentProgramId = _allPrograms[_selectedTabIndex]['id'];
+          _loadSpecificProgram(_currentProgramId!);
+        });
+      }
     });
     
     await _saveProgramData();
