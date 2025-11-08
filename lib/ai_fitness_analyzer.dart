@@ -341,6 +341,11 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
+          // Info Card - Always Visible
+          _buildInfoCard(theme, primaryColor, isDark),
+          
+          const SizedBox(height: 15),
+          
           // User Data Form Toggle Button
           _buildUserDataToggleButton(theme, primaryColor, isDark),
           
@@ -348,7 +353,7 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           
           // User Data Form (اختياري)
           if (_showUserDataForm) ...[
-            _buildUserDataForm(theme, primaryColor, isDark),
+            _buildUserDataFormFields(theme, primaryColor, isDark),
             const SizedBox(height: 20),
           ],
           
@@ -363,6 +368,123 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
 
           // Analysis Result - دائماً ظاهر
           _buildAnalysisResult(theme, primaryColor, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(ThemeConfig theme, Color primaryColor, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            primaryColor.withOpacity(0.15),
+            primaryColor.withOpacity(0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: primaryColor.withOpacity(0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.lightbulb_rounded,
+                  color: primaryColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'لماذا نحتاج بياناتك؟',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'لتحليل أدق وبرنامج مخصص لك',
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        color: theme.textPrimaryColor.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _buildInfoItem('⚖️ الوزن والطول', 'لحساب BMI الدقيق وتحديد السعرات المناسبة', theme, primaryColor),
+          const SizedBox(height: 10),
+          _buildInfoItem('🎂 العمر', 'لتخصيص البرنامج التدريبي حسب قدرتك البدنية', theme, primaryColor),
+          const SizedBox(height: 10),
+          _buildInfoItem('👤 الجنس', 'لحساب معدل الحرق والاحتياجات الغذائية', theme, primaryColor),
+          const SizedBox(height: 10),
+          _buildInfoItem('🏃 مستوى النشاط', 'لتحديد شدة التمارين والسعرات اليومية', theme, primaryColor),
+          const SizedBox(height: 10),
+          _buildInfoItem('🎯 الهدف', 'لتصميم برنامج مخصص يحقق هدفك', theme, primaryColor),
+          const SizedBox(height: 15),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.green.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.lock_outline, color: Colors.green, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'جميع بياناتك محفوظة محلياً وآمنة تماماً 🔒',
+                    style: GoogleFonts.cairo(
+                      fontSize: 11,
+                      color: theme.textPrimaryColor.withOpacity(0.8),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -430,7 +552,7 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
               ),
             ),
             Icon(
-              Icons.info_outline,
+              Icons.edit_outlined,
               color: primaryColor.withOpacity(0.7),
               size: 20,
             ),
@@ -440,7 +562,7 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
     );
   }
 
-  Widget _buildUserDataForm(ThemeConfig theme, Color primaryColor, bool isDark) {
+  Widget _buildUserDataFormFields(ThemeConfig theme, Color primaryColor, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -460,7 +582,7 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'بياناتك الشخصية',
+                  'أدخل بياناتك',
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -472,60 +594,10 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           ),
           const SizedBox(height: 5),
           Text(
-            'أضف بياناتك لتحليل أكثر دقة (جميع الحقول اختيارية)',
+            'جميع الحقول اختيارية - أضف ما تعرفه فقط',
             style: GoogleFonts.cairo(
               fontSize: 11,
               color: theme.textPrimaryColor.withOpacity(0.6),
-            ),
-          ),
-          
-          const SizedBox(height: 15),
-          
-          // Info Card - لماذا نحتاج هذه البيانات؟
-          Container(
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  primaryColor.withOpacity(0.1),
-                  primaryColor.withOpacity(0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: primaryColor.withOpacity(0.3),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.lightbulb_outline, color: primaryColor, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'لماذا نحتاج هذه البيانات؟',
-                      style: GoogleFonts.cairo(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: theme.textPrimaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _buildInfoItem('⚖️ الوزن والطول', 'لحساب BMI الدقيق وتحديد السعرات المناسبة', theme, primaryColor),
-                const SizedBox(height: 6),
-                _buildInfoItem('🎂 العمر', 'لتخصيص البرنامج التدريبي حسب قدرتك البدنية', theme, primaryColor),
-                const SizedBox(height: 6),
-                _buildInfoItem('👤 الجنس', 'لحساب معدل الحرق والاحتياجات الغذائية', theme, primaryColor),
-                const SizedBox(height: 6),
-                _buildInfoItem('🏃 مستوى النشاط', 'لتحديد شدة التمارين والسعرات اليومية', theme, primaryColor),
-                const SizedBox(height: 6),
-                _buildInfoItem('🎯 الهدف', 'لتصميم برنامج مخصص يحقق هدفك', theme, primaryColor),
-              ],
             ),
           ),
           
