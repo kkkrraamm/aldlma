@@ -17,6 +17,7 @@ import 'package:path/path.dart' as path;
 
 import 'theme_config.dart';
 import 'api_config.dart';
+import 'notifications.dart';
 
 class AICookingAssistantPage extends StatefulWidget {
   const AICookingAssistantPage({Key? key}) : super(key: key);
@@ -156,7 +157,11 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
         await _analyzeIngredients();
       }
     } catch (e) {
-      _showError('فشل اختيار الصورة: $e');
+      NotificationsService.instance.toast(
+        'فشل اختيار الصورة',
+        icon: Icons.error,
+        color: Colors.red,
+      );
     }
   }
 
@@ -187,7 +192,13 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
           setState(() {
             _image = null;
           });
-          _showError('⚠️ الصورة لا تحتوي على طعام أو مكونات. يرجى تصوير مكونات طعام.');
+          
+          // إظهار Toast نفس حاسبة السعرات
+          NotificationsService.instance.toast(
+            '⚠️ هذه الصورة لا تحتوي على طعام أو مكونات',
+            icon: Icons.warning_amber_rounded,
+            color: Colors.orange,
+          );
           return;
         }
         
@@ -220,24 +231,23 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
         await _saveHistory();
         
       } else {
-        _showError('فشل التحليل. حاول مرة أخرى.');
+        NotificationsService.instance.toast(
+          'فشل التحليل. حاول مرة أخرى',
+          icon: Icons.error,
+          color: Colors.red,
+        );
       }
     } catch (e) {
-      _showError('حدث خطأ: $e');
+      NotificationsService.instance.toast(
+        'حدث خطأ أثناء التحليل',
+        icon: Icons.error,
+        color: Colors.red,
+      );
     } finally {
       setState(() {
         _isAnalyzing = false;
       });
     }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: GoogleFonts.cairo()),
-        backgroundColor: Colors.red,
-      ),
-    );
   }
 
   // استخراج الوقت من نص الخطوة
@@ -309,13 +319,11 @@ class _AICookingAssistantPageState extends State<AICookingAssistantPage> with Si
         setState(() {
           _timerRunning[stepIndex] = false;
         });
-        // إشعار
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('⏰ انتهى وقت الخطوة ${stepIndex + 1}!', style: GoogleFonts.cairo()),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
+        // إشعار Toast
+        NotificationsService.instance.toast(
+          '⏰ انتهى وقت الخطوة ${stepIndex + 1}!',
+          icon: Icons.alarm_on_rounded,
+          color: Colors.green,
         );
       }
     });
