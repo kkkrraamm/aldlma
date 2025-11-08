@@ -128,7 +128,7 @@ class _AIFitness30DayPlanPageState extends State<AIFitness30DayPlanPage> {
     final nutritionMeals = widget.nutritionPlan['meals'] as List? ?? [];
     
     for (int day = 1; day <= 30; day++) {
-      final weekIndex = ((day - 1) ~/ 7).clamp(0, workoutPlan.length - 1);
+      final weekIndex = workoutPlan.isEmpty ? 0 : ((day - 1) ~/ 7).clamp(0, workoutPlan.length - 1);
       final dayInWeek = ((day - 1) % 7);
       
       Map<String, dynamic> dayPlan = {
