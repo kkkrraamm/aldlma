@@ -1124,50 +1124,48 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
       ),
       );
     
-    // إضافة انيميشن الانتقال من الموضع القديم إلى الجديد
+    // إضافة انيميشن الانتقال من الأعلى إلى الموضع الجديد
     if (isMoving && oldIndex != null && newIndex != null) {
-      // حساب المسافة بين المواضع بدقة
-      final crossAxisCount = 2;
-      final oldRow = oldIndex ~/ crossAxisCount;
-      final newRow = newIndex ~/ crossAxisCount;
-      final oldCol = oldIndex % crossAxisCount;
-      final newCol = newIndex % crossAxisCount;
-      
-      // حساب المسافة بناءً على حجم الشاشة بدقة
+      // حساب المسافة بناءً على حجم الشاشة
       final screenWidth = MediaQuery.of(context).size.width;
-      final padding = 20.0; // padding من SliverPadding
-      final spacing = 15.0; // crossAxisSpacing و mainAxisSpacing
+      final padding = 20.0;
+      final spacing = 15.0;
+      final crossAxisCount = 2;
       
-      // حساب عرض البطاقة بدقة
+      // حساب عرض البطاقة
       final availableWidth = screenWidth - (padding * 2);
       final cardWidth = (availableWidth - spacing) / crossAxisCount;
-      final cardHeight = cardWidth / 0.85; // childAspectRatio = 0.85
+      final cardHeight = cardWidth / 0.85;
       
-      // حساب الفرق في المواضع
-      // deltaX: الفرق في الأعمدة (يمين = موجب، يسار = سالب)
-      // deltaY: الفرق في الصفوف (أسفل = موجب، أعلى = سالب)
-      final deltaCol = oldCol - newCol; // إذا كان في العمود الأيمن وانتقل لليسار = موجب
-      final deltaRow = oldRow - newRow; // إذا كان في صف أسفل وانتقل لأعلى = موجب
-      
-      // حساب الإزاحة بالبكسل
-      // البطاقة تبدأ من الموضع القديم (deltaX, deltaY) وتنتقل إلى (0, 0)
+      // حساب الموضع الأفقي (لتوسيط البطاقة)
+      final oldCol = oldIndex % crossAxisCount;
+      final newCol = newIndex % crossAxisCount;
+      final deltaCol = oldCol - newCol;
       final deltaX = deltaCol * (cardWidth + spacing);
-      final deltaY = deltaRow * (cardHeight + spacing);
+      
+      // البطاقة تبدأ من الأعلى (خارج الشاشة) وتنزل إلى موضعها
+      // نستخدم مسافة كبيرة من الأعلى لضمان أنها تبدأ من خارج الإطار
+      final startY = -cardHeight - 100; // تبدأ من فوق الإطار
       
       return TweenAnimationBuilder<double>(
         key: key,
         duration: const Duration(milliseconds: 600),
         tween: Tween(begin: 0.0, end: 1.0),
-        curve: Curves.easeInOutCubic,
+        curve: Curves.easeOutCubic,
         builder: (context, value, child) {
-          // البطاقة تبدأ من الموضع القديم (deltaX, deltaY) وتنتقل إلى الموضع الجديد (0, 0)
-          // value = 0: في الموضع القديم (deltaX, deltaY)
-          // value = 1: في الموضع الجديد (0, 0)
+          // البطاقة تبدأ من الأعلى (startY) وتنزل إلى موضعها (0)
+          // وتتحرك أفقياً من الموضع القديم (deltaX) إلى الجديد (0)
           return Transform.translate(
-            offset: Offset(deltaX * (1 - value), deltaY * (1 - value)),
+            offset: Offset(
+              deltaX * (1 - value), // الحركة الأفقية
+              startY * (1 - value), // الحركة العمودية (من الأعلى)
+            ),
             child: Transform.scale(
-              scale: 0.95 + (0.05 * value),
-              child: child,
+              scale: 0.8 + (0.2 * value), // تكبر من 0.8 إلى 1.0
+              child: Opacity(
+                opacity: 0.5 + (0.5 * value), // تظهر تدريجياً
+                child: child,
+              ),
             ),
           );
         },
