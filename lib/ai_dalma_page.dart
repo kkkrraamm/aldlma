@@ -714,44 +714,112 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
 
     String buffer = '';
     await for (final chunk in resp.stream.transform(utf8.decoder)) {
+      debugPrint('📦 [STREAM] Received chunk: ${chunk.length} bytes');
       for (final line in const LineSplitter().convert(chunk)) {
         final String ln = line.trim();
         if (ln.isEmpty) continue;
+        
+        debugPrint('📝 [STREAM] Line: ${ln.substring(0, ln.length > 100 ? 100 : ln.length)}');
+        
         if (ln.startsWith('data:')) {
           final payload = ln.substring(5).trim();
           if (payload == '[DONE]') {
+            debugPrint('✅ [STREAM] Received [DONE]');
             continue;
           }
           try {
             final dynamic jsonObj = json.decode(payload);
+            debugPrint('📊 [STREAM] Parsed JSON: ${jsonObj.toString().substring(0, 200)}');
+            
+            final delta = _extractStreamDelta(jsonObj);
+            debugPrint('💬 [STREAM] Extracted delta: "$delta"');
+            
+            if (delta.isNotEmpty) {
+              buffer += delta;
+              debugPrint('📚 [STREAM] Buffer length: ${buffer.length}');
+              
+              if (_streamMsgIndex != null && _streamMsgIndex! < _messages.length) {
+                setState(() {
+                  _messages[_streamMsgIndex!]['text'] = buffer;
+                });
+                _scrollDown();
+              } else {
+                debugPrint('⚠️ [STREAM] _streamMsgIndex is null or out of range');
+              }
+            }
+          } catch (e) {
+            debugPrint('❌ [STREAM] Error parsing chunk: $e');
+            debugPrint('❌ [STREAM] Payload: $payload');
+          }
+        } else {
+          // قد تكون البيانات بدون prefix "data:"
+          try {
+            final dynamic jsonObj = json.decode(ln);
+            debugPrint('📊 [STREAM] Parsed JSON (no prefix): ${jsonObj.toString().substring(0, 200)}');
+            
             final delta = _extractStreamDelta(jsonObj);
             if (delta.isNotEmpty) {
               buffer += delta;
               if (_streamMsgIndex != null && _streamMsgIndex! < _messages.length) {
-                setState(() => _messages[_streamMsgIndex!]['text'] = buffer);
+                setState(() {
+                  _messages[_streamMsgIndex!]['text'] = buffer;
+                });
                 _scrollDown();
               }
             }
-          } catch (_) {
-            // ignore malformed chunks
+          } catch (e) {
+            // ignore non-JSON lines
           }
         }
       }
     }
+    
+    debugPrint('✅ [STREAM] Final buffer: "$buffer"');
+    debugPrint('✅ [STREAM] Buffer length: ${buffer.length}');
   }
 
   String _extractStreamDelta(dynamic data) {
     try {
       if (data is Map) {
+        // 1. محاولة استخراج من output_text مباشرة
+        if (data['output_text'] is String) {
+          final text = data['output_text'] as String;
+          if (text.isNotEmpty) {
+            debugPrint('✅ [EXTRACT] Found output_text: "$text"');
+            return text;
+          }
+        }
+        
+        // 2. محاولة استخراج من output array
         final output = data['output'];
         if (output is List) {
           final StringBuffer out = StringBuffer();
           for (final item in output) {
             if (item is Map) {
               final type = item['type']?.toString();
+              
+              // معالجة message type
               if (type == 'message') {
+                // محاولة delta أولاً
                 final delta = item['delta'];
-                final content = (delta is Map) ? delta['content'] : item['content'];
+                if (delta is Map) {
+                  final deltaContent = delta['content'];
+                  if (deltaContent is List) {
+                    for (final c in deltaContent) {
+                      if (c is Map) {
+                        final ct = c['type']?.toString();
+                        if ((ct == 'output_text' || ct == 'output_text.delta') && c['text'] is String) {
+                          out.write(c['text']);
+                        } else if (c['text'] is String) {
+                          out.write(c['text']);
+                        }
+                      }
+                    }
+                  }
+                }
+                
+                // محاولة content مباشرة
+                final content = item['content'];
                 if (content is List) {
                   for (final c in content) {
                     if (c is Map) {
@@ -765,13 +833,50 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
                   }
                 }
               }
+              
+              // معالجة output_text type مباشرة
+              if (type == 'output_text' && item['text'] is String) {
+                out.write(item['text']);
+              }
             }
           }
           final s = out.toString();
-          if (s.isNotEmpty) return s;
+          if (s.isNotEmpty) {
+            debugPrint('✅ [EXTRACT] Extracted from output: "$s"');
+            return s;
+          }
+        }
+        
+        // 3. محاولة استخراج من message.content
+        final message = data['message'];
+        if (message is Map) {
+          final content = message['content'];
+          if (content is List) {
+            final StringBuffer out = StringBuffer();
+            for (final c in content) {
+              if (c is Map) {
+                final text = c['text'] ?? c['content'];
+                if (text is String && text.isNotEmpty) {
+                  out.write(text);
+                }
+              } else if (c is String) {
+                out.write(c);
+              }
+            }
+            final s = out.toString();
+            if (s.isNotEmpty) {
+              debugPrint('✅ [EXTRACT] Extracted from message.content: "$s"');
+              return s;
+            }
+          } else if (content is String) {
+            debugPrint('✅ [EXTRACT] Found message.content (string): "$content"');
+            return content;
+          }
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('❌ [EXTRACT] Error: $e');
+    }
     return '';
   }
 
