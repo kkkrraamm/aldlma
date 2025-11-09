@@ -930,38 +930,39 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                     children: [
                       // Icon
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withOpacity(0.25),
                           shape: BoxShape.circle,
                         ),
                         child: Text(
                           tool['icon'],
-                          style: const TextStyle(fontSize: 36),
+                          style: const TextStyle(fontSize: 42),
                         ),
                       ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   // Title
                   Text(
                     tool['title'],
                     style: GoogleFonts.cairo(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
+                      letterSpacing: 0.3,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   // Subtitle
                   Flexible(
                     child: Text(
                       tool['subtitle'],
                       style: GoogleFonts.cairo(
-                        fontSize: 10,
-                        color: Colors.white.withOpacity(0.9),
-                        height: 1.2,
+                        fontSize: 11,
+                        color: Colors.white.withOpacity(0.95),
+                        height: 1.4,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 2,
@@ -1013,12 +1014,12 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                 ),
                 // زر المفضلة في أعلى يمين البطاقة
                 Positioned(
-                  top: 16,
-                  right: 16,
+                  top: 14,
+                  right: 14,
                   child: GestureDetector(
                     onTap: () => _toggleFavorite(tool['title']),
                     child: Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
                         color: _favoriteTools.contains(tool['title'])
                             ? Colors.red.withOpacity(0.95)
@@ -1026,13 +1027,13 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: Colors.white.withOpacity(0.7),
-                          width: 2.5,
+                          width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.25),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
@@ -1041,7 +1042,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                             ? Icons.favorite
                             : Icons.favorite_border,
                         color: Colors.white,
-                        size: 20,
+                        size: 16,
                       ),
                     ),
                   ),
