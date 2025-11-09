@@ -36,6 +36,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
   Set<String> _favoriteTools = {};
   String? _animatingTool;
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  Map<String, int> _oldPositions = {}; // لتتبع المواضع القديمة
 
   @override
   void initState() {
@@ -112,8 +113,21 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     try {
       final prefs = await SharedPreferences.getInstance();
       
+      // حفظ الموضع القديم قبل التغيير
+      final oldTools = _getFilteredTools();
+      int? oldIndex;
+      for (int i = 0; i < oldTools.length; i++) {
+        if (oldTools[i]['title'] == toolTitle) {
+          oldIndex = i;
+          break;
+        }
+      }
+      
       setState(() {
         _animatingTool = toolTitle;
+        if (oldIndex != null) {
+          _oldPositions[toolTitle] = oldIndex;
+        }
         
         if (_favoriteTools.contains(toolTitle)) {
           _favoriteTools.remove(toolTitle);
@@ -131,6 +145,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
       if (mounted) {
         setState(() {
           _animatingTool = null;
+          _oldPositions.remove(toolTitle); // إزالة الموضع القديم
         });
       }
     } catch (e) {
@@ -856,18 +871,20 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final tool = _getFilteredTools()[index];
-                  // البطاقة تنتقل إلى الأول إذا كانت مفضلة وفي الموضع الأول وكانت في _animatingTool
-                  final isMovingToFirst = index == 0 && 
-                                        _favoriteTools.contains(tool['title']) &&
-                                        _animatingTool == tool['title'];
+                  final toolTitle = tool['title'];
+                  final isAnimating = _animatingTool == toolTitle;
+                  final oldIndex = _oldPositions[toolTitle];
+                  final isMoving = isAnimating && oldIndex != null && oldIndex != index;
                   
                   return _buildToolCard(
                     context,
                     tool,
                     theme,
                     isDark,
-                    key: ValueKey('${tool['title']}_$index'),
-                    isMovingToFirst: isMovingToFirst,
+                    key: ValueKey('${toolTitle}_$index'),
+                    isMoving: isMoving,
+                    oldIndex: oldIndex,
+                    newIndex: index,
                   );
                 },
                 childCount: _getFilteredTools().length,
@@ -890,7 +907,9 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     ThemeConfig theme,
     bool isDark, {
     Key? key,
-    bool isMovingToFirst = false,
+    bool isMoving = false,
+    int? oldIndex,
+    int? newIndex,
   }) {
     final isAnimating = _animatingTool == tool['title'];
     final isFavorite = _favoriteTools.contains(tool['title']);
@@ -1105,20 +1124,39 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
       ),
       );
     
-    // إضافة انيميشن للبطاقة التي تنتقل إلى الأول
-    if (isMovingToFirst) {
+    // إضافة انيميشن الانتقال من الموضع القديم إلى الجديد
+    if (isMoving && oldIndex != null && newIndex != null) {
+      // حساب المسافة بين المواضع
+      // Grid: 2 columns, card height ≈ 200px, spacing = 15px
+      final crossAxisCount = 2;
+      final oldRow = oldIndex ~/ crossAxisCount;
+      final newRow = newIndex ~/ crossAxisCount;
+      final oldCol = oldIndex % crossAxisCount;
+      final newCol = newIndex % crossAxisCount;
+      
+      // حساب المسافة بناءً على حجم الشاشة
+      final screenWidth = MediaQuery.of(context).size.width;
+      final padding = 20.0; // padding من SliverPadding
+      final spacing = 15.0; // crossAxisSpacing
+      final cardWidth = (screenWidth - (padding * 2) - spacing) / crossAxisCount;
+      final cardHeight = cardWidth / 0.85; // childAspectRatio = 0.85
+      final rowHeight = cardHeight + spacing;
+      
+      final deltaY = (oldRow - newRow) * rowHeight;
+      final deltaX = (oldCol - newCol) * (cardWidth + spacing);
+      
       return TweenAnimationBuilder<double>(
         key: key,
         duration: const Duration(milliseconds: 600),
         tween: Tween(begin: 0.0, end: 1.0),
-        curve: Curves.easeOutCubic,
+        curve: Curves.easeInOutCubic,
         builder: (context, value, child) {
           return Transform.translate(
-            offset: Offset(0, -50 * (1 - value)),
+            offset: Offset(deltaX * (1 - value), deltaY * (1 - value)),
             child: Transform.scale(
-              scale: 0.8 + (0.2 * value),
+              scale: 0.9 + (0.1 * value),
               child: Opacity(
-                opacity: value,
+                opacity: 0.7 + (0.3 * value),
                 child: child,
               ),
             ),
