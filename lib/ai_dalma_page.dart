@@ -21,13 +21,7 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
   int? _streamMsgIndex;
 
   // API إعدادات ذكاء الدلما
-  static const String _endpoint = 'https://api.openai.com/v1/responses';
-  // ⚠️ يجب إضافة OpenAI API Key هنا
-  // احصل على الـ API Key من: https://platform.openai.com/api-keys
-  static const String _apiKey = ''; // TODO: أضف OpenAI API Key هنا
-  static const String _promptId = 'pmpt_68d9e5897e508193a8362567a7e2b1b30556320da57d2e9c';
-  static const String _promptVersion = '2'; // تحديث إلى version 2
-  static const String _model = 'o4-mini';
+  // يستخدم نفس الـ API Key المستخدم في أدوات الدلما الأخرى
 
   @override
   void dispose() {
@@ -39,19 +33,6 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _loading) return;
-    
-    // التحقق من وجود API Key
-    if (_apiKey.isEmpty) {
-      setState(() {
-        _messages.add({
-          'role': 'assistant',
-          'text': '⚠️ عذراً، إعدادات الدلما غير مكتملة. يرجى إضافة API Key في الكود.',
-          'ts': DateTime.now(),
-        });
-      });
-      _scrollDown();
-      return;
-    }
     
     setState(() {
       _messages.add({'role': 'user', 'text': text, 'ts': DateTime.now()});
@@ -704,50 +685,18 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
     );
   }
 
-  ({String model, int maxOut, String verbosity, bool includeTemp}) _pickSettings(String q) {
-    final String qq = q.trim();
-    final bool isLong = qq.length > 400;
-    final bool isSimple = qq.length < 120 && !isLong;
-    final String model = 'o4-mini';
-    final int maxOut = isSimple ? 120 : (isLong ? 240 : 180);
-    final String verbosity = isSimple ? 'low' : 'medium';
-    final bool includeTemp = false;
-    return (model: model, maxOut: maxOut, verbosity: verbosity, includeTemp: includeTemp);
-  }
 
   Future<void> _askDalmaStream(String question) async {
-    final s = _pickSettings(question);
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $_apiKey',
-    };
-    final messages = [
-      {
-        'role': 'user',
-        'content': [
-          {'type': 'input_text', 'text': question}
-        ]
-      }
-    ];
+    final headers = await ApiConfig.getHeaders();
+    
     final Map<String, dynamic> body = {
-      'model': s.model,
-      'prompt': {'id': _promptId, 'version': _promptVersion},
-      'input': messages,
-      'text': {'verbosity': s.verbosity},
-      'max_output_tokens': s.maxOut,
-      'store': true,
+      'question': question,
       'stream': true,
-      'include': [
-        'reasoning.encrypted_content',
-        'web_search_call.action.sources',
-      ],
     };
 
-    debugPrint('ASK DALMA STREAM REQUEST → $_endpoint');
-    debugPrint('Headers: {Content-Type: application/json, Authorization: Bearer ${_apiKey.substring(0, 8)}...}');
-    debugPrint('Body: ${json.encode(body)}');
+    debugPrint('🧠 [AI DALMA] إرسال طلب بث إلى خادم الدلما...');
 
-    final req = http.Request('POST', Uri.parse(_endpoint));
+    final req = http.Request('POST', Uri.parse('${ApiConfig.baseUrl}/api/ai/dalma-chat'));
     req.headers.addAll(headers);
     req.body = json.encode(body);
     http.StreamedResponse resp;
@@ -759,7 +708,7 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
 
     if (resp.statusCode != 200) {
       final bodyStr = await resp.stream.bytesToString();
-      debugPrint('STREAM ERROR [${resp.statusCode}] $bodyStr');
+      debugPrint('❌ [AI DALMA] خطأ [${resp.statusCode}] $bodyStr');
       throw Exception('خطأ من خادم الدلما: ${resp.statusCode}');
     }
 
@@ -827,156 +776,44 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
   }
 
   Future<String> _askDalma(String question) async {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $_apiKey',
+    final headers = await ApiConfig.getHeaders();
+    
+    final Map<String, dynamic> body = {
+      'question': question,
+      'stream': false,
     };
 
-    final messages = [
-      {
-        'role': 'user',
-        'content': [
-          {'type': 'input_text', 'text': question}
-        ]
-      }
-    ];
-
-    Map<String, dynamic> body = {
-      'model': _model,
-      'prompt': {'id': _promptId, 'version': _promptVersion},
-      'input': messages,
-      'text': {'verbosity': 'medium'},
-      'max_output_tokens': 300,
-      'store': true,
-      'include': [
-        'reasoning.encrypted_content',
-        'web_search_call.action.sources',
-      ],
-    };
-
-    debugPrint('ASK DALMA REQUEST → $_endpoint');
-    debugPrint('Headers: {Content-Type: application/json, Authorization: Bearer ${_apiKey.substring(0, 8)}...}');
-    debugPrint('Body: ${json.encode(body)}');
+    debugPrint('🧠 [AI DALMA] إرسال طلب إلى خادم الدلما...');
 
     http.Response res;
     try {
       res = await http
-          .post(Uri.parse(_endpoint), headers: headers, body: json.encode(body))
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/api/ai/dalma-chat'),
+            headers: headers,
+            body: json.encode(body),
+          )
           .timeout(const Duration(seconds: 25));
     } catch (e) {
       throw Exception('فشل الاتصال بخادم الدلما: $e');
     }
 
-    debugPrint('ASK DALMA RESPONSE [${res.statusCode}] ${res.body}');
+    debugPrint('✅ [AI DALMA] استجابة [${res.statusCode}]');
 
     if (res.statusCode == 200) {
-      final data = json.decode(res.body);
-      final ans = _parseResponsesAnswer(data);
-      if (ans.isNotEmpty) return ans;
-
-      final status = data['status'];
-      final incomplete = data['incomplete_details'];
-      final reason = (incomplete is Map) ? (incomplete['reason']?.toString() ?? '') : '';
-      if (status == 'incomplete' && reason == 'max_output_tokens') {
-        final Map<String, dynamic> body2 = Map<String, dynamic>.from(body);
-        body2['max_output_tokens'] = 480;
-        debugPrint('Retry due to incomplete/max_output_tokens with higher cap...');
-        debugPrint('Body2: ${json.encode(body2)}');
-        try {
-          final retry2 = await http
-              .post(Uri.parse(_endpoint), headers: headers, body: json.encode(body2))
-              .timeout(const Duration(seconds: 25));
-          debugPrint('RETRY2 RESPONSE [${retry2.statusCode}] ${retry2.body}');
-          if (retry2.statusCode == 200) {
-            final d2 = json.decode(retry2.body);
-            final a2 = _parseResponsesAnswer(d2);
-            if (a2.isNotEmpty) return a2;
-          }
-        } catch (_) {}
+      final data = json.decode(utf8.decode(res.bodyBytes));
+      
+      // استخراج الإجابة من response
+      if (data['answer'] != null && data['answer'].toString().trim().isNotEmpty) {
+        return data['answer'].toString().trim();
       }
-    }
-
-    final bool tempUnsupported =
-        res.statusCode == 400 && res.body.toLowerCase().contains('temperature');
-    if (tempUnsupported) {
-      body.remove('temperature');
-      debugPrint('Retry without temperature...');
-      try {
-        final retry = await http
-            .post(Uri.parse(_endpoint), headers: headers, body: json.encode(body))
-            .timeout(const Duration(seconds: 25));
-        debugPrint('RETRY RESPONSE [${retry.statusCode}] ${retry.body}');
-        if (retry.statusCode == 200) {
-          final data = json.decode(retry.body);
-          final ans = _parseResponsesAnswer(data);
-          if (ans.isNotEmpty) return ans;
-        }
-      } catch (e) {
-        // ignore, will fall through to error
-      }
-    }
-
-    if (res.statusCode == 200) {
+      
+      // إذا لم تكن هناك إجابة مباشرة
       return 'عذراً، الدلما لم يستطع توليد إجابة حالياً. يرجى المحاولة مرة أخرى.';
     }
+    
     throw Exception('خطأ من خادم الدلما: ${res.statusCode}');
   }
 
-  String _parseResponsesAnswer(dynamic data) {
-    try {
-      if (data is Map<String, dynamic>) {
-        final direct = data['output_text'];
-        if (direct is String && direct.trim().isNotEmpty) return direct.trim();
-
-        final output = data['output'];
-        if (output is List && output.isNotEmpty) {
-          final List<String> chunks = [];
-          for (final item in output) {
-            if (item is Map) {
-              final role = item['role']?.toString();
-              final type = item['type']?.toString();
-              if (type == 'message' && (role == null || role == 'assistant')) {
-                final content = item['content'];
-                if (content is List) {
-                  for (final c in content) {
-                    if (c is Map) {
-                      final ct = c['type']?.toString();
-                      if (ct == 'output_text' && c['text'] is String) {
-                        final t = (c['text'] as String).trim();
-                        if (t.isNotEmpty) chunks.add(t);
-                      } else {
-                        final t = (c['text'] ?? c['content'] ?? '').toString().trim();
-                        if (t.isNotEmpty) chunks.add(t);
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-          if (chunks.isNotEmpty) return chunks.join('\n').trim();
-        }
-
-        final msg = data['message'];
-        if (msg is Map && msg['content'] is List) {
-          final List content = msg['content'];
-          final parts = content
-              .whereType<Map>()
-              .map((m) => (m['text'] ?? m['content'] ?? '').toString())
-              .where((s) => s.trim().isNotEmpty)
-              .toList();
-          if (parts.isNotEmpty) return parts.join('\n').trim();
-        }
-
-        final choices = data['choices'];
-        if (choices is List && choices.isNotEmpty) {
-          final c0 = choices.first;
-          final msg = c0['message'];
-          if (msg is Map && msg['content'] is String) return (msg['content'] as String).trim();
-        }
-      }
-    } catch (_) {}
-    return '';
-  }
 }
 
