@@ -1192,7 +1192,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                 child: _buildStatCard(
                   icon: '💖',
                   title: 'المفضلة',
-                  value: _usageStats['favorite_count'].toString(),
+                  value: (_usageStats['favorite_count'] ?? 0).toString(),
                   color: const Color(0xFFE91E63),
                   theme: theme,
                   isCompact: true,
