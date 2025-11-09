@@ -13,11 +13,17 @@ import 'notifications.dart';
 class AIFitnessIntegratedProgramPage extends StatefulWidget {
   final Map<String, dynamic>? initialAnalysis;
   final String? programId;
+  final bool shouldStartProgram;
+  final String? programName;
+  final VoidCallback? onProgramStarted;
 
   const AIFitnessIntegratedProgramPage({
     Key? key,
     this.initialAnalysis,
     this.programId,
+    this.shouldStartProgram = false,
+    this.programName,
+    this.onProgramStarted,
   }) : super(key: key);
 
   @override
@@ -50,6 +56,14 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
   void initState() {
     super.initState();
     _loadAllPrograms();
+    
+    // إذا كان يجب بدء برنامج جديد
+    if (widget.shouldStartProgram && widget.programName != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startProgramWithName(widget.programName!);
+        widget.onProgramStarted?.call();
+      });
+    }
   }
 
   @override
@@ -200,6 +214,10 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
     
     if (programName == null || programName.isEmpty) return;
     
+    await _startProgramWithName(programName);
+  }
+  
+  Future<void> _startProgramWithName(String programName) async {
     // عرض مؤشر التحميل
     setState(() {
       _isLoading = true;
@@ -1463,18 +1481,17 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
 
     return Column(
       children: [
-        // شريط البرامج - بسيط وجميل
+        // شريط البرامج - مدمج وأنيق
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: theme.cardColor,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
+            border: Border(
+              bottom: BorderSide(
+                color: theme.textPrimaryColor.withOpacity(0.05),
+                width: 1,
               ),
-            ],
+            ),
           ),
           child: Row(
             children: [
@@ -1502,109 +1519,104 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
                   ),
                 ),
               
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               
-              // زر إضافة برنامج جديد
-              Container(
-                decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.add, color: primaryColor, size: 22),
-                  onPressed: () => _startProgram(),
-                  tooltip: 'برنامج جديد',
-                  padding: const EdgeInsets.all(8),
+              // أزرار صغيرة
+              IconButton(
+                icon: Icon(Icons.add_circle_outline, color: primaryColor, size: 20),
+                onPressed: () => _startProgram(),
+                tooltip: 'برنامج جديد',
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(),
+              ),
+              
+              if (_allPrograms.isNotEmpty)
+                IconButton(
+                  icon: Icon(Icons.delete_outline, color: Colors.red.withOpacity(0.7), size: 18),
+                  onPressed: () => _showDeleteProgramDialog(theme, primaryColor),
+                  tooltip: 'حذف',
+                  padding: const EdgeInsets.all(6),
                   constraints: const BoxConstraints(),
                 ),
-              ),
-              
-              const SizedBox(width: 5),
-              
-              // زر حذف
-              if (_allPrograms.isNotEmpty)
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                    onPressed: () => _showDeleteProgramDialog(theme, primaryColor),
-                    tooltip: 'حذف',
-                    padding: const EdgeInsets.all(8),
-                    constraints: const BoxConstraints(),
-                  ),
-                ),
             ],
           ),
         ),
         
-        // Scrollable Content
+        // المحتوى القابل للتمرير
         Expanded(
           child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Goals Section
-                if (_monthlyGoal != null || (_weeklyGoals.isNotEmpty && _currentWeek <= _weeklyGoals.length))
+                if (_monthlyGoal != null || (_weeklyGoals.isNotEmpty && _currentWeek <= _weeklyGoals.length)) ...[
                   _buildGoalsSection(theme, primaryColor, isDark),
-        
-        // Header بسيط
-        Container(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'الأسبوع $_currentWeek',
-                    style: GoogleFonts.cairo(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textPrimaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'اليوم $_currentDayInWeek من 7',
-                    style: GoogleFonts.cairo(
-                      fontSize: 14,
-                      color: theme.textPrimaryColor.withOpacity(0.6),
-                    ),
-                  ),
+                  const SizedBox(height: 20),
                 ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '$totalDays/30',
-                  style: GoogleFonts.cairo(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: primaryColor,
+        
+                // Header - بطاقة أنيقة
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.textPrimaryColor.withOpacity(0.08),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'الأسبوع $_currentWeek',
+                            style: GoogleFonts.cairo(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textPrimaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'اليوم $_currentDayInWeek من 7',
+                            style: GoogleFonts.cairo(
+                              fontSize: 13,
+                              color: theme.textPrimaryColor.withOpacity(0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$totalDays/30',
+                          style: GoogleFonts.cairo(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
 
-                // Week days
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(15),
-                  itemCount: weekPlan.length,
-                  itemBuilder: (context, index) {
-                    return _buildDayCard(weekPlan[index], theme, primaryColor, isDark);
-                  },
-                ),
+                const SizedBox(height: 20),
+
+                // أيام الأسبوع
+                ...weekPlan.asMap().entries.map((entry) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildDayCard(entry.value, theme, primaryColor, isDark),
+                  );
+                }).toList(),
               ],
             ),
           ),
@@ -1630,69 +1642,49 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
     final isDay7 = dayInWeek == 7;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDay7
-              ? [Colors.purple.withOpacity(0.15), Colors.purple.withOpacity(0.08)]
-              : isToday
-                  ? [primaryColor.withOpacity(0.15), primaryColor.withOpacity(0.08)]
-                  : [
-                      theme.textPrimaryColor.withOpacity(0.05),
-                      theme.textPrimaryColor.withOpacity(0.02),
-                    ],
-        ),
-        borderRadius: BorderRadius.circular(15),
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDay7
-              ? Colors.purple.withOpacity(0.5)
+              ? Colors.purple.withOpacity(0.3)
               : isToday
-                  ? primaryColor.withOpacity(0.5)
-                  : theme.textPrimaryColor.withOpacity(0.1),
-          width: isToday || isDay7 ? 2 : 1,
+                  ? primaryColor.withOpacity(0.4)
+                  : theme.textPrimaryColor.withOpacity(0.08),
+          width: isToday || isDay7 ? 1.5 : 1,
         ),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           leading: Container(
-            width: 50,
-            height: 50,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: isDay7
-                  ? Colors.purple.withOpacity(0.2)
+                  ? Colors.purple.withOpacity(0.12)
                   : progress == 1.0
-                      ? Colors.green.withOpacity(0.2)
+                      ? Colors.green.withOpacity(0.12)
                       : isToday
-                          ? primaryColor.withOpacity(0.2)
-                          : theme.textPrimaryColor.withOpacity(0.1),
+                          ? primaryColor.withOpacity(0.12)
+                          : theme.textPrimaryColor.withOpacity(0.06),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: isDay7
-                    ? Colors.purple
-                    : progress == 1.0
-                        ? Colors.green
-                        : isToday
-                            ? primaryColor
-                            : theme.textPrimaryColor.withOpacity(0.3),
-                width: 2,
-              ),
             ),
             child: Center(
               child: progress == 1.0
-                  ? const Icon(Icons.check, color: Colors.green, size: 28)
+                  ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
                   : isDay7
-                      ? const Icon(Icons.camera_alt, color: Colors.purple, size: 24)
+                      ? const Icon(Icons.camera_alt, color: Colors.purple, size: 20)
                       : Text(
                           '$dayInWeek',
                           style: GoogleFonts.cairo(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: isDay7
                                 ? Colors.purple
                                 : isToday
                                     ? primaryColor
-                                    : theme.textPrimaryColor,
+                                    : theme.textPrimaryColor.withOpacity(0.7),
                           ),
                         ),
             ),

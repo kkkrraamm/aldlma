@@ -34,6 +34,11 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
   bool _isAnalyzing = false;
   int _currentNavIndex = 0;
   
+  // للتحكم في إنشاء برنامج جديد
+  bool _shouldStartNewProgram = false;
+  String? _newProgramName;
+  int _programTriggerKey = 0;
+  
   // سجل التحليلات
   List<Map<String, dynamic>> _analysisHistory = [];
   
@@ -350,6 +355,111 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
     }
   }
 
+  Future<String?> _showProgramNameDialog(ThemeConfig theme, Color primaryColor) async {
+    final TextEditingController nameController = TextEditingController();
+    
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.edit_note, color: primaryColor, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'اسم البرنامج',
+                style: GoogleFonts.cairo(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textPrimaryColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'اختر اسماً مميزاً لبرنامجك التدريبي',
+              style: GoogleFonts.cairo(
+                fontSize: 14,
+                color: theme.textPrimaryColor.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              textAlign: TextAlign.right,
+              style: GoogleFonts.cairo(
+                fontSize: 16,
+                color: theme.textPrimaryColor,
+              ),
+              decoration: InputDecoration(
+                hintText: 'مثال: برنامج بناء العضلات',
+                hintStyle: GoogleFonts.cairo(
+                  color: theme.textPrimaryColor.withOpacity(0.4),
+                ),
+                filled: true,
+                fillColor: theme.backgroundColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              onSubmitted: (value) {
+                if (value.isNotEmpty) {
+                  Navigator.of(context).pop(value);
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'إلغاء',
+              style: GoogleFonts.cairo(
+                color: theme.textPrimaryColor.withOpacity(0.6),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              if (name.isNotEmpty) {
+                Navigator.of(context).pop(name);
+              } else {
+                NotificationsService.instance.toast(
+                  'يرجى إدخال اسم البرنامج',
+                  icon: Icons.warning,
+                  color: Colors.orange,
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              'إنشاء',
+              style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeConfig>(context);
@@ -389,7 +499,16 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       case 2:
         // السماح بالدخول حتى بدون تحليل حالي (سيعرض البرامج المحفوظة)
         return AIFitnessIntegratedProgramPage(
+          key: ValueKey(_programTriggerKey), // لإعادة بناء الصفحة عند الحاجة
           initialAnalysis: _result['is_body'] == true ? _result : null,
+          shouldStartProgram: _shouldStartNewProgram,
+          programName: _newProgramName,
+          onProgramStarted: () {
+            setState(() {
+              _shouldStartNewProgram = false;
+              _newProgramName = null;
+            });
+          },
         );
       default:
         return _buildAnalysisPage(theme, primaryColor, isDark);
@@ -1619,11 +1738,19 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      // الانتقال إلى تبويب "30 يوم"
-                      setState(() {
-                        _currentNavIndex = 2;
-                      });
+                    onPressed: () async {
+                      // فتح نافذة لإدخال اسم البرنامج
+                      final programName = await _showProgramNameDialog(theme, primaryColor);
+                      
+                      if (programName != null && programName.isNotEmpty) {
+                        // تعيين المتغيرات لإنشاء البرنامج
+                        setState(() {
+                          _shouldStartNewProgram = true;
+                          _newProgramName = programName;
+                          _programTriggerKey++; // لإعادة بناء الصفحة
+                          _currentNavIndex = 2; // الانتقال إلى تبويب "30 يوم"
+                        });
+                      }
                     },
                     icon: const Icon(Icons.play_arrow, size: 24),
                     label: Text(
