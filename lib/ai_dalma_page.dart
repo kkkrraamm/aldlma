@@ -713,81 +713,125 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
     }
 
     String buffer = '';
+    String currentDataLine = ''; // Buffer للـ data line غير المكتمل
+    
     await for (final chunk in resp.stream.transform(utf8.decoder)) {
-      debugPrint('📦 [STREAM] Received chunk: ${chunk.length} bytes');
-      for (final line in const LineSplitter().convert(chunk)) {
+      final lines = const LineSplitter().convert(chunk);
+      
+      for (int i = 0; i < lines.length; i++) {
+        String line = lines[i];
+        
+        // إذا كان هناك data line غير مكتمل من قبل، نضيف السطر الحالي
+        if (currentDataLine.isNotEmpty) {
+          line = currentDataLine + line;
+          currentDataLine = '';
+        }
+        
         final String ln = line.trim();
         if (ln.isEmpty) continue;
         
-        debugPrint('📝 [STREAM] Line: ${ln.substring(0, ln.length > 100 ? 100 : ln.length)}');
+        // معالجة events
+        if (ln.startsWith('event:')) {
+          continue;
+        }
         
+        // معالجة data
         if (ln.startsWith('data:')) {
           final payload = ln.substring(5).trim();
           if (payload == '[DONE]') {
-            debugPrint('✅ [STREAM] Received [DONE]');
             continue;
           }
+          
+          // محاولة parse الـ JSON
+          dynamic jsonObj;
           try {
-            final dynamic jsonObj = json.decode(payload);
-            debugPrint('📊 [STREAM] Parsed JSON: ${jsonObj.toString().substring(0, 200)}');
-            
-            final delta = _extractStreamDelta(jsonObj);
-            debugPrint('💬 [STREAM] Extracted delta: "$delta"');
-            
-            if (delta.isNotEmpty) {
-              buffer += delta;
-              debugPrint('📚 [STREAM] Buffer length: ${buffer.length}');
-              
-              if (_streamMsgIndex != null && _streamMsgIndex! < _messages.length) {
-                setState(() {
-                  _messages[_streamMsgIndex!]['text'] = buffer;
-                });
-                _scrollDown();
-              } else {
-                debugPrint('⚠️ [STREAM] _streamMsgIndex is null or out of range');
-              }
-            }
+            jsonObj = json.decode(payload);
           } catch (e) {
-            debugPrint('❌ [STREAM] Error parsing chunk: $e');
-            debugPrint('❌ [STREAM] Payload: $payload');
+            // JSON غير مكتمل - نحفظه للـ chunk التالي
+            if (i == lines.length - 1) {
+              // آخر سطر في الـ chunk، قد يكون غير مكتمل
+              currentDataLine = payload;
+            }
+            continue;
           }
-        } else {
-          // قد تكون البيانات بدون prefix "data:"
-          try {
-            final dynamic jsonObj = json.decode(ln);
-            debugPrint('📊 [STREAM] Parsed JSON (no prefix): ${jsonObj.toString().substring(0, 200)}');
-            
-            final delta = _extractStreamDelta(jsonObj);
-            if (delta.isNotEmpty) {
-              buffer += delta;
-              if (_streamMsgIndex != null && _streamMsgIndex! < _messages.length) {
-                setState(() {
-                  _messages[_streamMsgIndex!]['text'] = buffer;
-                });
-                _scrollDown();
-              }
+          
+          // استخراج النص من الـ JSON
+          final delta = _extractStreamDelta(jsonObj);
+          if (delta.isNotEmpty) {
+            buffer += delta;
+            if (_streamMsgIndex != null && _streamMsgIndex! < _messages.length) {
+              setState(() {
+                _messages[_streamMsgIndex!]['text'] = buffer;
+              });
+              _scrollDown();
             }
-          } catch (e) {
-            // ignore non-JSON lines
           }
         }
       }
     }
     
-    debugPrint('✅ [STREAM] Final buffer: "$buffer"');
-    debugPrint('✅ [STREAM] Buffer length: ${buffer.length}');
+    debugPrint('✅ [STREAM] Final buffer length: ${buffer.length}');
   }
 
   String _extractStreamDelta(dynamic data) {
     try {
       if (data is Map) {
+        final type = data['type']?.toString();
+        
+        // معالجة response.output_item.added و response.output_item.delta
+        if (type == 'response.output_item.added' || type == 'response.output_item.delta') {
+          final item = data['item'];
+          if (item is Map) {
+            final itemType = item['type']?.toString();
+            
+            // معالجة message type
+            if (itemType == 'message') {
+              // محاولة delta أولاً
+              final delta = item['delta'];
+              if (delta is Map) {
+                final deltaContent = delta['content'];
+                if (deltaContent is List) {
+                  final StringBuffer out = StringBuffer();
+                  for (final c in deltaContent) {
+                    if (c is Map) {
+                      final ct = c['type']?.toString();
+                      if ((ct == 'output_text' || ct == 'output_text.delta') && c['text'] is String) {
+                        out.write(c['text']);
+                      } else if (c['text'] is String) {
+                        out.write(c['text']);
+                      }
+                    }
+                  }
+                  final s = out.toString();
+                  if (s.isNotEmpty) return s;
+                }
+              }
+              
+              // محاولة content مباشرة
+              final content = item['content'];
+              if (content is List) {
+                final StringBuffer out = StringBuffer();
+                for (final c in content) {
+                  if (c is Map) {
+                    final ct = c['type']?.toString();
+                    if ((ct == 'output_text' || ct == 'output_text.delta') && c['text'] is String) {
+                      out.write(c['text']);
+                    } else if (c['text'] is String) {
+                      out.write(c['text']);
+                    }
+                  }
+                }
+                final s = out.toString();
+                if (s.isNotEmpty) return s;
+              }
+            }
+          }
+        }
+        
         // 1. محاولة استخراج من output_text مباشرة
         if (data['output_text'] is String) {
           final text = data['output_text'] as String;
-          if (text.isNotEmpty) {
-            debugPrint('✅ [EXTRACT] Found output_text: "$text"');
-            return text;
-          }
+          if (text.isNotEmpty) return text;
         }
         
         // 2. محاولة استخراج من output array
@@ -796,10 +840,10 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
           final StringBuffer out = StringBuffer();
           for (final item in output) {
             if (item is Map) {
-              final type = item['type']?.toString();
+              final itemType = item['type']?.toString();
               
               // معالجة message type
-              if (type == 'message') {
+              if (itemType == 'message') {
                 // محاولة delta أولاً
                 final delta = item['delta'];
                 if (delta is Map) {
@@ -835,16 +879,13 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
               }
               
               // معالجة output_text type مباشرة
-              if (type == 'output_text' && item['text'] is String) {
+              if (itemType == 'output_text' && item['text'] is String) {
                 out.write(item['text']);
               }
             }
           }
           final s = out.toString();
-          if (s.isNotEmpty) {
-            debugPrint('✅ [EXTRACT] Extracted from output: "$s"');
-            return s;
-          }
+          if (s.isNotEmpty) return s;
         }
         
         // 3. محاولة استخراج من message.content
@@ -864,12 +905,8 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
               }
             }
             final s = out.toString();
-            if (s.isNotEmpty) {
-              debugPrint('✅ [EXTRACT] Extracted from message.content: "$s"');
-              return s;
-            }
+            if (s.isNotEmpty) return s;
           } else if (content is String) {
-            debugPrint('✅ [EXTRACT] Found message.content (string): "$content"');
             return content;
           }
         }
