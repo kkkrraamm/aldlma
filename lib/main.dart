@@ -838,11 +838,27 @@ class _RecentToolsSection extends StatefulWidget {
 class _RecentToolsSectionState extends State<_RecentToolsSection> {
   List<Map<String, String>> _recentTools = [];
   bool _isLoading = true;
+  String _userName = '';
 
   @override
   void initState() {
     super.initState();
     _loadRecentTools();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final name = prefs.getString('user_name') ?? '';
+      if (mounted) {
+        setState(() {
+          _userName = name;
+        });
+      }
+    } catch (e) {
+      print('❌ فشل تحميل اسم المستخدم: $e');
+    }
   }
 
   Future<void> _loadRecentTools() async {
@@ -893,68 +909,64 @@ class _RecentToolsSectionState extends State<_RecentToolsSection> {
         final isDark = theme.isDarkMode;
         final primaryColor = isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
         
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: theme.textPrimaryColor.withOpacity(0.06),
-            ),
-          ),
-          child: Row(
+        // تحديد التحية بناءً على وجود الاسم
+        final greeting = _userName.isNotEmpty ? 'يا قرابة $_userName' : 'يا قرابة سادة';
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.history,
-                size: 18,
-                color: theme.textPrimaryColor.withOpacity(0.5),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'آخر استخدام:',
-                style: GoogleFonts.cairo(
-                  fontSize: 12,
-                  color: theme.textPrimaryColor.withOpacity(0.6),
-                  fontWeight: FontWeight.w600,
+              // النص الترحيبي
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'آخر استخدامك من أدوات الدلما ',
+                      style: GoogleFonts.cairo(
+                        fontSize: 13,
+                        color: theme.textPrimaryColor.withOpacity(0.7),
+                        fontWeight: FontWeight.w500,
+                        height: 1.6,
+                      ),
+                    ),
+                    TextSpan(
+                      text: greeting,
+                      style: GoogleFonts.cairo(
+                        fontSize: 13,
+                        color: primaryColor,
+                        fontWeight: FontWeight.w700,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: _recentTools.map((tool) {
-                      return Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                tool['icon'] ?? '🤖',
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                tool['name'] ?? '',
-                                style: GoogleFonts.cairo(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.textPrimaryColor,
-                                ),
-                              ),
-                            ],
+              const SizedBox(height: 8),
+              // الأدوات (نص فقط بدون خلفية)
+              Wrap(
+                spacing: 12,
+                runSpacing: 6,
+                children: _recentTools.map((tool) {
+                  return Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: tool['icon'] ?? '🤖',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        TextSpan(
+                          text: ' ${tool['name'] ?? ''}',
+                          style: GoogleFonts.cairo(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: theme.textPrimaryColor,
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
             ],
           ),
