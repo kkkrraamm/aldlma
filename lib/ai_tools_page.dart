@@ -34,6 +34,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
   bool _isLoadingStats = true;
   late AnimationController _statsAnimationController;
   Set<String> _favoriteTools = {};
+  Set<String> _likedTools = {};
 
   @override
   void initState() {
@@ -60,6 +61,13 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
       if (favoritesJson != null && favoritesJson.isNotEmpty) {
         final decoded = json.decode(favoritesJson) as List;
         _favoriteTools = decoded.map((e) => e.toString()).toSet();
+      }
+      
+      // تحميل الأدوات المعجب بها
+      final likedJson = prefs.getString('liked_ai_tools');
+      if (likedJson != null && likedJson.isNotEmpty) {
+        final decoded = json.decode(likedJson) as List;
+        _likedTools = decoded.map((e) => e.toString()).toSet();
       }
       
       // تحميل آخر الأدوات المستخدمة
@@ -91,6 +99,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
             'last_tool': recentTools.isNotEmpty ? recentTools.first['name'] ?? '' : '',
             'last_tool_icon': recentTools.isNotEmpty ? recentTools.first['icon'] ?? '' : '',
             'favorite_count': _favoriteTools.length,
+            'liked_count': _likedTools.length,
             'tools_used': recentTools.length,
           };
           _isLoadingStats = false;
@@ -123,6 +132,26 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
       await prefs.setString('favorite_ai_tools', json.encode(_favoriteTools.toList()));
     } catch (e) {
       print('❌ فشل حفظ المفضلة: $e');
+    }
+  }
+
+  Future<void> _toggleLike(String toolTitle) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      setState(() {
+        if (_likedTools.contains(toolTitle)) {
+          _likedTools.remove(toolTitle);
+        } else {
+          _likedTools.add(toolTitle);
+        }
+        _usageStats['liked_count'] = _likedTools.length;
+      });
+      
+      // حفظ في SharedPreferences
+      await prefs.setString('liked_ai_tools', json.encode(_likedTools.toList()));
+    } catch (e) {
+      print('❌ فشل حفظ الإعجاب: $e');
     }
   }
 
@@ -907,24 +936,26 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           borderRadius: BorderRadius.circular(25),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.2),
-                    Colors.white.withOpacity(0.05),
-                  ],
-                ),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1.5,
-                ),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Column(
+            child: Stack(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(0.2),
+                        Colors.white.withOpacity(0.05),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Icon
@@ -1010,6 +1041,80 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                   ],
                 ),
               ),
+                
+                // زر الإعجاب في أعلى يسار البطاقة
+                Positioned(
+                  top: 14,
+                  left: 14,
+                  child: GestureDetector(
+                    onTap: () => _toggleLike(tool['title']),
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: _likedTools.contains(tool['title'])
+                            ? const Color(0xFF2196F3).withOpacity(0.95)
+                            : Colors.white.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.7),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _likedTools.contains(tool['title'])
+                            ? Icons.thumb_up
+                            : Icons.thumb_up_outlined,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // زر المفضلة في أعلى يمين البطاقة
+                Positioned(
+                  top: 14,
+                  right: 14,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(tool['title']),
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: _favoriteTools.contains(tool['title'])
+                            ? Colors.red.withOpacity(0.95)
+                            : Colors.white.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.7),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _favoriteTools.contains(tool['title'])
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1113,7 +1218,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
             ),
           ),
           
-          // البطاقات الإحصائية
+          // البطاقات الإحصائية - الصف الأول
           Row(
             children: [
               Expanded(
@@ -1132,6 +1237,32 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                   title: 'الأدوات المستخدمة',
                   value: _usageStats['tools_used'].toString(),
                   color: const Color(0xFF4CAF50),
+                  theme: theme,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // البطاقات الإحصائية - الصف الثاني
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  icon: '👍',
+                  title: 'الإعجابات',
+                  value: (_usageStats['liked_count'] ?? 0).toString(),
+                  color: const Color(0xFF2196F3),
+                  theme: theme,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  icon: '❤️',
+                  title: 'المفضلة',
+                  value: (_usageStats['favorite_count'] ?? 0).toString(),
+                  color: const Color(0xFFE91E63),
                   theme: theme,
                 ),
               ),
