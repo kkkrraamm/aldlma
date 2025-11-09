@@ -910,7 +910,7 @@ class _RecentToolsSectionState extends State<_RecentToolsSection> {
         final primaryColor = isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
         
         // تحديد التحية بناءً على وجود الاسم
-        final greeting = _userName.isNotEmpty ? 'يا قرابة $_userName' : 'يا قرابة ساده';
+        final greeting = _userName.isNotEmpty ? 'يا قرابة $_userName' : 'يا قرابة';
         
         return Padding(
           padding: const EdgeInsets.only(top: 4, bottom: 12),
