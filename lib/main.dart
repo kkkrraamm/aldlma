@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'prayer_page.dart';
 import 'desert_transition.dart';
-import 'ask_dalma_dialog.dart';
+import 'ai_dalma_page.dart';
 import 'orders_page.dart';
 import 'trends_page.dart';
 import 'services_page.dart';
@@ -742,7 +742,10 @@ class _AskDalmaButton extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            showDialog(context: context, builder: (_) => const AskDalmaDialog());
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AIDalmaPage()),
+            );
           },
           child: const Padding(
             padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -751,7 +754,7 @@ class _AskDalmaButton extends StatelessWidget {
               children: [
                 const Icon(Icons.psychology_outlined, color: Colors.white, size: 24),
                 const SizedBox(width: 12),
-                const Text('اسأل الدلما', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                const Text('ذكاء اصطناعي الدلما', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
               ],
             ),
           ),
