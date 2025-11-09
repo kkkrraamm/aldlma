@@ -932,19 +932,19 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                    // Icon
-                    Container(
-                    padding: const EdgeInsets.all(14),
+                  // Icon
+                  Container(
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Text(
                       tool['icon'],
-                      style: const TextStyle(fontSize: 40),
+                      style: const TextStyle(fontSize: 36),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   // Title
                   Text(
                     tool['title'],
@@ -958,22 +958,22 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   // Subtitle
-                  Expanded(
+                  Flexible(
                     child: Text(
                       tool['subtitle'],
                       style: GoogleFonts.cairo(
-                        fontSize: 11,
+                        fontSize: 10,
                         color: Colors.white.withOpacity(0.9),
-                        height: 1.3,
+                        height: 1.2,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   // Badge إذا كانت جاهزة
                   if (tool['page'] != null)
                     Container(
@@ -1024,7 +1024,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                     child: GestureDetector(
                       onTap: () => _toggleFavorite(tool['title']),
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: _favoriteTools.contains(tool['title'])
                               ? Colors.red.withOpacity(0.95)
@@ -1032,12 +1032,12 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: Colors.white.withOpacity(0.6),
-                            width: 2,
+                            width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.2),
-                              blurRadius: 8,
+                              blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
                           ],
@@ -1047,7 +1047,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                               ? Icons.favorite
                               : Icons.favorite_border,
                           color: Colors.white,
-                          size: 18,
+                          size: 14,
                         ),
                       ),
                     ),
