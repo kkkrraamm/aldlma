@@ -22,7 +22,9 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
 
   // API إعدادات ذكاء الدلما
   static const String _endpoint = 'https://api.openai.com/v1/responses';
-  static const String _apiKey = ''; // معطّل - استخدم الموقع الخارجي بدلاً منه
+  // ⚠️ يجب إضافة OpenAI API Key هنا
+  // احصل على الـ API Key من: https://platform.openai.com/api-keys
+  static const String _apiKey = ''; // TODO: أضف OpenAI API Key هنا
   static const String _promptId = 'pmpt_68d9e5897e508193a8362567a7e2b1b30556320da57d2e9c';
   static const String _promptVersion = '2'; // تحديث إلى version 2
   static const String _model = 'o4-mini';
@@ -37,6 +39,20 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _loading) return;
+    
+    // التحقق من وجود API Key
+    if (_apiKey.isEmpty) {
+      setState(() {
+        _messages.add({
+          'role': 'assistant',
+          'text': '⚠️ عذراً، إعدادات الدلما غير مكتملة. يرجى إضافة API Key في الكود.',
+          'ts': DateTime.now(),
+        });
+      });
+      _scrollDown();
+      return;
+    }
+    
     setState(() {
       _messages.add({'role': 'user', 'text': text, 'ts': DateTime.now()});
       _loading = true;
