@@ -1126,24 +1126,33 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     
     // إضافة انيميشن الانتقال من الموضع القديم إلى الجديد
     if (isMoving && oldIndex != null && newIndex != null) {
-      // حساب المسافة بين المواضع
-      // Grid: 2 columns, card height ≈ 200px, spacing = 15px
+      // حساب المسافة بين المواضع بدقة
       final crossAxisCount = 2;
       final oldRow = oldIndex ~/ crossAxisCount;
       final newRow = newIndex ~/ crossAxisCount;
       final oldCol = oldIndex % crossAxisCount;
       final newCol = newIndex % crossAxisCount;
       
-      // حساب المسافة بناءً على حجم الشاشة
+      // حساب المسافة بناءً على حجم الشاشة بدقة
       final screenWidth = MediaQuery.of(context).size.width;
       final padding = 20.0; // padding من SliverPadding
-      final spacing = 15.0; // crossAxisSpacing
-      final cardWidth = (screenWidth - (padding * 2) - spacing) / crossAxisCount;
-      final cardHeight = cardWidth / 0.85; // childAspectRatio = 0.85
-      final rowHeight = cardHeight + spacing;
+      final spacing = 15.0; // crossAxisSpacing و mainAxisSpacing
       
-      final deltaY = (oldRow - newRow) * rowHeight;
-      final deltaX = (oldCol - newCol) * (cardWidth + spacing);
+      // حساب عرض البطاقة بدقة
+      final availableWidth = screenWidth - (padding * 2);
+      final cardWidth = (availableWidth - spacing) / crossAxisCount;
+      final cardHeight = cardWidth / 0.85; // childAspectRatio = 0.85
+      
+      // حساب الفرق في المواضع
+      // deltaX: الفرق في الأعمدة (يمين = موجب، يسار = سالب)
+      // deltaY: الفرق في الصفوف (أسفل = موجب، أعلى = سالب)
+      final deltaCol = oldCol - newCol; // إذا كان في العمود الأيمن وانتقل لليسار = موجب
+      final deltaRow = oldRow - newRow; // إذا كان في صف أسفل وانتقل لأعلى = موجب
+      
+      // حساب الإزاحة بالبكسل
+      // البطاقة تبدأ من الموضع القديم (deltaX, deltaY) وتنتقل إلى (0, 0)
+      final deltaX = deltaCol * (cardWidth + spacing);
+      final deltaY = deltaRow * (cardHeight + spacing);
       
       return TweenAnimationBuilder<double>(
         key: key,
@@ -1151,14 +1160,14 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
         tween: Tween(begin: 0.0, end: 1.0),
         curve: Curves.easeInOutCubic,
         builder: (context, value, child) {
+          // البطاقة تبدأ من الموضع القديم (deltaX, deltaY) وتنتقل إلى الموضع الجديد (0, 0)
+          // value = 0: في الموضع القديم (deltaX, deltaY)
+          // value = 1: في الموضع الجديد (0, 0)
           return Transform.translate(
             offset: Offset(deltaX * (1 - value), deltaY * (1 - value)),
             child: Transform.scale(
-              scale: 0.9 + (0.1 * value),
-              child: Opacity(
-                opacity: 0.7 + (0.3 * value),
-                child: child,
-              ),
+              scale: 0.95 + (0.05 * value),
+              child: child,
             ),
           );
         },
