@@ -28,12 +28,12 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     'total_uses': 0,
     'last_tool': '',
     'last_tool_icon': '',
-    'favorite_tool': '',
-    'favorite_tool_icon': '',
+    'favorite_count': 0,
     'tools_used': 0,
   };
   bool _isLoadingStats = true;
   late AnimationController _statsAnimationController;
+  Set<String> _favoriteTools = {};
 
   @override
   void initState() {
@@ -54,6 +54,13 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
   Future<void> _loadUsageStats() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      
+      // تحميل الأدوات المفضلة
+      final favoritesJson = prefs.getString('favorite_ai_tools');
+      if (favoritesJson != null && favoritesJson.isNotEmpty) {
+        final decoded = json.decode(favoritesJson) as List;
+        _favoriteTools = decoded.map((e) => e.toString()).toSet();
+      }
       
       // تحميل آخر الأدوات المستخدمة
       final recentToolsJson = prefs.getString('recent_ai_tools');
@@ -77,33 +84,13 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
         totalUses += decoded.length;
       }
       
-      // حساب الأداة الأكثر استخداماً
-      Map<String, int> toolUsageCount = {};
-      for (var tool in recentTools) {
-        final id = tool['id'] ?? '';
-        toolUsageCount[id] = (toolUsageCount[id] ?? 0) + 1;
-      }
-      
-      String favoriteTool = '';
-      String favoriteToolIcon = '';
-      int maxCount = 0;
-      toolUsageCount.forEach((id, count) {
-        if (count > maxCount) {
-          maxCount = count;
-          final tool = recentTools.firstWhere((t) => t['id'] == id, orElse: () => {});
-          favoriteTool = tool['name'] ?? '';
-          favoriteToolIcon = tool['icon'] ?? '';
-        }
-      });
-      
       if (mounted) {
         setState(() {
           _usageStats = {
             'total_uses': totalUses,
             'last_tool': recentTools.isNotEmpty ? recentTools.first['name'] ?? '' : '',
             'last_tool_icon': recentTools.isNotEmpty ? recentTools.first['icon'] ?? '' : '',
-            'favorite_tool': favoriteTool,
-            'favorite_tool_icon': favoriteToolIcon,
+            'favorite_count': _favoriteTools.length,
             'tools_used': recentTools.length,
           };
           _isLoadingStats = false;
@@ -116,6 +103,26 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           _isLoadingStats = false;
         });
       }
+    }
+  }
+
+  Future<void> _toggleFavorite(String toolTitle) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      setState(() {
+        if (_favoriteTools.contains(toolTitle)) {
+          _favoriteTools.remove(toolTitle);
+        } else {
+          _favoriteTools.add(toolTitle);
+        }
+        _usageStats['favorite_count'] = _favoriteTools.length;
+      });
+      
+      // حفظ في SharedPreferences
+      await prefs.setString('favorite_ai_tools', json.encode(_favoriteTools.toList()));
+    } catch (e) {
+      print('❌ فشل حفظ المفضلة: $e');
     }
   }
 
@@ -384,11 +391,25 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
 
 
   List<Map<String, dynamic>> _getFilteredTools() {
+    List<Map<String, dynamic>> filtered;
     if (_selectedCategoryIndex == 0) {
-      return _tools; // الكل
+      filtered = List.from(_tools);
+    } else {
+      final selectedCategory = _categories[_selectedCategoryIndex]['id'];
+      filtered = _tools.where((tool) => tool['category'] == selectedCategory).toList();
     }
-    final selectedCategory = _categories[_selectedCategoryIndex]['id'];
-    return _tools.where((tool) => tool['category'] == selectedCategory).toList();
+    
+    // ترتيب: المفضلة أولاً
+    filtered.sort((a, b) {
+      final aIsFavorite = _favoriteTools.contains(a['title']);
+      final bIsFavorite = _favoriteTools.contains(b['title']);
+      
+      if (aIsFavorite && !bIsFavorite) return -1;
+      if (!aIsFavorite && bIsFavorite) return 1;
+      return 0;
+    });
+    
+    return filtered;
   }
 
   @override
@@ -905,17 +926,49 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Icon مع تأثير
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      tool['icon'],
-                      style: const TextStyle(fontSize: 36),
-                    ),
+                  // Icon مع زر المفضلة
+                  Stack(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          tool['icon'],
+                          style: const TextStyle(fontSize: 36),
+                        ),
+                      ),
+                      // زر المفضلة
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () => _toggleFavorite(tool['title']),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: _favoriteTools.contains(tool['title'])
+                                  ? Colors.red.withOpacity(0.9)
+                                  : Colors.white.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.5),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Icon(
+                              _favoriteTools.contains(tool['title'])
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 10),
                   // Title
@@ -1133,20 +1186,18 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                   ),
                 ),
               
-              // الأداة المفضلة
-              if (_usageStats['favorite_tool'].isNotEmpty) ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildStatCard(
-                    icon: _usageStats['favorite_tool_icon'],
-                    title: 'المفضلة',
-                    value: _usageStats['favorite_tool'],
-                    color: const Color(0xFFE91E63),
-                    theme: theme,
-                    isCompact: true,
-                  ),
+              // المفضلة
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  icon: '💖',
+                  title: 'المفضلة',
+                  value: _usageStats['favorite_count'].toString(),
+                  color: const Color(0xFFE91E63),
+                  theme: theme,
+                  isCompact: true,
                 ),
-              ],
+              ),
             ],
           ),
         ],
