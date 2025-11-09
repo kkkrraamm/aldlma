@@ -1063,9 +1063,9 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
       backgroundColor: theme.backgroundColor,
       body: Stack(
         children: [
-          // المحتوى الأساسي
+          // المحتوى الأساسي - دائماً يعرض الشاشة الرئيسية
           _allPrograms.isEmpty
-              ? _buildStartScreen(theme, primaryColor, isDark)
+              ? _buildEmptyState(theme, primaryColor, isDark)
               : _buildProgramScreen(theme, primaryColor, isDark),
           
           // شاشة التحميل
@@ -1179,33 +1179,24 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
     );
   }
 
-  Widget _buildStartScreen(ThemeConfig theme, Color primaryColor, bool isDark) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
+  Widget _buildEmptyState(ThemeConfig theme, Color primaryColor, bool isDark) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(30),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(25),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    primaryColor.withOpacity(0.2),
-                    primaryColor.withOpacity(0.1),
-                  ],
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.calendar_today,
-                size: 80,
-                color: primaryColor,
-              ),
+            // أيقونة بسيطة
+            Icon(
+              Icons.calendar_month_rounded,
+              size: 100,
+              color: primaryColor.withOpacity(0.5),
             ),
             const SizedBox(height: 25),
+            
+            // عنوان
             Text(
-              'برنامج 30 يوم المتكامل',
+              'لا توجد برامج',
               style: GoogleFonts.cairo(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -1213,59 +1204,38 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
               ),
             ),
             const SizedBox(height: 10),
+            
+            // وصف
             Text(
-              '4 أسابيع × 7 أيام',
+              'ابدأ برنامجك الأول وتابع تقدمك',
               textAlign: TextAlign.center,
               style: GoogleFonts.cairo(
-                fontSize: 14,
-                color: primaryColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: primaryColor.withOpacity(0.3)),
-              ),
-              child: Column(
-                children: [
-                  _buildFeatureRow(Icons.calendar_view_week, 'جدول أسبوعي مفصل (7 أيام)', theme),
-                  const SizedBox(height: 10),
-                  _buildFeatureRow(Icons.camera_alt, 'صورة أسبوعية للتتبع', theme),
-                  const SizedBox(height: 10),
-                  _buildFeatureRow(Icons.trending_up, 'تحليل التقدم تلقائياً', theme),
-                  const SizedBox(height: 10),
-                  _buildFeatureRow(Icons.refresh, 'تحديث البرنامج كل أسبوع', theme),
-                ],
-              ),
-            ),
-            const SizedBox(height: 25),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _startProgram,
-                icon: const Icon(Icons.play_arrow, size: 24),
-                label: Text(
-                  'ابدأ البرنامج الآن',
-                  style: GoogleFonts.cairo(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
+                fontSize: 16,
+                color: theme.textPrimaryColor.withOpacity(0.6),
               ),
             ),
             const SizedBox(height: 30),
+            
+            // زر البدء
+            ElevatedButton.icon(
+              onPressed: _startProgram,
+              icon: const Icon(Icons.add_circle_outline, size: 24),
+              label: Text(
+                'إنشاء برنامج جديد',
+                style: GoogleFonts.cairo(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1493,21 +1463,23 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
 
     return Column(
       children: [
-        // Program Tabs with Actions (Fixed at top)
-        if (_allPrograms.isNotEmpty && _tabController != null)
-          Container(
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
+        // شريط البرامج - بسيط وجميل
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Tabs
+              if (_allPrograms.isNotEmpty && _tabController != null)
                 Expanded(
                   child: TabBar(
                     controller: _tabController,
@@ -1515,44 +1487,58 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
                     labelColor: primaryColor,
                     unselectedLabelColor: theme.textPrimaryColor.withOpacity(0.5),
                     indicatorColor: primaryColor,
-                    indicatorWeight: 3,
+                    indicatorWeight: 2,
                     labelStyle: GoogleFonts.cairo(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
                     unselectedLabelStyle: GoogleFonts.cairo(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.normal,
                     ),
                     tabs: _allPrograms.map((program) {
-                      return Tab(
-                        child: Row(
-                          children: [
-                            Icon(Icons.calendar_today, size: 16),
-                            const SizedBox(width: 5),
-                            Text(program['name'] ?? 'برنامج'),
-                          ],
-                        ),
-                      );
+                      return Tab(text: program['name'] ?? 'برنامج');
                     }).toList(),
                   ),
                 ),
-                // New Program Button
-                IconButton(
-                  icon: Icon(Icons.add_circle, color: primaryColor, size: 28),
+              
+              const SizedBox(width: 10),
+              
+              // زر إضافة برنامج جديد
+              Container(
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.add, color: primaryColor, size: 22),
                   onPressed: () => _startProgram(),
                   tooltip: 'برنامج جديد',
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(),
                 ),
-                // Delete Program Button
-                if (_allPrograms.isNotEmpty)
-                  IconButton(
-                    icon: Icon(Icons.delete_outline, color: Colors.red.withOpacity(0.7), size: 24),
-                    onPressed: () => _showDeleteProgramDialog(theme, primaryColor),
-                    tooltip: 'حذف البرنامج',
+              ),
+              
+              const SizedBox(width: 5),
+              
+              // زر حذف
+              if (_allPrograms.isNotEmpty)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-              ],
-            ),
+                  child: IconButton(
+                    icon: Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                    onPressed: () => _showDeleteProgramDialog(theme, primaryColor),
+                    tooltip: 'حذف',
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+            ],
           ),
+        ),
         
         // Scrollable Content
         Expanded(
@@ -1563,60 +1549,47 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
                 if (_monthlyGoal != null || (_weeklyGoals.isNotEmpty && _currentWeek <= _weeklyGoals.length))
                   _buildGoalsSection(theme, primaryColor, isDark),
         
-        // Header
+        // Header بسيط
         Container(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                primaryColor.withOpacity(0.15),
-                primaryColor.withOpacity(0.05),
-              ],
-            ),
-          ),
-          child: Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'الأسبوع $_currentWeek من 4',
-                        style: GoogleFonts.cairo(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textPrimaryColor,
-                        ),
-                      ),
-                      Text(
-                        'اليوم $_currentDayInWeek من 7',
-                        style: GoogleFonts.cairo(
-                          fontSize: 14,
-                          color: theme.textPrimaryColor.withOpacity(0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.2),
-                      shape: BoxShape.circle,
+                  Text(
+                    'الأسبوع $_currentWeek',
+                    style: GoogleFonts.cairo(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textPrimaryColor,
                     ),
-                    child: Text(
-                      '$totalDays/30',
-                      style: GoogleFonts.cairo(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
-                      ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'اليوم $_currentDayInWeek من 7',
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      color: theme.textPrimaryColor.withOpacity(0.6),
                     ),
                   ),
                 ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$totalDays/30',
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
               ),
             ],
           ),
@@ -1957,4 +1930,6 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
     );
   }
 }
+
+
 
