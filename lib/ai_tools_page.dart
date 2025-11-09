@@ -1202,13 +1202,66 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           
           // آخر أداة مستخدمة
           if (_usageStats['last_tool'].isNotEmpty)
-            _buildStatCard(
-              icon: _usageStats['last_tool_icon'],
-              title: 'آخر استخدام',
-              value: _usageStats['last_tool'],
-              color: const Color(0xFFFF9800),
-              theme: theme,
-              isCompact: true,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFFFF9800).withOpacity(0.1),
+                    const Color(0xFFF57C00).withOpacity(0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFFFF9800).withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF9800).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _usageStats['last_tool_icon'],
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'آخر استخدام',
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            color: theme.textPrimaryColor.withOpacity(0.6),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _usageStats['last_tool'],
+                          style: GoogleFonts.cairo(
+                            fontSize: 15,
+                            color: theme.textPrimaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: theme.textPrimaryColor.withOpacity(0.3),
+                  ),
+                ],
+              ),
             ),
         ],
       ),
