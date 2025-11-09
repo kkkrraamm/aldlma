@@ -906,63 +906,60 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           borderRadius: BorderRadius.circular(25),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Stack(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withOpacity(0.2),
-                        Colors.white.withOpacity(0.05),
-                      ],
-                    ),
-                    border: Border.all(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.2),
+                    Colors.white.withOpacity(0.05),
+                  ],
+                ),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Icon
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      width: 1.5,
+                      shape: BoxShape.circle,
                     ),
-                    borderRadius: BorderRadius.circular(25),
+                    child: Text(
+                      tool['icon'],
+                      style: const TextStyle(fontSize: 36),
+                    ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Icon
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          tool['icon'],
-                          style: const TextStyle(fontSize: 42),
-                        ),
-                      ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   // Title
                   Text(
                     tool['title'],
                     style: GoogleFonts.cairo(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      letterSpacing: 0.3,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   // Subtitle
                   Flexible(
                     child: Text(
                       tool['subtitle'],
                       style: GoogleFonts.cairo(
-                        fontSize: 11,
-                        color: Colors.white.withOpacity(0.95),
-                        height: 1.4,
+                        fontSize: 10,
+                        color: Colors.white.withOpacity(0.9),
+                        height: 1.2,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 2,
@@ -1011,44 +1008,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                     ),
                   ],
                 ),
-                ),
-                // زر المفضلة في أعلى يمين البطاقة
-                Positioned(
-                  top: 14,
-                  right: 14,
-                  child: GestureDetector(
-                    onTap: () => _toggleFavorite(tool['title']),
-                    child: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: _favoriteTools.contains(tool['title'])
-                            ? Colors.red.withOpacity(0.95)
-                            : Colors.white.withOpacity(0.3),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.7),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.25),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        _favoriteTools.contains(tool['title'])
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
           ),
         ),
       ),
