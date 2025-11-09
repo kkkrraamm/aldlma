@@ -1481,63 +1481,128 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
 
     return Column(
       children: [
-        // شريط البرامج - مدمج وأنيق
+        // شريط البرامج - تصميم Pills جميل
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: theme.cardColor,
+            color: theme.backgroundColor,
             border: Border(
               bottom: BorderSide(
-                color: theme.textPrimaryColor.withOpacity(0.05),
+                color: theme.textPrimaryColor.withOpacity(0.06),
                 width: 1,
               ),
             ),
           ),
           child: Row(
             children: [
-              // Tabs
-              if (_allPrograms.isNotEmpty && _tabController != null)
+              // Program Pills
+              if (_allPrograms.isNotEmpty)
                 Expanded(
-                  child: TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    labelColor: primaryColor,
-                    unselectedLabelColor: theme.textPrimaryColor.withOpacity(0.5),
-                    indicatorColor: primaryColor,
-                    indicatorWeight: 2,
-                    labelStyle: GoogleFonts.cairo(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _allPrograms.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final program = entry.value;
+                        final isSelected = _selectedTabIndex == index;
+                        
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedTabIndex = index;
+                                _tabController?.animateTo(index);
+                                _currentProgramId = _allPrograms[index]['id'];
+                                _loadSpecificProgram(_currentProgramId!);
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected 
+                                    ? primaryColor 
+                                    : theme.cardColor,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isSelected 
+                                      ? primaryColor 
+                                      : theme.textPrimaryColor.withOpacity(0.1),
+                                  width: isSelected ? 0 : 1,
+                                ),
+                                boxShadow: isSelected ? [
+                                  BoxShadow(
+                                    color: primaryColor.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ] : null,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 14,
+                                    color: isSelected 
+                                        ? Colors.white 
+                                        : theme.textPrimaryColor.withOpacity(0.6),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    program['name'] ?? 'برنامج',
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 13,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                      color: isSelected 
+                                          ? Colors.white 
+                                          : theme.textPrimaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    unselectedLabelStyle: GoogleFonts.cairo(
-                      fontSize: 13,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    tabs: _allPrograms.map((program) {
-                      return Tab(text: program['name'] ?? 'برنامج');
-                    }).toList(),
                   ),
                 ),
               
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               
-              // أزرار صغيرة
-              IconButton(
-                icon: Icon(Icons.add_circle_outline, color: primaryColor, size: 20),
-                onPressed: () => _startProgram(),
-                tooltip: 'برنامج جديد',
-                padding: const EdgeInsets.all(6),
-                constraints: const BoxConstraints(),
-              ),
-              
-              if (_allPrograms.isNotEmpty)
-                IconButton(
-                  icon: Icon(Icons.delete_outline, color: Colors.red.withOpacity(0.7), size: 18),
-                  onPressed: () => _showDeleteProgramDialog(theme, primaryColor),
-                  tooltip: 'حذف',
-                  padding: const EdgeInsets.all(6),
+              // أزرار الإجراءات
+              Container(
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.add, color: primaryColor, size: 20),
+                  onPressed: () => _startProgram(),
+                  tooltip: 'برنامج جديد',
+                  padding: const EdgeInsets.all(8),
                   constraints: const BoxConstraints(),
                 ),
+              ),
+              
+              if (_allPrograms.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                    onPressed: () => _showDeleteProgramDialog(theme, primaryColor),
+                    tooltip: 'حذف',
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
