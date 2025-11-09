@@ -126,8 +126,8 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
       // حفظ في SharedPreferences
       await prefs.setString('favorite_ai_tools', json.encode(_favoriteTools.toList()));
       
-      // إزالة الانيميشن بعد فترة
-      await Future.delayed(const Duration(milliseconds: 600));
+      // إزالة الانيميشن بعد فترة (أطول من مدة انيميشن الانتقال)
+      await Future.delayed(const Duration(milliseconds: 800));
       if (mounted) {
         setState(() {
           _animatingTool = null;
@@ -856,44 +856,18 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final tool = _getFilteredTools()[index];
-                  return Hero(
-                    tag: 'tool_${tool['title']}',
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 600),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder: (child, animation) {
-                        return SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, -0.5),
-                            end: Offset.zero,
-                          ).animate(CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeOutCubic,
-                          )),
-                          child: FadeTransition(
-                            opacity: animation,
-                            child: ScaleTransition(
-                              scale: Tween<double>(
-                                begin: 0.8,
-                                end: 1.0,
-                              ).animate(CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeOutBack,
-                              )),
-                              child: child,
-                            ),
-                          ),
-                        );
-                      },
-                      child: _buildToolCard(
-                        context,
-                        tool,
-                        theme,
-                        isDark,
-                        key: ValueKey('${tool['title']}_$index'),
-                      ),
-                    ),
+                  // البطاقة تنتقل إلى الأول إذا كانت مفضلة وفي الموضع الأول وكانت في _animatingTool
+                  final isMovingToFirst = index == 0 && 
+                                        _favoriteTools.contains(tool['title']) &&
+                                        _animatingTool == tool['title'];
+                  
+                  return _buildToolCard(
+                    context,
+                    tool,
+                    theme,
+                    isDark,
+                    key: ValueKey('${tool['title']}_$index'),
+                    isMovingToFirst: isMovingToFirst,
                   );
                 },
                 childCount: _getFilteredTools().length,
@@ -916,22 +890,12 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     ThemeConfig theme,
     bool isDark, {
     Key? key,
+    bool isMovingToFirst = false,
   }) {
     final isAnimating = _animatingTool == tool['title'];
     final isFavorite = _favoriteTools.contains(tool['title']);
     
-    return TweenAnimationBuilder<double>(
-      key: key,
-      duration: const Duration(milliseconds: 300),
-      tween: Tween(begin: 1.0, end: isAnimating ? 1.05 : 1.0),
-      curve: Curves.easeOutBack,
-      builder: (context, scale, child) {
-        return Transform.scale(
-          scale: scale,
-          child: child,
-        );
-      },
-      child: GestureDetector(
+    Widget card = GestureDetector(
         onTap: () {
         if (tool['page'] != null) {
           Navigator.push(
@@ -1139,7 +1103,44 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           ),
         ),
       ),
-      ),
+      );
+    
+    // إضافة انيميشن للبطاقة التي تنتقل إلى الأول
+    if (isMovingToFirst) {
+      return TweenAnimationBuilder<double>(
+        key: key,
+        duration: const Duration(milliseconds: 600),
+        tween: Tween(begin: 0.0, end: 1.0),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Transform.translate(
+            offset: Offset(0, -50 * (1 - value)),
+            child: Transform.scale(
+              scale: 0.8 + (0.2 * value),
+              child: Opacity(
+                opacity: value,
+                child: child,
+              ),
+            ),
+          );
+        },
+        child: card,
+      );
+    }
+    
+    // انيميشن تكبير البطاقة عند الضغط على القلب
+    return TweenAnimationBuilder<double>(
+      key: key,
+      duration: const Duration(milliseconds: 300),
+      tween: Tween(begin: 1.0, end: isAnimating ? 1.05 : 1.0),
+      curve: Curves.easeOutBack,
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: child,
+        );
+      },
+      child: card,
     );
   }
 
