@@ -926,11 +926,14 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
               ),
               child: Stack(
                 children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                  // Icon
-                  Container(
+                  SizedBox(
+                    width: double.infinity,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                    // Icon
+                    Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
@@ -1011,6 +1014,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                       ),
                     ),
                     ],
+                    ),
                   ),
                   
                   // زر المفضلة في أعلى يمين البطاقة
