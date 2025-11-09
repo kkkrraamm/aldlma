@@ -34,6 +34,8 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
   bool _isLoadingStats = true;
   late AnimationController _statsAnimationController;
   Set<String> _favoriteTools = {};
+  String? _animatingTool;
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
 
   @override
   void initState() {
@@ -111,6 +113,8 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
       final prefs = await SharedPreferences.getInstance();
       
       setState(() {
+        _animatingTool = toolTitle;
+        
         if (_favoriteTools.contains(toolTitle)) {
           _favoriteTools.remove(toolTitle);
         } else {
@@ -121,6 +125,14 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
       
       // حفظ في SharedPreferences
       await prefs.setString('favorite_ai_tools', json.encode(_favoriteTools.toList()));
+      
+      // إزالة الانيميشن بعد فترة
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (mounted) {
+        setState(() {
+          _animatingTool = null;
+        });
+      }
     } catch (e) {
       print('❌ فشل حفظ المفضلة: $e');
     }
@@ -866,8 +878,21 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     ThemeConfig theme,
     bool isDark,
   ) {
-    return GestureDetector(
-      onTap: () {
+    final isAnimating = _animatingTool == tool['title'];
+    final isFavorite = _favoriteTools.contains(tool['title']);
+    
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 300),
+      tween: Tween(begin: 1.0, end: isAnimating ? 1.05 : 1.0),
+      curve: Curves.easeOutBack,
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: child,
+        );
+      },
+      child: GestureDetector(
+        onTap: () {
         if (tool['page'] != null) {
           Navigator.push(
             context,
@@ -1021,35 +1046,51 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                   Positioned(
                     top: 0,
                     right: 0,
-                    child: GestureDetector(
-                      onTap: () => _toggleFavorite(tool['title']),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: _favoriteTools.contains(tool['title'])
-                              ? Colors.red.withOpacity(0.95)
-                              : Colors.white.withOpacity(0.25),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.6),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
+                    child: TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 300),
+                      tween: Tween(begin: 1.0, end: isAnimating ? 1.3 : 1.0),
+                      curve: Curves.elasticOut,
+                      builder: (context, heartScale, child) {
+                        return Transform.scale(
+                          scale: heartScale,
+                          child: GestureDetector(
+                            onTap: () => _toggleFavorite(tool['title']),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: isFavorite
+                                    ? Colors.red.withOpacity(0.95)
+                                    : Colors.white.withOpacity(0.25),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.6),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                  if (isAnimating && isFavorite)
+                                    BoxShadow(
+                                      color: Colors.red.withOpacity(0.5),
+                                      blurRadius: 12,
+                                      spreadRadius: 2,
+                                    ),
+                                ],
+                              ),
+                              child: Icon(
+                                isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: Colors.white,
+                                size: 14,
+                              ),
                             ),
-                          ],
-                        ),
-                        child: Icon(
-                          _favoriteTools.contains(tool['title'])
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: Colors.white,
-                          size: 14,
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -1057,6 +1098,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
             ),
           ),
         ),
+      ),
       ),
     );
   }
