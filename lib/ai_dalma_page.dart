@@ -3,6 +3,7 @@ import 'theme_config.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
 
 class AIDalmaPage extends StatefulWidget {
   const AIDalmaPage({super.key});
@@ -22,7 +23,7 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
   static const String _endpoint = 'https://api.openai.com/v1/responses';
   static const String _apiKey = ''; // معطّل - استخدم الموقع الخارجي بدلاً منه
   static const String _promptId = 'pmpt_68d9e5897e508193a8362567a7e2b1b30556320da57d2e9c';
-  static const String _promptVersion = '1';
+  static const String _promptVersion = '2'; // تحديث إلى version 2
   static const String _model = 'o4-mini';
 
   @override
@@ -91,6 +92,59 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
     });
   }
 
+  Widget _buildQuickAction({
+    required String icon,
+    required String label,
+    required VoidCallback onTap,
+    required ThemeConfig theme,
+    required Color primaryColor,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              primaryColor.withOpacity(0.15),
+              primaryColor.withOpacity(0.08),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: primaryColor.withOpacity(0.3),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: primaryColor.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              icon,
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: GoogleFonts.cairo(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: theme.textPrimaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -112,14 +166,28 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
             title: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [primaryColor, primaryColor.withOpacity(0.7)],
                     ),
                     borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.psychology, color: Colors.white, size: 20),
+                  child: Image.asset(
+                    'assets/img/aldlma.png',
+                    width: 24,
+                    height: 24,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.psychology, color: Colors.white, size: 20);
+                    },
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -155,44 +223,206 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
                   ),
                   child: _messages.isEmpty
                       ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(24),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      primaryColor.withOpacity(0.1),
-                                      primaryColor.withOpacity(0.05),
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // شعار الدلما مع انيميشن
+                                TweenAnimationBuilder<double>(
+                                  duration: const Duration(milliseconds: 1500),
+                                  tween: Tween(begin: 0.0, end: 1.0),
+                                  curve: Curves.elasticOut,
+                                  builder: (context, value, child) {
+                                    return Transform.scale(
+                                      scale: value,
+                                      child: Transform.rotate(
+                                        angle: (1 - value) * 0.5,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(32),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                              colors: [
+                                                primaryColor.withOpacity(0.2),
+                                                primaryColor.withOpacity(0.1),
+                                                primaryColor.withOpacity(0.05),
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: primaryColor.withOpacity(0.3),
+                                                blurRadius: 30,
+                                                spreadRadius: 5,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Image.asset(
+                                            'assets/img/aldlma.png',
+                                            width: 120,
+                                            height: 120,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Icon(
+                                                Icons.psychology,
+                                                size: 120,
+                                                color: primaryColor.withOpacity(0.7),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 40),
+                                // العنوان الرئيسي
+                                TweenAnimationBuilder<double>(
+                                  duration: const Duration(milliseconds: 800),
+                                  tween: Tween(begin: 0.0, end: 1.0),
+                                  curve: Curves.easeOut,
+                                  builder: (context, value, child) {
+                                    return Opacity(
+                                      opacity: value,
+                                      child: Transform.translate(
+                                        offset: Offset(0, 20 * (1 - value)),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'مرحباً! 👋',
+                                        style: GoogleFonts.cairo(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w900,
+                                          color: primaryColor,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'أنا ذكاء اصطناعي الدلما',
+                                        style: GoogleFonts.cairo(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w700,
+                                          color: theme.textPrimaryColor,
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                  shape: BoxShape.circle,
                                 ),
-                                child: Icon(
-                                  Icons.psychology,
-                                  size: 64,
-                                  color: primaryColor.withOpacity(0.7),
+                                const SizedBox(height: 24),
+                                // الوصف
+                                TweenAnimationBuilder<double>(
+                                  duration: const Duration(milliseconds: 1000),
+                                  tween: Tween(begin: 0.0, end: 1.0),
+                                  curve: Curves.easeOut,
+                                  builder: (context, value, child) {
+                                    return Opacity(
+                                      opacity: value,
+                                      child: Transform.translate(
+                                        offset: Offset(0, 20 * (1 - value)),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 16,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: theme.cardColor,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: primaryColor.withOpacity(0.2),
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          '💬 اسألني أي شيء',
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700,
+                                            color: theme.textPrimaryColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'سأجيبك بكل دقة ووضوح',
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 14,
+                                            color: theme.textPrimaryColor.withOpacity(0.6),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 24),
-                              Text(
-                                'مرحباً! أنا ذكاء اصطناعي الدلما',
-                                style: GoogleFonts.cairo(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  color: theme.textPrimaryColor,
+                                const SizedBox(height: 32),
+                                // أيقونات سريعة
+                                TweenAnimationBuilder<double>(
+                                  duration: const Duration(milliseconds: 1200),
+                                  tween: Tween(begin: 0.0, end: 1.0),
+                                  curve: Curves.easeOut,
+                                  builder: (context, value, child) {
+                                    return Opacity(
+                                      opacity: value,
+                                      child: child,
+                                    );
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _buildQuickAction(
+                                        icon: '💡',
+                                        label: 'نصائح',
+                                        onTap: () {
+                                          _controller.text = 'أعطني نصائح مفيدة';
+                                          _send();
+                                        },
+                                        theme: theme,
+                                        primaryColor: primaryColor,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      _buildQuickAction(
+                                        icon: '❓',
+                                        label: 'أسئلة',
+                                        onTap: () {
+                                          _controller.text = 'ما هي أفضل الممارسات؟';
+                                          _send();
+                                        },
+                                        theme: theme,
+                                        primaryColor: primaryColor,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      _buildQuickAction(
+                                        icon: '📚',
+                                        label: 'معلومات',
+                                        onTap: () {
+                                          _controller.text = 'أخبرني معلومات مفيدة';
+                                          _send();
+                                        },
+                                        theme: theme,
+                                        primaryColor: primaryColor,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'اسألني أي شيء وسأجيبك',
-                                style: GoogleFonts.cairo(
-                                  fontSize: 16,
-                                  color: theme.textPrimaryColor.withOpacity(0.6),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         )
                       : ListView.builder(
@@ -246,44 +476,108 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
                             }
                             final m = _messages[i];
                             final isUser = m['role'] == 'user';
-                            return Align(
-                              alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                constraints: BoxConstraints(
-                                  maxWidth: MediaQuery.of(context).size.width * 0.75,
-                                ),
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  gradient: isUser
-                                      ? LinearGradient(
-                                          colors: [
-                                            primaryColor,
-                                            primaryColor.withOpacity(0.85),
-                                          ],
-                                        )
-                                      : null,
-                                  color: isUser ? null : theme.cardColor,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: isUser
-                                      ? null
-                                      : Border.all(
-                                          color: primaryColor.withOpacity(0.2),
-                                        ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.08),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 2),
+                            return TweenAnimationBuilder<double>(
+                              duration: const Duration(milliseconds: 400),
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              curve: Curves.easeOut,
+                              builder: (context, value, child) {
+                                return Opacity(
+                                  opacity: value,
+                                  child: Transform.translate(
+                                    offset: Offset(
+                                      isUser ? 20 * (1 - value) : -20 * (1 - value),
+                                      0,
                                     ),
-                                  ],
-                                ),
-                                child: Text(
-                                  m['text'],
-                                  style: GoogleFonts.cairo(
-                                    fontSize: 15,
-                                    height: 1.6,
-                                    color: isUser ? Colors.white : theme.textPrimaryColor,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: Align(
+                                alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  constraints: BoxConstraints(
+                                    maxWidth: MediaQuery.of(context).size.width * 0.75,
+                                  ),
+                                  padding: const EdgeInsets.all(18),
+                                  decoration: BoxDecoration(
+                                    gradient: isUser
+                                        ? LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              primaryColor,
+                                              primaryColor.withOpacity(0.85),
+                                            ],
+                                          )
+                                        : null,
+                                    color: isUser ? null : theme.cardColor,
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: const Radius.circular(20),
+                                      topRight: const Radius.circular(20),
+                                      bottomLeft: Radius.circular(isUser ? 20 : 4),
+                                      bottomRight: Radius.circular(isUser ? 4 : 20),
+                                    ),
+                                    border: isUser
+                                        ? null
+                                        : Border.all(
+                                            color: primaryColor.withOpacity(0.2),
+                                            width: 1.5,
+                                          ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: isUser
+                                            ? primaryColor.withOpacity(0.3)
+                                            : Colors.black.withOpacity(0.08),
+                                        blurRadius: 15,
+                                        spreadRadius: isUser ? 1 : 0,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (!isUser) ...[
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                primaryColor.withOpacity(0.2),
+                                                primaryColor.withOpacity(0.1),
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Image.asset(
+                                            'assets/img/aldlma.png',
+                                            width: 20,
+                                            height: 20,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Icon(
+                                                Icons.psychology,
+                                                size: 20,
+                                                color: primaryColor,
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                      ],
+                                      Expanded(
+                                        child: Text(
+                                          m['text'],
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 15.5,
+                                            height: 1.7,
+                                            fontWeight: FontWeight.w500,
+                                            color: isUser ? Colors.white : theme.textPrimaryColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -426,6 +720,10 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
       'max_output_tokens': s.maxOut,
       'store': true,
       'stream': true,
+      'include': [
+        'reasoning.encrypted_content',
+        'web_search_call.action.sources',
+      ],
     };
 
     debugPrint('ASK DALMA STREAM REQUEST → $_endpoint');
@@ -533,6 +831,10 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
       'text': {'verbosity': 'medium'},
       'max_output_tokens': 300,
       'store': true,
+      'include': [
+        'reasoning.encrypted_content',
+        'web_search_call.action.sources',
+      ],
     };
 
     debugPrint('ASK DALMA REQUEST → $_endpoint');
