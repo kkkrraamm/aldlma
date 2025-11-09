@@ -910,65 +910,65 @@ class _RecentToolsSectionState extends State<_RecentToolsSection> {
         final primaryColor = isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
         
         // تحديد التحية بناءً على وجود الاسم
-        final greeting = _userName.isNotEmpty ? 'يا قرابة $_userName' : 'يا قرابة سادة';
+        final greeting = _userName.isNotEmpty ? 'يا قرابة $_userName' : 'يا قرابة ساده';
         
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // النص الترحيبي
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'آخر استخدامك من أدوات الدلما ',
-                      style: GoogleFonts.cairo(
-                        fontSize: 13,
-                        color: theme.textPrimaryColor.withOpacity(0.7),
-                        fontWeight: FontWeight.w500,
-                        height: 1.6,
-                      ),
-                    ),
-                    TextSpan(
-                      text: greeting,
-                      style: GoogleFonts.cairo(
-                        fontSize: 13,
-                        color: primaryColor,
-                        fontWeight: FontWeight.w700,
-                        height: 1.6,
-                      ),
-                    ),
-                  ],
+          padding: const EdgeInsets.only(top: 4, bottom: 12),
+          child: RichText(
+            textAlign: TextAlign.start,
+            text: TextSpan(
+              style: GoogleFonts.cairo(
+                fontSize: 13.5,
+                height: 1.8,
+                fontWeight: FontWeight.w500,
+              ),
+              children: [
+                TextSpan(
+                  text: 'آخر استخدامك من أدوات الدلما ',
+                  style: TextStyle(
+                    color: theme.textPrimaryColor.withOpacity(0.65),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              // الأدوات (نص فقط بدون خلفية)
-              Wrap(
-                spacing: 12,
-                runSpacing: 6,
-                children: _recentTools.map((tool) {
-                  return Text.rich(
+                TextSpan(
+                  text: greeting,
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                TextSpan(
+                  text: ': ',
+                  style: TextStyle(
+                    color: theme.textPrimaryColor.withOpacity(0.65),
+                  ),
+                ),
+                // الأدوات بدون خلفية
+                ..._recentTools.expand((tool) {
+                  final isLast = tool == _recentTools.last;
+                  return [
                     TextSpan(
-                      children: [
-                        TextSpan(
-                          text: tool['icon'] ?? '🤖',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        TextSpan(
-                          text: ' ${tool['name'] ?? ''}',
-                          style: GoogleFonts.cairo(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: theme.textPrimaryColor,
-                          ),
-                        ),
-                      ],
+                      text: tool['icon'] ?? '🤖',
+                      style: const TextStyle(fontSize: 15),
                     ),
-                  );
+                    TextSpan(
+                      text: ' ${tool['name'] ?? ''}',
+                      style: TextStyle(
+                        color: theme.textPrimaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (!isLast)
+                      TextSpan(
+                        text: '  •  ',
+                        style: TextStyle(
+                          color: primaryColor.withOpacity(0.4),
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                  ];
                 }).toList(),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
