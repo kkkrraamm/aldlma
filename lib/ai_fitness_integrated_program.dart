@@ -1481,17 +1481,18 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
 
     return Column(
       children: [
-        // شريط البرامج - تصميم Pills جميل
+        // شريط البرامج - تصميم Pills احترافي
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: theme.backgroundColor,
-            border: Border(
-              bottom: BorderSide(
-                color: theme.textPrimaryColor.withOpacity(0.06),
-                width: 1,
+            color: theme.cardColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
               ),
-            ),
+            ],
           ),
           child: Row(
             children: [
@@ -1507,7 +1508,7 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
                         final isSelected = _selectedTabIndex == index;
                         
                         return Padding(
-                          padding: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.only(left: 10),
                           child: GestureDetector(
                             onTap: () {
                               setState(() {
@@ -1518,24 +1519,31 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
                               });
                             },
                             child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                               decoration: BoxDecoration(
-                                color: isSelected 
-                                    ? primaryColor 
-                                    : theme.cardColor,
-                                borderRadius: BorderRadius.circular(20),
+                                gradient: isSelected 
+                                    ? LinearGradient(
+                                        colors: [primaryColor, primaryColor.withOpacity(0.85)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : null,
+                                color: isSelected ? null : theme.backgroundColor,
+                                borderRadius: BorderRadius.circular(25),
                                 border: Border.all(
                                   color: isSelected 
-                                      ? primaryColor 
-                                      : theme.textPrimaryColor.withOpacity(0.1),
-                                  width: isSelected ? 0 : 1,
+                                      ? Colors.transparent
+                                      : theme.textPrimaryColor.withOpacity(0.12),
+                                  width: 1.5,
                                 ),
                                 boxShadow: isSelected ? [
                                   BoxShadow(
-                                    color: primaryColor.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
+                                    color: primaryColor.withOpacity(0.35),
+                                    blurRadius: 12,
+                                    spreadRadius: 1,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ] : null,
                               ),
@@ -1543,23 +1551,35 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.calendar_today,
-                                    size: 14,
+                                    Icons.fitness_center,
+                                    size: 16,
                                     color: isSelected 
                                         ? Colors.white 
-                                        : theme.textPrimaryColor.withOpacity(0.6),
+                                        : primaryColor.withOpacity(0.7),
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 8),
                                   Text(
                                     program['name'] ?? 'برنامج',
                                     style: GoogleFonts.cairo(
-                                      fontSize: 13,
+                                      fontSize: 14,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                                       color: isSelected 
                                           ? Colors.white 
                                           : theme.textPrimaryColor,
+                                      letterSpacing: 0.3,
                                     ),
                                   ),
+                                  if (isSelected) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -1572,37 +1592,51 @@ class _AIFitnessIntegratedProgramPageState extends State<AIFitnessIntegratedProg
               
               const SizedBox(width: 12),
               
-              // أزرار الإجراءات
-              Container(
-                decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.add, color: primaryColor, size: 20),
-                  onPressed: () => _startProgram(),
-                  tooltip: 'برنامج جديد',
-                  padding: const EdgeInsets.all(8),
-                  constraints: const BoxConstraints(),
-                ),
+              // أزرار الإجراءات - محسّنة
+              Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          primaryColor.withOpacity(0.15),
+                          primaryColor.withOpacity(0.08),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.add_circle, color: primaryColor, size: 22),
+                      onPressed: () => _startProgram(),
+                      tooltip: 'برنامج جديد',
+                      padding: const EdgeInsets.all(10),
+                      constraints: const BoxConstraints(),
+                    ),
+                  ),
+                  
+                  if (_allPrograms.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.red.withOpacity(0.12),
+                            Colors.red.withOpacity(0.06),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: Icon(Icons.delete_sweep, color: Colors.red, size: 20),
+                        onPressed: () => _showDeleteProgramDialog(theme, primaryColor),
+                        tooltip: 'حذف البرنامج',
+                        padding: const EdgeInsets.all(10),
+                        constraints: const BoxConstraints(),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              
-              if (_allPrograms.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                    onPressed: () => _showDeleteProgramDialog(theme, primaryColor),
-                    tooltip: 'حذف',
-                    padding: const EdgeInsets.all(8),
-                    constraints: const BoxConstraints(),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
