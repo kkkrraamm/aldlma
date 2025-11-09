@@ -238,12 +238,6 @@ class _HomeScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _AIToolsButton(),
                 ),
-                const SizedBox(height: 16),
-                // آخر الأدوات المستخدمة
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _RecentToolsSection(),
-                ),
                 const SizedBox(height: 24),
                 // Content with proper spacing
                 Padding(
@@ -767,7 +761,53 @@ class _AskDalmaButton extends StatelessWidget {
   }
 }
 
-class _AIToolsButton extends StatelessWidget {
+class _AIToolsButton extends StatefulWidget {
+  @override
+  State<_AIToolsButton> createState() => _AIToolsButtonState();
+}
+
+class _AIToolsButtonState extends State<_AIToolsButton> {
+  List<Map<String, String>> _recentTools = [];
+  String _userName = '';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final recentToolsJson = prefs.getString('recent_ai_tools');
+      final name = prefs.getString('user_name') ?? '';
+      
+      List<Map<String, String>> tools = [];
+      if (recentToolsJson != null && recentToolsJson.isNotEmpty) {
+        final decoded = json.decode(recentToolsJson) as List;
+        tools = decoded
+            .map((e) => Map<String, String>.from(e as Map))
+            .take(3)
+            .toList();
+      }
+      
+      if (mounted) {
+        setState(() {
+          _recentTools = tools;
+          _userName = name;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -775,6 +815,7 @@ class _AIToolsButton extends StatelessWidget {
       builder: (context, _) {
         final themeConfig = ThemeConfig.instance;
         final primaryColor = themeConfig.primaryColor;
+        final hasRecentTools = !_isLoading && _recentTools.isNotEmpty;
         
         return Container(
           width: double.infinity,
@@ -805,20 +846,111 @@ class _AIToolsButton extends StatelessWidget {
                 );
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                padding: EdgeInsets.symmetric(
+                  vertical: hasRecentTools ? 18 : 16,
+                  horizontal: 20,
+                ),
+                child: Column(
                   children: [
-                    const Text('🤖', style: TextStyle(fontSize: 24)),
-                    const SizedBox(width: 12),
-                    Text(
-                      'أدوات الدلما',
-                      style: GoogleFonts.cairo(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    // العنوان الرئيسي
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('🤖', style: TextStyle(fontSize: 24)),
+                        const SizedBox(width: 12),
+                        Text(
+                          'أدوات الدلما',
+                          style: GoogleFonts.cairo(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
+                    
+                    // آخر استخدام (إذا وجد)
+                    if (hasRecentTools) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: GoogleFonts.cairo(
+                              fontSize: 12.5,
+                              height: 1.6,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'آخر استخدامك ',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.85),
+                                ),
+                              ),
+                              if (_userName.isNotEmpty) ...[
+                                TextSpan(
+                                  text: 'يا قرابة $_userName',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ] else ...[
+                                TextSpan(
+                                  text: 'يا قرابة',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                              TextSpan(
+                                text: ': ',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.85),
+                                ),
+                              ),
+                              ..._recentTools.expand((tool) {
+                                final isLast = tool == _recentTools.last;
+                                return [
+                                  TextSpan(
+                                    text: tool['icon'] ?? '🤖',
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                  TextSpan(
+                                    text: ' ${tool['name'] ?? ''}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  if (!isLast)
+                                    TextSpan(
+                                      text: '  •  ',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.5),
+                                      ),
+                                    ),
+                                ];
+                              }).toList(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -830,151 +962,6 @@ class _AIToolsButton extends StatelessWidget {
   }
 }
 
-class _RecentToolsSection extends StatefulWidget {
-  @override
-  State<_RecentToolsSection> createState() => _RecentToolsSectionState();
-}
-
-class _RecentToolsSectionState extends State<_RecentToolsSection> {
-  List<Map<String, String>> _recentTools = [];
-  bool _isLoading = true;
-  String _userName = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadRecentTools();
-    _loadUserName();
-  }
-
-  Future<void> _loadUserName() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final name = prefs.getString('user_name') ?? '';
-      if (mounted) {
-        setState(() {
-          _userName = name;
-        });
-      }
-    } catch (e) {
-      print('❌ فشل تحميل اسم المستخدم: $e');
-    }
-  }
-
-  Future<void> _loadRecentTools() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final recentToolsJson = prefs.getString('recent_ai_tools');
-      
-      if (recentToolsJson != null && recentToolsJson.isNotEmpty) {
-        final decoded = json.decode(recentToolsJson) as List;
-        final tools = decoded
-            .map((e) => Map<String, String>.from(e as Map))
-            .take(3)
-            .toList();
-        
-        if (mounted) {
-          setState(() {
-            _recentTools = tools;
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // لا تعرض شيء إذا كان يحمل أو لا توجد أدوات
-    if (_isLoading || _recentTools.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return AnimatedBuilder(
-      animation: ThemeConfig.instance,
-      builder: (context, _) {
-        final theme = ThemeConfig.instance;
-        final isDark = theme.isDarkMode;
-        final primaryColor = isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
-        
-        // تحديد التحية بناءً على وجود الاسم
-        final greeting = _userName.isNotEmpty ? 'يا قرابة $_userName' : 'يا قرابة';
-        
-        return Padding(
-          padding: const EdgeInsets.only(top: 4, bottom: 12),
-          child: RichText(
-            textAlign: TextAlign.start,
-            text: TextSpan(
-              style: GoogleFonts.cairo(
-                fontSize: 13.5,
-                height: 1.8,
-                fontWeight: FontWeight.w500,
-              ),
-              children: [
-                TextSpan(
-                  text: 'آخر استخدامك من أدوات الدلما ',
-                  style: TextStyle(
-                    color: theme.textPrimaryColor.withOpacity(0.65),
-                  ),
-                ),
-                TextSpan(
-                  text: greeting,
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                TextSpan(
-                  text: ': ',
-                  style: TextStyle(
-                    color: theme.textPrimaryColor.withOpacity(0.65),
-                  ),
-                ),
-                // الأدوات بدون خلفية
-                ..._recentTools.expand((tool) {
-                  final isLast = tool == _recentTools.last;
-                  return [
-                    TextSpan(
-                      text: tool['icon'] ?? '🤖',
-                      style: const TextStyle(fontSize: 15),
-                    ),
-                    TextSpan(
-                      text: ' ${tool['name'] ?? ''}',
-                      style: TextStyle(
-                        color: theme.textPrimaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (!isLast)
-                      TextSpan(
-                        text: '  •  ',
-                        style: TextStyle(
-                          color: primaryColor.withOpacity(0.4),
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                  ];
-                }).toList(),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
 
 class _SearchField extends StatelessWidget {
   @override
