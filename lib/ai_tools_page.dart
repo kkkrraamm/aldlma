@@ -4,9 +4,11 @@
 // by Abdulkarim ✨
 
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'theme_config.dart';
 import 'ai_calorie_calculator.dart';
@@ -20,8 +22,102 @@ class AIToolsPage extends StatefulWidget {
   State<AIToolsPage> createState() => _AIToolsPageState();
 }
 
-class _AIToolsPageState extends State<AIToolsPage> {
+class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStateMixin {
   int _selectedCategoryIndex = 0;
+  Map<String, dynamic> _usageStats = {
+    'total_uses': 0,
+    'last_tool': '',
+    'last_tool_icon': '',
+    'favorite_tool': '',
+    'favorite_tool_icon': '',
+    'tools_used': 0,
+  };
+  bool _isLoadingStats = true;
+  late AnimationController _statsAnimationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _statsAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    _loadUsageStats();
+  }
+
+  @override
+  void dispose() {
+    _statsAnimationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUsageStats() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // تحميل آخر الأدوات المستخدمة
+      final recentToolsJson = prefs.getString('recent_ai_tools');
+      List<Map<String, String>> recentTools = [];
+      if (recentToolsJson != null && recentToolsJson.isNotEmpty) {
+        final decoded = json.decode(recentToolsJson) as List;
+        recentTools = decoded.map((e) => Map<String, String>.from(e as Map)).toList();
+      }
+      
+      // حساب الإحصائيات
+      final calorieHistory = prefs.getString('calorie_analysis_history');
+      final cookingHistory = prefs.getString('cooking_recipe_history');
+      
+      int totalUses = 0;
+      if (calorieHistory != null) {
+        final List<dynamic> decoded = json.decode(calorieHistory);
+        totalUses += decoded.length;
+      }
+      if (cookingHistory != null) {
+        final List<dynamic> decoded = json.decode(cookingHistory);
+        totalUses += decoded.length;
+      }
+      
+      // حساب الأداة الأكثر استخداماً
+      Map<String, int> toolUsageCount = {};
+      for (var tool in recentTools) {
+        final id = tool['id'] ?? '';
+        toolUsageCount[id] = (toolUsageCount[id] ?? 0) + 1;
+      }
+      
+      String favoriteTool = '';
+      String favoriteToolIcon = '';
+      int maxCount = 0;
+      toolUsageCount.forEach((id, count) {
+        if (count > maxCount) {
+          maxCount = count;
+          final tool = recentTools.firstWhere((t) => t['id'] == id, orElse: () => {});
+          favoriteTool = tool['name'] ?? '';
+          favoriteToolIcon = tool['icon'] ?? '';
+        }
+      });
+      
+      if (mounted) {
+        setState(() {
+          _usageStats = {
+            'total_uses': totalUses,
+            'last_tool': recentTools.isNotEmpty ? recentTools.first['name'] ?? '' : '',
+            'last_tool_icon': recentTools.isNotEmpty ? recentTools.first['icon'] ?? '' : '',
+            'favorite_tool': favoriteTool,
+            'favorite_tool_icon': favoriteToolIcon,
+            'tools_used': recentTools.length,
+          };
+          _isLoadingStats = false;
+        });
+        _statsAnimationController.forward();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingStats = false;
+        });
+      }
+    }
+  }
 
   // التصنيفات مع الأدوات
   final List<Map<String, dynamic>> _categories = [
@@ -553,6 +649,12 @@ class _AIToolsPageState extends State<AIToolsPage> {
             ),
           ),
 
+          // قسم التحليلات
+          if (!_isLoadingStats && _usageStats['total_uses'] > 0)
+            SliverToBoxAdapter(
+              child: _buildUsageStatsSection(theme, isDark, primaryColor),
+            ),
+
           // Elegant Categories Grid
           SliverToBoxAdapter(
             child: Container(
@@ -945,6 +1047,280 @@ class _AIToolsPageState extends State<AIToolsPage> {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUsageStatsSection(ThemeConfig theme, bool isDark, Color primaryColor) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            primaryColor.withOpacity(0.15),
+            primaryColor.withOpacity(0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: primaryColor.withOpacity(0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // العنوان
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [primaryColor, primaryColor.withOpacity(0.7)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.analytics_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'تحليلات استخدامك',
+                      style: GoogleFonts.cairo(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                    Text(
+                      'إحصائيات تفاعلك مع أدوات الدلما',
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        color: theme.textPrimaryColor.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // البطاقات الإحصائية
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  icon: '🎯',
+                  title: 'إجمالي الاستخدامات',
+                  value: _usageStats['total_uses'].toString(),
+                  color: const Color(0xFF6C63FF),
+                  theme: theme,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  icon: '🛠️',
+                  title: 'الأدوات المستخدمة',
+                  value: _usageStats['tools_used'].toString(),
+                  color: const Color(0xFF4CAF50),
+                  theme: theme,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // آخر أداة مستخدمة
+          if (_usageStats['last_tool'].isNotEmpty)
+            _buildInfoCard(
+              icon: _usageStats['last_tool_icon'],
+              title: 'آخر أداة استخدمتها',
+              value: _usageStats['last_tool'],
+              color: const Color(0xFFFF9800),
+              theme: theme,
+            ),
+          
+          // الأداة المفضلة
+          if (_usageStats['favorite_tool'].isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildInfoCard(
+              icon: _usageStats['favorite_tool_icon'],
+              title: 'أداتك المفضلة',
+              value: _usageStats['favorite_tool'],
+              color: const Color(0xFFE91E63),
+              theme: theme,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard({
+    required String icon,
+    required String title,
+    required String value,
+    required Color color,
+    required ThemeConfig theme,
+  }) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutBack,
+      builder: (context, animValue, child) {
+        return Transform.scale(
+          scale: animValue,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: color.withOpacity(0.3),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Text(
+                  icon,
+                  style: const TextStyle(fontSize: 28),
+                ),
+                const SizedBox(height: 8),
+                TweenAnimationBuilder<int>(
+                  tween: IntTween(begin: 0, end: int.tryParse(value) ?? 0),
+                  duration: const Duration(milliseconds: 1200),
+                  builder: (context, animValue, child) {
+                    return Text(
+                      animValue.toString(),
+                      style: GoogleFonts.cairo(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: color,
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: GoogleFonts.cairo(
+                    fontSize: 11,
+                    color: theme.textPrimaryColor.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoCard({
+    required String icon,
+    required String title,
+    required String value,
+    required Color color,
+    required ThemeConfig theme,
+  }) {
+    return FadeTransition(
+      opacity: _statsAnimationController,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.3),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: _statsAnimationController,
+          curve: Curves.easeOut,
+        )),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  icon,
+                  style: const TextStyle(fontSize: 22),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.cairo(
+                        fontSize: 11,
+                        color: theme.textPrimaryColor.withOpacity(0.6),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: GoogleFonts.cairo(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
