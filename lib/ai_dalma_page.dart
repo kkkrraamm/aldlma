@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
+import 'api_config.dart';
 
 class AIDalmaPage extends StatefulWidget {
   const AIDalmaPage({super.key});
@@ -19,7 +20,7 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
   bool _loading = false;
   int? _streamMsgIndex;
 
-  // OpenAI Responses API settings
+  // API إعدادات ذكاء الدلما
   static const String _endpoint = 'https://api.openai.com/v1/responses';
   static const String _apiKey = ''; // معطّل - استخدم الموقع الخارجي بدلاً منه
   static const String _promptId = 'pmpt_68d9e5897e508193a8362567a7e2b1b30556320da57d2e9c';
@@ -66,9 +67,9 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
       } catch (e2) {
         setState(() {
           if (_streamMsgIndex != null && _streamMsgIndex! < _messages.length) {
-            _messages[_streamMsgIndex!]['text'] = 'تعذر الحصول على رد حالياً. حاول لاحقاً.';
+            _messages[_streamMsgIndex!]['text'] = 'عذراً، الدلما غير متاح حالياً. يرجى المحاولة لاحقاً.';
           } else {
-            _messages.add({'role': 'assistant', 'text': 'تعذر الحصول على رد حالياً. حاول لاحقاً.', 'ts': DateTime.now()});
+            _messages.add({'role': 'assistant', 'text': 'عذراً، الدلما غير متاح حالياً. يرجى المحاولة لاحقاً.', 'ts': DateTime.now()});
           }
         });
       }
@@ -737,13 +738,13 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
     try {
       resp = await http.Client().send(req).timeout(const Duration(seconds: 30));
     } catch (e) {
-      throw Exception('فشل بدء البث: $e');
+      throw Exception('فشل الاتصال بخادم الدلما: $e');
     }
 
     if (resp.statusCode != 200) {
       final bodyStr = await resp.stream.bytesToString();
       debugPrint('STREAM ERROR [${resp.statusCode}] $bodyStr');
-      throw Exception('خطأ من الخادم: ${resp.statusCode}');
+      throw Exception('خطأ من خادم الدلما: ${resp.statusCode}');
     }
 
     String buffer = '';
@@ -847,7 +848,7 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
           .post(Uri.parse(_endpoint), headers: headers, body: json.encode(body))
           .timeout(const Duration(seconds: 25));
     } catch (e) {
-      throw Exception('فشل الاتصال بالخادم: $e');
+      throw Exception('فشل الاتصال بخادم الدلما: $e');
     }
 
     debugPrint('ASK DALMA RESPONSE [${res.statusCode}] ${res.body}');
@@ -900,9 +901,9 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
     }
 
     if (res.statusCode == 200) {
-      return 'لم أستطع توليد إجابة حالياً.';
+      return 'عذراً، الدلما لم يستطع توليد إجابة حالياً. يرجى المحاولة مرة أخرى.';
     }
-    throw Exception('خطأ من الخادم: ${res.statusCode}');
+    throw Exception('خطأ من خادم الدلما: ${res.statusCode}');
   }
 
   String _parseResponsesAnswer(dynamic data) {
