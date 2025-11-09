@@ -906,29 +906,29 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           borderRadius: BorderRadius.circular(25),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.2),
-                    Colors.white.withOpacity(0.05),
-                  ],
-                ),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1.5,
-                ),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Icon مع زر المفضلة
-                  Stack(
+            child: Stack(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(0.2),
+                        Colors.white.withOpacity(0.05),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // Icon
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -940,36 +940,6 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                           style: const TextStyle(fontSize: 36),
                         ),
                       ),
-                      // زر المفضلة
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () => _toggleFavorite(tool['title']),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: _favoriteTools.contains(tool['title'])
-                                  ? Colors.red.withOpacity(0.9)
-                                  : Colors.white.withOpacity(0.3),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.5),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Icon(
-                              _favoriteTools.contains(tool['title'])
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 10),
                   // Title
                   Text(
@@ -1038,8 +1008,45 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ],
+                ),
+                ),
+                // زر المفضلة في أعلى يمين البطاقة
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(tool['title']),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _favoriteTools.contains(tool['title'])
+                            ? Colors.red.withOpacity(0.95)
+                            : Colors.white.withOpacity(0.25),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.6),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _favoriteTools.contains(tool['title'])
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
