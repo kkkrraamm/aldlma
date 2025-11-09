@@ -931,38 +931,39 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                     children: [
                   // Icon
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Text(
                       tool['icon'],
-                      style: const TextStyle(fontSize: 36),
+                      style: const TextStyle(fontSize: 40),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   // Title
                   Text(
                     tool['title'],
                     style: GoogleFonts.cairo(
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                      height: 1.2,
                     ),
                     textAlign: TextAlign.center,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   // Subtitle
-                  Flexible(
+                  Expanded(
                     child: Text(
                       tool['subtitle'],
                       style: GoogleFonts.cairo(
-                        fontSize: 10,
+                        fontSize: 11,
                         color: Colors.white.withOpacity(0.9),
-                        height: 1.2,
+                        height: 1.3,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 2,
