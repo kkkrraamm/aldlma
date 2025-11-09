@@ -1139,6 +1139,22 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           ),
           const SizedBox(height: 12),
           
+          // المفضلة
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  icon: '❤️',
+                  title: 'المفضلة',
+                  value: (_usageStats['favorite_count'] ?? 0).toString(),
+                  color: const Color(0xFFE91E63),
+                  theme: theme,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
           // آخر أداة مستخدمة
           if (_usageStats['last_tool'].isNotEmpty)
             _buildStatCard(
