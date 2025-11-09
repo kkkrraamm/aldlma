@@ -237,6 +237,12 @@ class _HomeScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _AIToolsButton(),
                 ),
+                const SizedBox(height: 16),
+                // آخر الأدوات المستخدمة
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _RecentToolsSection(),
+                ),
                 const SizedBox(height: 24),
                 // Content with proper spacing
                 Padding(
@@ -816,6 +822,91 @@ class _AIToolsButton extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RecentToolsSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: ThemeConfig.instance,
+      builder: (context, _) {
+        final theme = ThemeConfig.instance;
+        final isDark = theme.isDarkMode;
+        final primaryColor = isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
+        
+        // بيانات ثابتة لآخر الأدوات (يمكن تحديثها لاحقاً)
+        final recentTools = [
+          {'icon': '🍽️', 'name': 'حاسبة السعرات'},
+          {'icon': '👨‍🍳', 'name': 'مساعد الطبخ'},
+          {'icon': '💪', 'name': 'محلل البناء'},
+        ];
+        
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: theme.textPrimaryColor.withOpacity(0.06),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.history,
+                size: 18,
+                color: theme.textPrimaryColor.withOpacity(0.5),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'آخر استخدام:',
+                style: GoogleFonts.cairo(
+                  fontSize: 12,
+                  color: theme.textPrimaryColor.withOpacity(0.6),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Row(
+                  children: recentTools.take(3).map((tool) {
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              tool['icon']!,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              tool['name']!,
+                              style: GoogleFonts.cairo(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: theme.textPrimaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
         );
       },
