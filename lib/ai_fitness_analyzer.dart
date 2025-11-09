@@ -289,8 +289,8 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
       if (response.statusCode == 200) {
         final result = json.decode(utf8.decode(response.bodyBytes));
         
-        // التحقق من أن الصورة تحتوي على جسم بشري
-        if (result['is_body'] == false) {
+        // التحقق من أن الصورة تحتوي على جسم بشري (فقط إذا كانت هناك صورة)
+        if (_image != null && result['is_body'] == false) {
           setState(() {
             _image = null;
           });
@@ -303,8 +303,11 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
           return;
         }
         
-        // حفظ الصورة محلياً
-        final imagePath = await _saveImageLocally(_image!);
+        // حفظ الصورة محلياً (فقط إذا كانت موجودة)
+        String? imagePath;
+        if (_image != null) {
+          imagePath = await _saveImageLocally(_image!);
+        }
         
         setState(() {
           _result = result;
@@ -423,94 +426,25 @@ class _AIFitnessAnalyzerPageState extends State<AIFitnessAnalyzerPage> with Sing
 
           const SizedBox(height: 20),
 
-          // Loading Animation - يظهر أثناء التحليل (مع أو بدون صورة)
+          // Loading Animation - بسيط ونظيف مثل مساعد الطبخ
           if (_isAnalyzing) ...[
-            Container(
-              padding: const EdgeInsets.all(30),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    primaryColor.withOpacity(0.15),
-                    primaryColor.withOpacity(0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(
-                  color: primaryColor.withOpacity(0.3),
-                  width: 2,
-                ),
-              ),
-              child: Column(
-                children: [
-                  // Animated Logo or Icon
-                  TweenAnimationBuilder(
-                    tween: Tween<double>(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 1500),
-                    builder: (context, double value, child) {
-                      return Transform.scale(
-                        scale: 0.8 + (value * 0.2),
-                        child: Opacity(
-                          opacity: 0.5 + (value * 0.5),
-                          child: Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [primaryColor, primaryColor.withOpacity(0.6)],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: primaryColor.withOpacity(0.3),
-                                  blurRadius: 20,
-                                  spreadRadius: 5,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.analytics_rounded,
-                              size: 40,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    onEnd: () {
-                      // Loop the animation
-                      if (mounted && _isAnalyzing) {
-                        setState(() {});
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 25),
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                    strokeWidth: 3,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    _image != null ? 'جاري تحليل جسمك...' : 'جاري تحليل بياناتك...',
-                    style: GoogleFonts.cairo(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textPrimaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'الدلما تحلل بياناتك بدقة علمية',
-                    style: GoogleFonts.cairo(
-                      fontSize: 14,
-                      color: theme.textPrimaryColor.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 20),
+            Column(
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  _image != null ? 'جاري تحليل جسمك...' : 'جاري تحليل بياناتك...',
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: theme.textPrimaryColor,
+                  ),
+                ),
+              ],
+            ),
           ],
 
           // Analysis Result - دائماً ظاهر
