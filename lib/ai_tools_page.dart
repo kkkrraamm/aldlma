@@ -1054,81 +1054,42 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
 
   Widget _buildUsageStatsSection(ThemeConfig theme, bool isDark, Color primaryColor) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            primaryColor.withOpacity(0.15),
-            primaryColor.withOpacity(0.08),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: primaryColor.withOpacity(0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: primaryColor.withOpacity(0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // العنوان
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primaryColor, primaryColor.withOpacity(0.7)],
+          // العنوان البسيط
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16, right: 4),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        primaryColor,
+                        primaryColor.withOpacity(0.5),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primaryColor.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
-                child: const Icon(
-                  Icons.analytics_rounded,
-                  color: Colors.white,
-                  size: 22,
+                const SizedBox(width: 12),
+                Text(
+                  'تحليلات استخدامك',
+                  style: GoogleFonts.cairo(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: theme.textPrimaryColor,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'تحليلات استخدامك',
-                      style: GoogleFonts.cairo(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: theme.textPrimaryColor,
-                      ),
-                    ),
-                    Text(
-                      'إحصائيات تفاعلك مع أدوات الدلما',
-                      style: GoogleFonts.cairo(
-                        fontSize: 12,
-                        color: theme.textPrimaryColor.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 20),
           
           // البطاقات الإحصائية
           Row(
@@ -1156,27 +1117,38 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           ),
           const SizedBox(height: 12),
           
-          // آخر أداة مستخدمة
-          if (_usageStats['last_tool'].isNotEmpty)
-            _buildInfoCard(
-              icon: _usageStats['last_tool_icon'],
-              title: 'آخر أداة استخدمتها',
-              value: _usageStats['last_tool'],
-              color: const Color(0xFFFF9800),
-              theme: theme,
-            ),
-          
-          // الأداة المفضلة
-          if (_usageStats['favorite_tool'].isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _buildInfoCard(
-              icon: _usageStats['favorite_tool_icon'],
-              title: 'أداتك المفضلة',
-              value: _usageStats['favorite_tool'],
-              color: const Color(0xFFE91E63),
-              theme: theme,
-            ),
-          ],
+          // الصف الثاني
+          Row(
+            children: [
+              // آخر أداة مستخدمة
+              if (_usageStats['last_tool'].isNotEmpty)
+                Expanded(
+                  child: _buildStatCard(
+                    icon: _usageStats['last_tool_icon'],
+                    title: 'آخر استخدام',
+                    value: _usageStats['last_tool'],
+                    color: const Color(0xFFFF9800),
+                    theme: theme,
+                    isCompact: true,
+                  ),
+                ),
+              
+              // الأداة المفضلة
+              if (_usageStats['favorite_tool'].isNotEmpty) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    icon: _usageStats['favorite_tool_icon'],
+                    title: 'المفضلة',
+                    value: _usageStats['favorite_tool'],
+                    color: const Color(0xFFE91E63),
+                    theme: theme,
+                    isCompact: true,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
@@ -1188,7 +1160,10 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     required String value,
     required Color color,
     required ThemeConfig theme,
+    bool isCompact = false,
   }) {
+    final numValue = int.tryParse(value);
+    
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 800),
@@ -1197,7 +1172,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
         return Transform.scale(
           scale: animValue,
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isCompact ? 14 : 16),
             decoration: BoxDecoration(
               color: theme.cardColor,
               borderRadius: BorderRadius.circular(16),
@@ -1217,28 +1192,41 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
               children: [
                 Text(
                   icon,
-                  style: const TextStyle(fontSize: 28),
+                  style: TextStyle(fontSize: isCompact ? 24 : 28),
                 ),
-                const SizedBox(height: 8),
-                TweenAnimationBuilder<int>(
-                  tween: IntTween(begin: 0, end: int.tryParse(value) ?? 0),
-                  duration: const Duration(milliseconds: 1200),
-                  builder: (context, animValue, child) {
-                    return Text(
-                      animValue.toString(),
-                      style: GoogleFonts.cairo(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: color,
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 4),
+                SizedBox(height: isCompact ? 6 : 8),
+                if (numValue != null)
+                  TweenAnimationBuilder<int>(
+                    tween: IntTween(begin: 0, end: numValue),
+                    duration: const Duration(milliseconds: 1200),
+                    builder: (context, animValue, child) {
+                      return Text(
+                        animValue.toString(),
+                        style: GoogleFonts.cairo(
+                          fontSize: isCompact ? 20 : 24,
+                          fontWeight: FontWeight.w800,
+                          color: color,
+                        ),
+                      );
+                    },
+                  )
+                else
+                  Text(
+                    value,
+                    style: GoogleFonts.cairo(
+                      fontSize: isCompact ? 12 : 14,
+                      fontWeight: FontWeight.w700,
+                      color: theme.textPrimaryColor,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                SizedBox(height: isCompact ? 3 : 4),
                 Text(
                   title,
                   style: GoogleFonts.cairo(
-                    fontSize: 11,
+                    fontSize: isCompact ? 10 : 11,
                     color: theme.textPrimaryColor.withOpacity(0.7),
                     fontWeight: FontWeight.w600,
                   ),
@@ -1254,75 +1242,4 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildInfoCard({
-    required String icon,
-    required String title,
-    required String value,
-    required Color color,
-    required ThemeConfig theme,
-  }) {
-    return FadeTransition(
-      opacity: _statsAnimationController,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.3),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: _statsAnimationController,
-          curve: Curves.easeOut,
-        )),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: color.withOpacity(0.3),
-              width: 1.5,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  icon,
-                  style: const TextStyle(fontSize: 22),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.cairo(
-                        fontSize: 11,
-                        color: theme.textPrimaryColor.withOpacity(0.6),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      value,
-                      style: GoogleFonts.cairo(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: theme.textPrimaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
