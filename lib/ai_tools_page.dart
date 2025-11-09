@@ -856,7 +856,45 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final tool = _getFilteredTools()[index];
-                  return _buildToolCard(context, tool, theme, isDark);
+                  return Hero(
+                    tag: 'tool_${tool['title']}',
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 600),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, -0.5),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          )),
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: ScaleTransition(
+                              scale: Tween<double>(
+                                begin: 0.8,
+                                end: 1.0,
+                              ).animate(CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOutBack,
+                              )),
+                              child: child,
+                            ),
+                          ),
+                        );
+                      },
+                      child: _buildToolCard(
+                        context,
+                        tool,
+                        theme,
+                        isDark,
+                        key: ValueKey('${tool['title']}_$index'),
+                      ),
+                    ),
+                  );
                 },
                 childCount: _getFilteredTools().length,
               ),
@@ -876,12 +914,14 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     BuildContext context,
     Map<String, dynamic> tool,
     ThemeConfig theme,
-    bool isDark,
-  ) {
+    bool isDark, {
+    Key? key,
+  }) {
     final isAnimating = _animatingTool == tool['title'];
     final isFavorite = _favoriteTools.contains(tool['title']);
     
     return TweenAnimationBuilder<double>(
+      key: key,
       duration: const Duration(milliseconds: 300),
       tween: Tween(begin: 1.0, end: isAnimating ? 1.05 : 1.0),
       curve: Curves.easeOutBack,
