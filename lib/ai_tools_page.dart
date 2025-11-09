@@ -126,6 +126,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     }
   }
 
+
   // التصنيفات مع الأدوات
   final List<Map<String, dynamic>> _categories = [
     {
@@ -1138,36 +1139,16 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           ),
           const SizedBox(height: 12),
           
-          // الصف الثاني
-          Row(
-            children: [
-              // آخر أداة مستخدمة
-              if (_usageStats['last_tool'].isNotEmpty)
-                Expanded(
-                  child: _buildStatCard(
-                    icon: _usageStats['last_tool_icon'],
-                    title: 'آخر استخدام',
-                    value: _usageStats['last_tool'],
-                    color: const Color(0xFFFF9800),
-                    theme: theme,
-                    isCompact: true,
-                  ),
-                ),
-              
-              // المفضلة
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  icon: '💖',
-                  title: 'المفضلة',
-                  value: (_usageStats['favorite_count'] ?? 0).toString(),
-                  color: const Color(0xFFE91E63),
-                  theme: theme,
-                  isCompact: true,
-                ),
-              ),
-            ],
-          ),
+          // آخر أداة مستخدمة
+          if (_usageStats['last_tool'].isNotEmpty)
+            _buildStatCard(
+              icon: _usageStats['last_tool_icon'],
+              title: 'آخر استخدام',
+              value: _usageStats['last_tool'],
+              color: const Color(0xFFFF9800),
+              theme: theme,
+              isCompact: true,
+            ),
         ],
       ),
     );
