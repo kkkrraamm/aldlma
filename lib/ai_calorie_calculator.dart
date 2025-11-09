@@ -76,6 +76,44 @@ class _AICalorieCalculatorPageState extends State<AICalorieCalculatorPage> with 
     
     // تحميل السجل من التخزين
     _loadHistory();
+    
+    // حفظ آخر استخدام
+    _saveRecentTool();
+  }
+  
+  // حفظ الأداة في قائمة آخر استخدام
+  Future<void> _saveRecentTool() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final recentToolsJson = prefs.getString('recent_ai_tools');
+      
+      List<Map<String, String>> recentTools = [];
+      if (recentToolsJson != null && recentToolsJson.isNotEmpty) {
+        final decoded = json.decode(recentToolsJson) as List;
+        recentTools = decoded.map((e) => Map<String, String>.from(e as Map)).toList();
+      }
+      
+      // إزالة الأداة إذا كانت موجودة مسبقاً
+      recentTools.removeWhere((tool) => tool['id'] == 'calorie_calculator');
+      
+      // إضافة الأداة في البداية
+      recentTools.insert(0, {
+        'id': 'calorie_calculator',
+        'icon': '🍽️',
+        'name': 'حاسبة السعرات',
+      });
+      
+      // الاحتفاظ بآخر 5 أدوات فقط
+      if (recentTools.length > 5) {
+        recentTools = recentTools.take(5).toList();
+      }
+      
+      // حفظ القائمة المحدثة
+      await prefs.setString('recent_ai_tools', json.encode(recentTools));
+      print('✅ [RECENT] تم حفظ حاسبة السعرات في آخر استخدام');
+    } catch (e) {
+      print('❌ [RECENT] فشل حفظ آخر استخدام: $e');
+    }
   }
   
   // تحميل السجل من SharedPreferences

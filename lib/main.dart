@@ -829,22 +829,68 @@ class _AIToolsButton extends StatelessWidget {
   }
 }
 
-class _RecentToolsSection extends StatelessWidget {
+class _RecentToolsSection extends StatefulWidget {
+  @override
+  State<_RecentToolsSection> createState() => _RecentToolsSectionState();
+}
+
+class _RecentToolsSectionState extends State<_RecentToolsSection> {
+  List<Map<String, String>> _recentTools = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentTools();
+  }
+
+  Future<void> _loadRecentTools() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final recentToolsJson = prefs.getString('recent_ai_tools');
+      
+      if (recentToolsJson != null && recentToolsJson.isNotEmpty) {
+        final decoded = json.decode(recentToolsJson) as List;
+        final tools = decoded
+            .map((e) => Map<String, String>.from(e as Map))
+            .take(3)
+            .toList();
+        
+        if (mounted) {
+          setState(() {
+            _recentTools = tools;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // لا تعرض شيء إذا كان يحمل أو لا توجد أدوات
+    if (_isLoading || _recentTools.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return AnimatedBuilder(
       animation: ThemeConfig.instance,
       builder: (context, _) {
         final theme = ThemeConfig.instance;
         final isDark = theme.isDarkMode;
         final primaryColor = isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen;
-        
-        // بيانات ثابتة لآخر الأدوات (يمكن تحديثها لاحقاً)
-        final recentTools = [
-          {'icon': '🍽️', 'name': 'حاسبة السعرات'},
-          {'icon': '👨‍🍳', 'name': 'مساعد الطبخ'},
-          {'icon': '💪', 'name': 'محلل البناء'},
-        ];
         
         return Container(
           padding: const EdgeInsets.all(14),
@@ -873,37 +919,40 @@ class _RecentToolsSection extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Row(
-                  children: recentTools.take(3).map((tool) {
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              tool['icon']!,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              tool['name']!,
-                              style: GoogleFonts.cairo(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: theme.textPrimaryColor,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _recentTools.map((tool) {
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                tool['icon'] ?? '🤖',
+                                style: const TextStyle(fontSize: 14),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Text(
+                                tool['name'] ?? '',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.textPrimaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  }).toList(),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
             ],
