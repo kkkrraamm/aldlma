@@ -847,8 +847,8 @@ class _AIToolsButtonState extends State<_AIToolsButton> {
               },
               child: Padding(
                 padding: EdgeInsets.symmetric(
-                  vertical: hasRecentTools ? 18 : 16,
-                  horizontal: 20,
+                  vertical: hasRecentTools ? 20 : 18,
+                  horizontal: 22,
                 ),
                 child: Column(
                   children: [
@@ -856,14 +856,15 @@ class _AIToolsButtonState extends State<_AIToolsButton> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('🤖', style: TextStyle(fontSize: 24)),
-                        const SizedBox(width: 12),
+                        const Text('🤖', style: TextStyle(fontSize: 28)),
+                        const SizedBox(width: 14),
                         Text(
                           'أدوات الدلما',
                           style: GoogleFonts.cairo(
                             color: Colors.white,
-                            fontSize: 17,
+                            fontSize: 18,
                             fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
                           ),
                         ),
                       ],
@@ -871,33 +872,41 @@ class _AIToolsButtonState extends State<_AIToolsButton> {
                     
                     // آخر استخدام (إذا وجد)
                     if (hasRecentTools) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Container(
+                        width: double.infinity,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
+                          horizontal: 16,
+                          vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
+                            color: Colors.white.withOpacity(0.25),
+                            width: 1.5,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
                             style: GoogleFonts.cairo(
-                              fontSize: 12.5,
-                              height: 1.6,
+                              fontSize: 13.5,
+                              height: 1.7,
                               fontWeight: FontWeight.w500,
                             ),
                             children: [
                               TextSpan(
                                 text: 'آخر استخدامك ',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.85),
+                                  color: Colors.white.withOpacity(0.9),
                                 ),
                               ),
                               if (_userName.isNotEmpty) ...[
@@ -905,7 +914,7 @@ class _AIToolsButtonState extends State<_AIToolsButton> {
                                   text: 'يا قرابة $_userName',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.w700,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ] else ...[
@@ -913,14 +922,14 @@ class _AIToolsButtonState extends State<_AIToolsButton> {
                                   text: 'يا قرابة',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.w700,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ],
                               TextSpan(
-                                text: ': ',
+                                text: ':\n',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.85),
+                                  color: Colors.white.withOpacity(0.9),
                                 ),
                               ),
                               ..._recentTools.expand((tool) {
@@ -928,20 +937,21 @@ class _AIToolsButtonState extends State<_AIToolsButton> {
                                 return [
                                   TextSpan(
                                     text: tool['icon'] ?? '🤖',
-                                    style: const TextStyle(fontSize: 13),
+                                    style: const TextStyle(fontSize: 15),
                                   ),
                                   TextSpan(
                                     text: ' ${tool['name'] ?? ''}',
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                   if (!isLast)
                                     TextSpan(
                                       text: '  •  ',
                                       style: TextStyle(
-                                        color: Colors.white.withOpacity(0.5),
+                                        color: Colors.white.withOpacity(0.6),
+                                        fontWeight: FontWeight.w400,
                                       ),
                                     ),
                                 ];
