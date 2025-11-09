@@ -1013,26 +1013,26 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                 ),
                 // زر المفضلة في أعلى يمين البطاقة
                 Positioned(
-                  top: 12,
-                  right: 12,
+                  top: 16,
+                  right: 16,
                   child: GestureDetector(
                     onTap: () => _toggleFavorite(tool['title']),
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: _favoriteTools.contains(tool['title'])
                             ? Colors.red.withOpacity(0.95)
-                            : Colors.white.withOpacity(0.25),
+                            : Colors.white.withOpacity(0.3),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.6),
-                          width: 2,
+                          color: Colors.white.withOpacity(0.7),
+                          width: 2.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            color: Colors.black.withOpacity(0.25),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
@@ -1041,7 +1041,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                             ? Icons.favorite
                             : Icons.favorite_border,
                         color: Colors.white,
-                        size: 18,
+                        size: 20,
                       ),
                     ),
                   ),
