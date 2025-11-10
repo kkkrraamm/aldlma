@@ -714,9 +714,17 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
 
     String buffer = '';
     String currentDataLine = ''; // Buffer للـ data line غير المكتمل
+    int chunkCount = 0;
+    int dataLineCount = 0;
+    int parsedCount = 0;
+    int extractedCount = 0;
     
     await for (final chunk in resp.stream.transform(utf8.decoder)) {
+      chunkCount++;
+      debugPrint('📦 [STREAM] Chunk #$chunkCount: ${chunk.length} bytes');
+      
       final lines = const LineSplitter().convert(chunk);
+      debugPrint('📝 [STREAM] Lines in chunk: ${lines.length}');
       
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
@@ -725,6 +733,7 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
         if (currentDataLine.isNotEmpty) {
           line = currentDataLine + line;
           currentDataLine = '';
+          debugPrint('🔗 [STREAM] Merged incomplete line');
         }
         
         final String ln = line.trim();
@@ -732,25 +741,41 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
         
         // معالجة events
         if (ln.startsWith('event:')) {
+          final eventType = ln.substring(6).trim();
+          debugPrint('📢 [STREAM] Event: $eventType');
           continue;
         }
         
         // معالجة data
         if (ln.startsWith('data:')) {
+          dataLineCount++;
           final payload = ln.substring(5).trim();
           if (payload == '[DONE]') {
+            debugPrint('✅ [STREAM] Received [DONE]');
             continue;
+          }
+          
+          debugPrint('📄 [STREAM] Data line #$dataLineCount: ${payload.length} chars');
+          if (payload.length > 200) {
+            debugPrint('📄 [STREAM] Payload preview: ${payload.substring(0, 200)}...');
+          } else {
+            debugPrint('📄 [STREAM] Payload: $payload');
           }
           
           // محاولة parse الـ JSON
           dynamic jsonObj;
           try {
             jsonObj = json.decode(payload);
+            parsedCount++;
+            debugPrint('✅ [STREAM] Parsed JSON #$parsedCount');
+            debugPrint('📊 [STREAM] JSON keys: ${(jsonObj as Map).keys.toList()}');
           } catch (e) {
+            debugPrint('❌ [STREAM] JSON parse error: $e');
             // JSON غير مكتمل - نحفظه للـ chunk التالي
             if (i == lines.length - 1) {
               // آخر سطر في الـ chunk، قد يكون غير مكتمل
               currentDataLine = payload;
+              debugPrint('💾 [STREAM] Saved incomplete line (${payload.length} chars)');
             }
             continue;
           }
@@ -758,28 +783,44 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
           // استخراج النص من الـ JSON
           final delta = _extractStreamDelta(jsonObj);
           if (delta.isNotEmpty) {
+            extractedCount++;
+            debugPrint('💬 [STREAM] Extracted delta #$extractedCount: "${delta.substring(0, delta.length > 50 ? 50 : delta.length)}"');
             buffer += delta;
+            debugPrint('📚 [STREAM] Buffer now: ${buffer.length} chars');
+            
             if (_streamMsgIndex != null && _streamMsgIndex! < _messages.length) {
               setState(() {
                 _messages[_streamMsgIndex!]['text'] = buffer;
               });
               _scrollDown();
+            } else {
+              debugPrint('⚠️ [STREAM] _streamMsgIndex issue: $_streamMsgIndex, messages length: ${_messages.length}');
             }
+          } else {
+            debugPrint('⚠️ [STREAM] No delta extracted from JSON');
           }
         }
       }
     }
     
-    debugPrint('✅ [STREAM] Final buffer length: ${buffer.length}');
+    debugPrint('✅ [STREAM] Summary:');
+    debugPrint('   - Chunks: $chunkCount');
+    debugPrint('   - Data lines: $dataLineCount');
+    debugPrint('   - Parsed: $parsedCount');
+    debugPrint('   - Extracted: $extractedCount');
+    debugPrint('   - Final buffer length: ${buffer.length}');
   }
 
   String _extractStreamDelta(dynamic data) {
     try {
       if (data is Map) {
         final type = data['type']?.toString();
+        debugPrint('🔍 [EXTRACT] Type: $type');
+        debugPrint('🔍 [EXTRACT] Keys: ${data.keys.toList()}');
         
         // معالجة response.output_item.added و response.output_item.delta
         if (type == 'response.output_item.added' || type == 'response.output_item.delta') {
+          debugPrint('✅ [EXTRACT] Processing output_item event');
           final item = data['item'];
           if (item is Map) {
             final itemType = item['type']?.toString();
@@ -958,4 +999,12 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
   }
 
 }
+
+
+
+
+
+
+
+
 
