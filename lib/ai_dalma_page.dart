@@ -48,10 +48,16 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
     });
     _scrollDown();
 
+    String? streamResult;
     try {
-      await _askDalmaStream(text);
+      streamResult = await _askDalmaStream(text);
     } catch (e) {
-      // إن فشل البث، نجرب طلب عادي كنسخة احتياطية
+      debugPrint('❌ [STREAM] Error: $e');
+    }
+    
+    // إذا كان الـ buffer فارغ أو فشل الـ streaming، نستخدم regular response
+    if (streamResult == null || streamResult.isEmpty) {
+      debugPrint('⚠️ [STREAM] Buffer empty, using regular response');
       try {
         final answer = await _askDalma(text);
         setState(() {
@@ -62,6 +68,7 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
           }
         });
       } catch (e2) {
+        debugPrint('❌ [REGULAR] Error: $e2');
         setState(() {
           if (_streamMsgIndex != null && _streamMsgIndex! < _messages.length) {
             _messages[_streamMsgIndex!]['text'] = 'عذراً، الدلما غير متاح حالياً. يرجى المحاولة لاحقاً.';
@@ -70,12 +77,12 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
           }
         });
       }
-    } finally {
-      setState(() {
-        _loading = false;
-      });
-      _scrollDown();
     }
+    
+    setState(() {
+      _loading = false;
+    });
+    _scrollDown();
   }
 
   void _scrollDown() {
@@ -432,42 +439,171 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
                               return Align(
                                 alignment: Alignment.centerLeft,
                                 child: Container(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: theme.cardColor,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: primaryColor.withOpacity(0.2),
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
+                                  margin: EdgeInsets.only(
+                                    bottom: 16,
+                                    left: 8,
+                                    right: 40,
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                                        ),
+                                  constraints: BoxConstraints(
+                                    maxWidth: MediaQuery.of(context).size.width * 0.82,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 16,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: isDark
+                                            ? [
+                                                Colors.grey.shade800,
+                                                Colors.grey.shade700,
+                                                Colors.grey.shade800,
+                                              ]
+                                            : [
+                                                Colors.white,
+                                                Colors.grey.shade50,
+                                                Colors.white,
+                                              ],
+                                        stops: const [0.0, 0.5, 1.0],
                                       ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        'جاري الكتابة...',
-                                        style: GoogleFonts.cairo(
-                                          fontSize: 14,
-                                          color: theme.textPrimaryColor.withOpacity(0.6),
-                                        ),
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(24),
+                                        topRight: Radius.circular(24),
+                                        bottomLeft: Radius.circular(8),
+                                        bottomRight: Radius.circular(24),
                                       ),
-                                    ],
+                                      border: Border.all(
+                                        color: primaryColor.withOpacity(0.15),
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                primaryColor.withOpacity(0.25),
+                                                primaryColor.withOpacity(0.15),
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: primaryColor.withOpacity(0.3),
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Image.asset(
+                                              'assets/img/aldlma.png',
+                                              width: 22,
+                                              height: 22,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Icon(
+                                                  Icons.psychology_rounded,
+                                                  size: 22,
+                                                  color: primaryColor,
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            TweenAnimationBuilder<double>(
+                                              duration: const Duration(milliseconds: 1200),
+                                              tween: Tween(begin: 0.0, end: 1.0),
+                                              curve: Curves.easeInOut,
+                                              repeat: true,
+                                              builder: (context, value, child) {
+                                                return Transform.scale(
+                                                  scale: 0.8 + (0.2 * (0.5 - (value - 0.5).abs() * 2).abs()),
+                                                  child: Container(
+                                                    width: 8,
+                                                    height: 8,
+                                                    decoration: BoxDecoration(
+                                                      color: primaryColor.withOpacity(0.6 + (0.4 * value)),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            const SizedBox(width: 6),
+                                            TweenAnimationBuilder<double>(
+                                              duration: const Duration(milliseconds: 1200),
+                                              tween: Tween(begin: 0.0, end: 1.0),
+                                              curve: Curves.easeInOut,
+                                              repeat: true,
+                                              builder: (context, value, child) {
+                                                final delay = 0.2;
+                                                final adjustedValue = ((value - delay) % (1 - delay)) / (1 - delay);
+                                                return Transform.scale(
+                                                  scale: 0.8 + (0.2 * (0.5 - (adjustedValue - 0.5).abs() * 2).abs()),
+                                                  child: Container(
+                                                    width: 8,
+                                                    height: 8,
+                                                    decoration: BoxDecoration(
+                                                      color: primaryColor.withOpacity(0.6 + (0.4 * adjustedValue)),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            const SizedBox(width: 6),
+                                            TweenAnimationBuilder<double>(
+                                              duration: const Duration(milliseconds: 1200),
+                                              tween: Tween(begin: 0.0, end: 1.0),
+                                              curve: Curves.easeInOut,
+                                              repeat: true,
+                                              builder: (context, value, child) {
+                                                final delay = 0.4;
+                                                final adjustedValue = ((value - delay) % (1 - delay)) / (1 - delay);
+                                                return Transform.scale(
+                                                  scale: 0.8 + (0.2 * (0.5 - (adjustedValue - 0.5).abs() * 2).abs()),
+                                                  child: Container(
+                                                    width: 8,
+                                                    height: 8,
+                                                    decoration: BoxDecoration(
+                                                      color: primaryColor.withOpacity(0.6 + (0.4 * adjustedValue)),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'جاري الكتابة...',
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: theme.textPrimaryColor.withOpacity(0.6),
+                                            letterSpacing: 0.3,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );
@@ -493,88 +629,199 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
                               child: Align(
                                 alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                                 child: Container(
-                                  margin: const EdgeInsets.only(bottom: 16),
+                                  margin: EdgeInsets.only(
+                                    bottom: 16,
+                                    left: isUser ? 40 : 8,
+                                    right: isUser ? 8 : 40,
+                                  ),
                                   constraints: BoxConstraints(
-                                    maxWidth: MediaQuery.of(context).size.width * 0.75,
+                                    maxWidth: MediaQuery.of(context).size.width * 0.82,
                                   ),
-                                  padding: const EdgeInsets.all(18),
-                                  decoration: BoxDecoration(
-                                    gradient: isUser
-                                        ? LinearGradient(
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                            colors: [
-                                              primaryColor,
-                                              primaryColor.withOpacity(0.85),
-                                            ],
-                                          )
-                                        : null,
-                                    color: isUser ? null : theme.cardColor,
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: const Radius.circular(20),
-                                      topRight: const Radius.circular(20),
-                                      bottomLeft: Radius.circular(isUser ? 20 : 4),
-                                      bottomRight: Radius.circular(isUser ? 4 : 20),
-                                    ),
-                                    border: isUser
-                                        ? null
-                                        : Border.all(
-                                            color: primaryColor.withOpacity(0.2),
-                                            width: 1.5,
-                                          ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: isUser
-                                            ? primaryColor.withOpacity(0.3)
-                                            : Colors.black.withOpacity(0.08),
-                                        blurRadius: 15,
-                                        spreadRadius: isUser ? 1 : 0,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
                                     children: [
-                                      if (!isUser) ...[
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                primaryColor.withOpacity(0.2),
-                                                primaryColor.withOpacity(0.1),
+                                      // الرسالة الرئيسية
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 20,
+                                          vertical: 16,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: isUser
+                                              ? LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: [
+                                                    primaryColor,
+                                                    primaryColor.withOpacity(0.9),
+                                                    primaryColor.withOpacity(0.85),
+                                                  ],
+                                                  stops: const [0.0, 0.5, 1.0],
+                                                )
+                                              : LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: isDark
+                                                      ? [
+                                                          Colors.grey.shade800,
+                                                          Colors.grey.shade700,
+                                                          Colors.grey.shade800,
+                                                        ]
+                                                      : [
+                                                          Colors.white,
+                                                          Colors.grey.shade50,
+                                                          Colors.white,
+                                                        ],
+                                                  stops: const [0.0, 0.5, 1.0],
+                                                ),
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: const Radius.circular(24),
+                                            topRight: const Radius.circular(24),
+                                            bottomLeft: Radius.circular(isUser ? 24 : 8),
+                                            bottomRight: Radius.circular(isUser ? 8 : 24),
+                                          ),
+                                          border: isUser
+                                              ? null
+                                              : Border.all(
+                                                  color: primaryColor.withOpacity(0.15),
+                                                  width: 1.5,
+                                                ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: isUser
+                                                  ? primaryColor.withOpacity(0.4)
+                                                  : Colors.black.withOpacity(0.1),
+                                              blurRadius: 20,
+                                              spreadRadius: isUser ? 2 : 0,
+                                              offset: const Offset(0, 6),
+                                            ),
+                                            if (isUser)
+                                              BoxShadow(
+                                                color: primaryColor.withOpacity(0.2),
+                                                blurRadius: 10,
+                                                spreadRadius: 1,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (!isUser) ...[
+                                              Container(
+                                                width: 36,
+                                                height: 36,
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    colors: [
+                                                      primaryColor.withOpacity(0.25),
+                                                      primaryColor.withOpacity(0.15),
+                                                    ],
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                  ),
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: primaryColor.withOpacity(0.3),
+                                                    width: 1.5,
+                                                  ),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: primaryColor.withOpacity(0.2),
+                                                      blurRadius: 8,
+                                                      spreadRadius: 1,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Center(
+                                                  child: Image.asset(
+                                                    'assets/img/aldlma.png',
+                                                    width: 22,
+                                                    height: 22,
+                                                    errorBuilder: (context, error, stackTrace) {
+                                                      return Icon(
+                                                        Icons.psychology_rounded,
+                                                        size: 22,
+                                                        color: primaryColor,
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                            ],
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  // النص الرئيسي
+                                                  SelectableText.rich(
+                                                    _buildFormattedText(
+                                                      m['text'],
+                                                      isUser: isUser,
+                                                      theme: theme,
+                                                      primaryColor: primaryColor,
+                                                    ),
+                                                    style: GoogleFonts.cairo(
+                                                      fontSize: 16,
+                                                      height: 1.75,
+                                                      fontWeight: FontWeight.w500,
+                                                      color: isUser ? Colors.white : theme.textPrimaryColor,
+                                                      letterSpacing: 0.2,
+                                                    ),
+                                                  ),
+                                                  // Timestamp
+                                                  if (!isUser) ...[
+                                                    const SizedBox(height: 8),
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.access_time_rounded,
+                                                          size: 12,
+                                                          color: theme.textPrimaryColor.withOpacity(0.4),
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          _formatTime(m['ts']),
+                                                          style: GoogleFonts.cairo(
+                                                            fontSize: 11,
+                                                            color: theme.textPrimaryColor.withOpacity(0.4),
+                                                            fontWeight: FontWeight.w400,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      // تأثير إضافي للرسائل
+                                      if (!isUser)
+                                        Positioned(
+                                          top: -2,
+                                          left: -2,
+                                          child: Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color: primaryColor.withOpacity(0.3),
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: primaryColor.withOpacity(0.5),
+                                                  blurRadius: 6,
+                                                  spreadRadius: 1,
+                                                ),
                                               ],
                                             ),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Image.asset(
-                                            'assets/img/aldlma.png',
-                                            width: 20,
-                                            height: 20,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return Icon(
-                                                Icons.psychology,
-                                                size: 20,
-                                                color: primaryColor,
-                                              );
-                                            },
                                           ),
                                         ),
-                                        const SizedBox(width: 10),
-                                      ],
-                                      Expanded(
-                                        child: Text(
-                                          m['text'],
-                                          style: GoogleFonts.cairo(
-                                            fontSize: 15.5,
-                                            height: 1.7,
-                                            fontWeight: FontWeight.w500,
-                                            color: isUser ? Colors.white : theme.textPrimaryColor,
-                                          ),
-                                        ),
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -686,7 +933,7 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
   }
 
 
-  Future<void> _askDalmaStream(String question) async {
+  Future<String?> _askDalmaStream(String question) async {
     final headers = await ApiConfig.getHeaders();
     
     final Map<String, dynamic> body = {
@@ -821,6 +1068,8 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
     debugPrint('   - Parsed: $parsedCount');
     debugPrint('   - Extracted: $extractedCount');
     debugPrint('   - Final buffer length: ${buffer.length}');
+    
+    return buffer.isNotEmpty ? buffer : null;
   }
 
   String _extractStreamDelta(dynamic data) {
@@ -1045,6 +1294,110 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
     throw Exception('خطأ من خادم الدلما: ${res.statusCode}');
   }
 
+  // تنسيق النص مع دعم Markdown بسيط
+  TextSpan _buildFormattedText(
+    String text, {
+    required bool isUser,
+    required ThemeConfig theme,
+    required Color primaryColor,
+  }) {
+    if (text.isEmpty) {
+      return TextSpan(text: '');
+    }
+
+    final List<TextSpan> spans = [];
+    final lines = text.split('\n');
+    
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      
+      // معالجة العناوين (**text**)
+      if (line.trim().startsWith('**') && line.trim().endsWith('**')) {
+        final content = line.trim().substring(2, line.trim().length - 2);
+        spans.add(TextSpan(
+          text: content,
+          style: GoogleFonts.cairo(
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+            color: isUser ? Colors.white : primaryColor,
+          ),
+        ));
+      }
+      // معالجة النص المائل (*text*)
+      else if (line.trim().startsWith('*') && line.trim().endsWith('*') && !line.trim().startsWith('**')) {
+        final content = line.trim().substring(1, line.trim().length - 1);
+        spans.add(TextSpan(
+          text: content,
+          style: GoogleFonts.cairo(
+            fontStyle: FontStyle.italic,
+            color: isUser ? Colors.white.withOpacity(0.9) : theme.textPrimaryColor.withOpacity(0.8),
+          ),
+        ));
+      }
+      // معالجة الكود (`text`)
+      else if (line.contains('`')) {
+        final parts = line.split('`');
+        for (int j = 0; j < parts.length; j++) {
+          if (j % 2 == 0) {
+            spans.add(TextSpan(text: parts[j]));
+          } else {
+            spans.add(TextSpan(
+              text: parts[j],
+              style: GoogleFonts.cairo(
+                fontFamily: 'monospace',
+                backgroundColor: isUser
+                    ? Colors.white.withOpacity(0.2)
+                    : primaryColor.withOpacity(0.1),
+                color: isUser ? Colors.white : primaryColor,
+              ),
+            ));
+          }
+        }
+      }
+      // نص عادي
+      else {
+        spans.add(TextSpan(text: line));
+      }
+      
+      // إضافة سطر جديد (ما عدا السطر الأخير)
+      if (i < lines.length - 1) {
+        spans.add(const TextSpan(text: '\n'));
+      }
+    }
+    
+    return TextSpan(children: spans);
+  }
+
+  // تنسيق الوقت
+  String _formatTime(dynamic timestamp) {
+    if (timestamp == null) return '';
+    
+    try {
+      DateTime time;
+      if (timestamp is DateTime) {
+        time = timestamp;
+      } else if (timestamp is String) {
+        time = DateTime.parse(timestamp);
+      } else {
+        return '';
+      }
+      
+      final now = DateTime.now();
+      final difference = now.difference(time);
+      
+      if (difference.inMinutes < 1) {
+        return 'الآن';
+      } else if (difference.inMinutes < 60) {
+        return 'منذ ${difference.inMinutes} دقيقة';
+      } else if (difference.inHours < 24) {
+        return 'منذ ${difference.inHours} ساعة';
+      } else {
+        return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+      }
+    } catch (e) {
+      return '';
+    }
+  }
 }
 
 
