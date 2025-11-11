@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
+import 'dart:async';
 import 'api_config.dart';
 
 class AIDalmaPage extends StatefulWidget {
@@ -13,20 +14,31 @@ class AIDalmaPage extends StatefulWidget {
   State<AIDalmaPage> createState() => _AIDalmaPageState();
 }
 
-class _AIDalmaPageState extends State<AIDalmaPage> {
+class _AIDalmaPageState extends State<AIDalmaPage> with TickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> _messages = [];
   bool _loading = false;
   int? _streamMsgIndex;
+  late AnimationController _loadingAnimationController;
 
   // API إعدادات ذكاء الدلما
   // يستخدم نفس الـ API Key المستخدم في أدوات الدلما الأخرى
 
   @override
+  void initState() {
+    super.initState();
+    _loadingAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
+    _loadingAnimationController.dispose();
     super.dispose();
   }
 
@@ -524,16 +536,14 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
                                           ),
                                         ),
                                         const SizedBox(width: 12),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            TweenAnimationBuilder<double>(
-                                              duration: const Duration(milliseconds: 1200),
-                                              tween: Tween(begin: 0.0, end: 1.0),
-                                              curve: Curves.easeInOut,
-                                              repeat: true,
-                                              builder: (context, value, child) {
-                                                return Transform.scale(
+                                        AnimatedBuilder(
+                                          animation: _loadingAnimationController,
+                                          builder: (context, child) {
+                                            final value = _loadingAnimationController.value;
+                                            return Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Transform.scale(
                                                   scale: 0.8 + (0.2 * (0.5 - (value - 0.5).abs() * 2).abs()),
                                                   child: Container(
                                                     width: 8,
@@ -543,54 +553,34 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
                                                       shape: BoxShape.circle,
                                                     ),
                                                   ),
-                                                );
-                                              },
-                                            ),
-                                            const SizedBox(width: 6),
-                                            TweenAnimationBuilder<double>(
-                                              duration: const Duration(milliseconds: 1200),
-                                              tween: Tween(begin: 0.0, end: 1.0),
-                                              curve: Curves.easeInOut,
-                                              repeat: true,
-                                              builder: (context, value, child) {
-                                                final delay = 0.2;
-                                                final adjustedValue = ((value - delay) % (1 - delay)) / (1 - delay);
-                                                return Transform.scale(
-                                                  scale: 0.8 + (0.2 * (0.5 - (adjustedValue - 0.5).abs() * 2).abs()),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Transform.scale(
+                                                  scale: 0.8 + (0.2 * (0.5 - ((value + 0.2) % 1.0 - 0.5).abs() * 2).abs()),
                                                   child: Container(
                                                     width: 8,
                                                     height: 8,
                                                     decoration: BoxDecoration(
-                                                      color: primaryColor.withOpacity(0.6 + (0.4 * adjustedValue)),
+                                                      color: primaryColor.withOpacity(0.6 + (0.4 * ((value + 0.2) % 1.0))),
                                                       shape: BoxShape.circle,
                                                     ),
                                                   ),
-                                                );
-                                              },
-                                            ),
-                                            const SizedBox(width: 6),
-                                            TweenAnimationBuilder<double>(
-                                              duration: const Duration(milliseconds: 1200),
-                                              tween: Tween(begin: 0.0, end: 1.0),
-                                              curve: Curves.easeInOut,
-                                              repeat: true,
-                                              builder: (context, value, child) {
-                                                final delay = 0.4;
-                                                final adjustedValue = ((value - delay) % (1 - delay)) / (1 - delay);
-                                                return Transform.scale(
-                                                  scale: 0.8 + (0.2 * (0.5 - (adjustedValue - 0.5).abs() * 2).abs()),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Transform.scale(
+                                                  scale: 0.8 + (0.2 * (0.5 - ((value + 0.4) % 1.0 - 0.5).abs() * 2).abs()),
                                                   child: Container(
                                                     width: 8,
                                                     height: 8,
                                                     decoration: BoxDecoration(
-                                                      color: primaryColor.withOpacity(0.6 + (0.4 * adjustedValue)),
+                                                      color: primaryColor.withOpacity(0.6 + (0.4 * ((value + 0.4) % 1.0))),
                                                       shape: BoxShape.circle,
                                                     ),
                                                   ),
-                                                );
-                                              },
-                                            ),
-                                          ],
+                                                ),
+                                              ],
+                                            );
+                                          },
                                         ),
                                         const SizedBox(width: 12),
                                         Text(
@@ -1343,12 +1333,15 @@ class _AIDalmaPageState extends State<AIDalmaPage> {
           } else {
             spans.add(TextSpan(
               text: parts[j],
-              style: GoogleFonts.cairo(
+              style: TextStyle(
                 fontFamily: 'monospace',
+                fontFamilyFallback: ['Courier New', 'monospace'],
                 backgroundColor: isUser
                     ? Colors.white.withOpacity(0.2)
                     : primaryColor.withOpacity(0.1),
                 color: isUser ? Colors.white : primaryColor,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
               ),
             ));
           }
