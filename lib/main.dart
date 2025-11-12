@@ -9,10 +9,11 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'prayer_page.dart';
 import 'desert_transition.dart';
-import 'ai_dalma_page.dart';
 import 'orders_page.dart';
 import 'trends_page.dart';
 import 'services_page.dart';
+import 'realty_page.dart';
+import 'my_rfps_page.dart';
 import 'auth.dart';
 import 'login_page.dart';
 import 'notifications.dart';
@@ -227,16 +228,16 @@ class _HomeScreen extends StatelessWidget {
                   child: _SearchField(),
                 ),
                 const SizedBox(height: 16),
-                // زر اسأل الدلما
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _AskDalmaButton(),
-                ),
-                const SizedBox(height: 16),
                 // زر أدوات الذكاء الاصطناعي
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _AIToolsButton(),
+                ),
+                const SizedBox(height: 16),
+                // زر العقار
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _RealtyButton(),
                 ),
                 const SizedBox(height: 24),
                 // Content with proper spacing
@@ -712,54 +713,6 @@ class _PlaceholderScreen extends StatelessWidget {
         _Footer(),
         const SizedBox(height: 20),
       ],
-    );
-  }
-}
-
-class _AskDalmaButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withOpacity(0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AIDalmaPage()),
-            );
-          },
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.psychology_outlined, color: Colors.white, size: 24),
-                const SizedBox(width: 12),
-                const Text('ذكاء اصطناعي الدلما', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -1933,6 +1886,64 @@ class _FeaturedCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ==================== REALTY BUTTON ====================
+class _RealtyButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeConfig>(context);
+    
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.primaryColor,
+            theme.primaryColor.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: theme.primaryColor.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RealtyPage()),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.home_work, color: Colors.white, size: 24),
+                const SizedBox(width: 12),
+                Text(
+                  'عقار الدلما',
+                  style: GoogleFonts.cairo(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
