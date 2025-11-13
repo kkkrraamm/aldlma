@@ -60,16 +60,16 @@ function createUnifiedSidebar() {
                     <span>إدارة الطلبات</span>
                     <span class="badge badge-warning" id="pendingRequestsBadge">0</span>
                 </a>
-                <a href="office-registrations.html" class="nav-item" data-page="office-registrations">
-                    <i class="fas fa-building"></i>
-                    <span>طلبات المكاتب العقارية</span>
-                    <span class="badge badge-warning" id="officeRequestsBadge">0</span>
-                </a>
             </div>
 
             <!-- Realty System -->
             <div class="nav-section">
                 <span class="nav-section-title">نظام العقار</span>
+                <a href="office-registrations.html" class="nav-item" data-page="office-registrations">
+                    <i class="fas fa-building"></i>
+                    <span>طلبات المكاتب العقارية</span>
+                    <span class="badge badge-warning" id="officeRequestsBadge">0</span>
+                </a>
                 <a href="realty-subscriptions.html" class="nav-item" data-page="realty-subscriptions">
                     <i class="fas fa-chart-line"></i>
                     <span>إدارة الاشتراكات المالية</span>
