@@ -2,12 +2,16 @@
 // API_URL is defined in main.js
 let allSubscriptions = [];
 let filteredSubscriptions = [];
+let revenueChart = null;
 
 // تحميل البيانات عند فتح الصفحة
 document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ Realty Subscriptions Page Loaded');
     loadSubscriptions();
     setInterval(loadSubscriptions, 60000); // تحديث كل دقيقة
+    
+    // إضافة مستمع لتغيير الفترة
+    document.getElementById('revenueChartPeriod').addEventListener('change', updateRevenueChart);
 });
 
 async function loadSubscriptions() {
@@ -51,6 +55,7 @@ async function loadSubscriptions() {
             
             updateFinancialStats();
             updatePlanDistribution();
+            updateRevenueChart();
             displaySubscriptions();
         } else {
             showError('فشل تحميل البيانات');
@@ -131,6 +136,112 @@ function updatePlanDistribution() {
             </div>
         </div>
     `).join('');
+}
+
+function updateRevenueChart() {
+    const period = parseInt(document.getElementById('revenueChartPeriod').value);
+    
+    // إنشاء بيانات الأشهر
+    const months = [];
+    const revenues = [];
+    const today = new Date();
+    
+    for (let i = period - 1; i >= 0; i--) {
+        const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const monthName = date.toLocaleDateString('ar-SA', { month: 'short', year: 'numeric' });
+        months.push(monthName);
+        
+        // حساب الإيرادات لهذا الشهر
+        const monthRevenue = allSubscriptions.filter(sub => {
+            const subDate = new Date(sub.start_date);
+            return subDate.getMonth() === date.getMonth() && 
+                   subDate.getFullYear() === date.getFullYear();
+        }).reduce((sum, sub) => sum + sub.price, 0);
+        
+        revenues.push(monthRevenue);
+    }
+    
+    // تدمير الرسم القديم إذا كان موجوداً
+    if (revenueChart) {
+        revenueChart.destroy();
+    }
+    
+    // إنشاء الرسم البياني
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'الإيرادات (ر.س)',
+                data: revenues,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        family: 'Cairo'
+                    },
+                    bodyFont: {
+                        size: 13,
+                        family: 'Cairo'
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return 'الإيرادات: ' + context.parsed.y.toLocaleString() + ' ر.س';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        font: {
+                            family: 'Cairo',
+                            size: 12
+                        },
+                        callback: function(value) {
+                            return value.toLocaleString() + ' ر.س';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            family: 'Cairo',
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
 }
 
 function filterSubscriptions() {

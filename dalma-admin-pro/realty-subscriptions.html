@@ -562,12 +562,8 @@
                             <option value="12">آخر سنة</option>
                         </select>
                     </div>
-                    <div class="chart-placeholder">
-                        <div style="text-align: center;">
-                            <i class="fas fa-chart-bar" style="font-size: 48px; margin-bottom: 10px;"></i>
-                            <p>الرسم البياني للإيرادات</p>
-                            <small style="color: var(--text-tertiary);">يتم التحديث تلقائياً</small>
-                        </div>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
 
@@ -654,6 +650,7 @@
         </div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/main.js"></script>
     <script src="js/realty-subscriptions.js"></script>
