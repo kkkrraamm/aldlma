@@ -5,6 +5,7 @@ let allRequests = [];
 
 // تحميل الطلبات عند فتح الصفحة
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ Office Registrations Page Loaded');
     loadRequests();
     setInterval(loadRequests, 30000); // تحديث كل 30 ثانية
 });
@@ -13,18 +14,32 @@ async function loadRequests() {
     try {
         showLoading();
         
+        console.log('📥 Loading office registration requests...');
         const response = await fetch(`${API_URL}/api/admin/office-registration-requests`);
         const data = await response.json();
         
         if (data.success) {
             allRequests = data.requests;
+            console.log(`✅ Loaded ${allRequests.length} requests`);
+            updateStats();
             updateCounts();
-            displayRequests(currentTab);
+            displayAllTabs();
         }
     } catch (error) {
-        console.error('خطأ في تحميل الطلبات:', error);
+        console.error('❌ Error loading requests:', error);
         showError('فشل تحميل الطلبات');
     }
+}
+
+function updateStats() {
+    const pending = allRequests.filter(r => r.status === 'pending').length;
+    const approved = allRequests.filter(r => r.status === 'approved').length;
+    const rejected = allRequests.filter(r => r.status === 'rejected').length;
+    
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-approved').textContent = approved;
+    document.getElementById('stat-rejected').textContent = rejected;
+    document.getElementById('stat-total').textContent = allRequests.length;
 }
 
 function updateCounts() {
@@ -36,9 +51,6 @@ function updateCounts() {
     document.getElementById('badge-pending').textContent = pending;
     document.getElementById('badge-approved').textContent = approved;
     document.getElementById('badge-rejected').textContent = rejected;
-    
-    document.getElementById('pendingCount').textContent = pending;
-    document.getElementById('totalCount').textContent = allRequests.length;
 }
 
 function switchTab(status) {
@@ -55,12 +67,18 @@ function switchTab(status) {
         content.classList.remove('active');
     });
     document.getElementById(`content-${status}`).classList.add('active');
-    
-    displayRequests(status);
+}
+
+function displayAllTabs() {
+    displayRequests('all');
+    displayRequests('pending');
+    displayRequests('approved');
+    displayRequests('rejected');
 }
 
 function displayRequests(status) {
     const container = document.getElementById(`requests-${status}`);
+    if (!container) return;
     
     const filtered = status === 'all' 
         ? allRequests 
@@ -106,33 +124,72 @@ function createRequestCard(request) {
         minute: '2-digit'
     });
     
+    // حساب تاريخ انتهاء الاشتراك (30 يوم من تاريخ القبول)
+    let subscriptionInfo = '';
+    if (request.status === 'approved' && request.reviewed_at) {
+        const approvedDate = new Date(request.reviewed_at);
+        const expiryDate = new Date(approvedDate);
+        expiryDate.setDate(expiryDate.getDate() + 30);
+        
+        const daysLeft = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+        const daysLeftColor = daysLeft < 7 ? 'var(--danger)' : daysLeft < 15 ? 'var(--warning)' : 'var(--success)';
+        
+        subscriptionInfo = `
+            <div class="info-box" style="border-right-color: ${daysLeftColor}">
+                <div class="info-box-title">📅 معلومات الاشتراك</div>
+                <div class="info-box-content">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 8px;">
+                        <div>
+                            <strong style="color: var(--text-secondary); font-size: 12px;">تاريخ البدء:</strong>
+                            <div style="color: var(--text-primary); font-weight: 600;">${approvedDate.toLocaleDateString('ar-SA')}</div>
+                        </div>
+                        <div>
+                            <strong style="color: var(--text-secondary); font-size: 12px;">تاريخ الانتهاء:</strong>
+                            <div style="color: var(--text-primary); font-weight: 600;">${expiryDate.toLocaleDateString('ar-SA')}</div>
+                        </div>
+                        <div>
+                            <strong style="color: var(--text-secondary); font-size: 12px;">الأيام المتبقية:</strong>
+                            <div style="color: ${daysLeftColor}; font-weight: 800; font-size: 18px;">${daysLeft} يوم</div>
+                        </div>
+                        <div>
+                            <strong style="color: var(--text-secondary); font-size: 12px;">حالة الدفع:</strong>
+                            <div style="color: var(--success); font-weight: 600;">
+                                <i class="fas fa-check-circle"></i> مدفوع
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
     return `
         <div class="request-card">
             <div class="request-header">
                 <div class="office-info">
                     <h3>
                         <i class="fas fa-building"></i>
-                        ${request.office_name}
+                        ${escapeHtml(request.office_name)}
                     </h3>
                     <div class="office-meta">
                         <div class="meta-item">
                             <i class="fas fa-map-marker-alt"></i>
-                            <span>${request.city}</span>
+                            <span>${escapeHtml(request.city)}</span>
                         </div>
                         <div class="meta-item">
                             <i class="fas fa-phone"></i>
-                            <span>${request.phone}</span>
+                            <span>${escapeHtml(request.phone)}</span>
                         </div>
                         ${request.email ? `
                             <div class="meta-item">
                                 <i class="fas fa-envelope"></i>
-                                <span>${request.email}</span>
+                                <span>${escapeHtml(request.email)}</span>
                             </div>
                         ` : ''}
                         ${request.license_number ? `
                             <div class="meta-item">
                                 <i class="fas fa-certificate"></i>
-                                <span>رخصة: ${request.license_number}</span>
+                                <span>رخصة: ${escapeHtml(request.license_number)}</span>
                             </div>
                         ` : ''}
                     </div>
@@ -155,17 +212,19 @@ function createRequestCard(request) {
                 ${getPlanFeatures(request.requested_plan)}
             </div>
             
+            ${subscriptionInfo}
+            
             ${request.notes ? `
                 <div class="info-box">
                     <div class="info-box-title">📝 ملاحظات المكتب</div>
-                    <div class="info-box-content">${request.notes}</div>
+                    <div class="info-box-content">${escapeHtml(request.notes)}</div>
                 </div>
             ` : ''}
             
             ${request.review_notes ? `
                 <div class="info-box" style="border-right-color: ${request.status === 'approved' ? 'var(--success)' : 'var(--danger)'}">
                     <div class="info-box-title">📋 ملاحظات المراجعة</div>
-                    <div class="info-box-content">${request.review_notes}</div>
+                    <div class="info-box-content">${escapeHtml(request.review_notes)}</div>
                 </div>
             ` : ''}
             
@@ -176,13 +235,18 @@ function createRequestCard(request) {
                 </div>
                 <div class="request-actions">
                     ${request.status === 'pending' ? `
-                        <button class="btn btn-approve" onclick="approveRequest(${request.id}, '${escapeHtml(request.office_name)}')">
+                        <button class="btn-approve" onclick="approveRequest(${request.id}, '${escapeHtml(request.office_name)}')">
                             <i class="fas fa-check"></i>
                             قبول وإنشاء حساب
                         </button>
-                        <button class="btn btn-reject" onclick="rejectRequest(${request.id}, '${escapeHtml(request.office_name)}')">
+                        <button class="btn-reject" onclick="rejectRequest(${request.id}, '${escapeHtml(request.office_name)}')">
                             <i class="fas fa-times"></i>
                             رفض
+                        </button>
+                    ` : request.status === 'approved' ? `
+                        <button class="btn-approve" onclick="viewOfficeDetails(${request.id})">
+                            <i class="fas fa-eye"></i>
+                            عرض تفاصيل المكتب
                         </button>
                     ` : ''}
                 </div>
@@ -264,6 +328,7 @@ async function approveRequest(id, officeName) {
     if (notes === null) return;
     
     try {
+        console.log(`✅ Approving request #${id}...`);
         const response = await fetch(`${API_URL}/api/admin/office-registration/${id}/approve`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -279,7 +344,7 @@ async function approveRequest(id, officeName) {
             alert('❌ خطأ: ' + (data.error || 'حدث خطأ'));
         }
     } catch (error) {
-        console.error('خطأ:', error);
+        console.error('❌ Error:', error);
         alert('❌ حدث خطأ أثناء قبول الطلب');
     }
 }
@@ -296,6 +361,7 @@ async function rejectRequest(id, officeName) {
     }
     
     try {
+        console.log(`❌ Rejecting request #${id}...`);
         const response = await fetch(`${API_URL}/api/admin/office-registration/${id}/reject`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -311,9 +377,13 @@ async function rejectRequest(id, officeName) {
             alert('❌ خطأ: ' + (data.error || 'حدث خطأ'));
         }
     } catch (error) {
-        console.error('خطأ:', error);
+        console.error('❌ Error:', error);
         alert('❌ حدث خطأ أثناء رفض الطلب');
     }
+}
+
+function viewOfficeDetails(requestId) {
+    alert(`🏢 عرض تفاصيل المكتب\n\nهذه الميزة قيد التطوير...`);
 }
 
 function showLoading() {
@@ -338,7 +408,7 @@ function showError(message) {
                 <div class="empty-state">
                     <i class="fas fa-exclamation-triangle"></i>
                     <h3>${message}</h3>
-                    <button class="btn btn-approve" onclick="loadRequests()" style="margin-top: 20px;">
+                    <button class="btn-approve" onclick="loadRequests()" style="margin-top: 20px;">
                         <i class="fas fa-redo"></i>
                         إعادة المحاولة
                     </button>
@@ -348,11 +418,8 @@ function showError(message) {
     });
 }
 
-function closeModal() {
-    document.getElementById('reviewModal').classList.remove('active');
-}
-
 function escapeHtml(text) {
+    if (!text) return '';
     const map = {
         '&': '&amp;',
         '<': '&lt;',
@@ -360,5 +427,7 @@ function escapeHtml(text) {
         '"': '&quot;',
         "'": '&#039;'
     };
-    return text.replace(/[&<>"']/g, m => map[m]);
+    return text.toString().replace(/[&<>"']/g, m => map[m]);
 }
+
+console.log('✅ Office Registrations JS Loaded');
