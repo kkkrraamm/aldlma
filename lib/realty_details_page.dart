@@ -652,3 +652,4 @@ class _RealtyDetailsPageState extends State<RealtyDetailsPage> {
   }
 }
 
+
