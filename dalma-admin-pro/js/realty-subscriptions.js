@@ -224,6 +224,16 @@ function getPlanBadge(plan) {
     return badges[plan] || plan;
 }
 
+function getPlanName(plan) {
+    const names = {
+        'free': 'مجاني',
+        'basic': 'أساسي',
+        'pro': 'احترافي',
+        'vip': 'VIP'
+    };
+    return names[plan] || plan;
+}
+
 function getStatusBadge(status) {
     const badges = {
         'active': '✅ نشط',
@@ -282,11 +292,21 @@ function generateInvoice(id) {
     const sub = allSubscriptions.find(s => s.id === id);
     if (!sub) return;
     
-    alert(`📄 إنشاء فاتورة\n\n` +
-          `المكتب: ${sub.office_name}\n` +
-          `الباقة: ${getPlanBadge(sub.plan)}\n` +
-          `المبلغ: ${sub.price} ر.س\n\n` +
-          `🚧 ميزة إنشاء الفواتير قيد التطوير...`);
+    // إنشاء URL مع البيانات
+    const params = new URLSearchParams({
+        id: sub.id,
+        office_name: sub.office_name,
+        city: sub.city,
+        phone: sub.phone,
+        email: sub.email || '',
+        license: sub.license_number || '',
+        plan: sub.plan,
+        plan_name: getPlanName(sub.plan),
+        price: sub.price
+    });
+    
+    // فتح صفحة الفاتورة في نافذة جديدة
+    window.open(`invoice-generator.html?${params.toString()}`, '_blank', 'width=1000,height=800');
 }
 
 function exportFinancialReport() {

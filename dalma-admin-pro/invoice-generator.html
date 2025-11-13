@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء فاتورة - Dalma Admin Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #f8fafc;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .actions-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        /* Invoice Styles */
+        .invoice {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #10b981;
+            margin-bottom: 30px;
+        }
+
+        .company-info {
+            flex: 1;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        .company-name {
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #10b981, #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .company-details {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .company-details strong {
+            color: #334155;
+            font-weight: 700;
+        }
+
+        .invoice-meta {
+            text-align: left;
+        }
+
+        .invoice-title {
+            font-size: 32px;
+            font-weight: 900;
+            color: #10b981;
+            margin-bottom: 15px;
+        }
+
+        .invoice-number {
+            font-size: 18px;
+            color: #334155;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .invoice-date {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .invoice-body {
+            margin: 30px 0;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .client-info {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+
+        .info-label {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .info-value {
+            color: #334155;
+            font-weight: 700;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+        }
+
+        .items-table thead {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .items-table th {
+            padding: 15px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .items-table tbody tr {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .items-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .items-table td {
+            padding: 15px;
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .items-table td:first-child {
+            font-weight: 600;
+        }
+
+        .total-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .total-box {
+            width: 350px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 20px;
+            font-size: 15px;
+        }
+
+        .total-row.subtotal {
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+
+        .total-row.tax {
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            color: #64748b;
+        }
+
+        .total-row.grand-total {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: 900;
+            margin-top: 10px;
+        }
+
+        .invoice-footer {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .payment-info {
+            background: #f0fdf4;
+            border: 2px solid #10b981;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .payment-info-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #065f46;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .payment-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .payment-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .payment-label {
+            font-size: 12px;
+            color: #065f46;
+            font-weight: 600;
+        }
+
+        .payment-value {
+            font-size: 14px;
+            color: #064e3b;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .notes {
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .notes-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+
+        .notes-content {
+            font-size: 13px;
+            color: #78350f;
+            line-height: 1.6;
+        }
+
+        .footer-text {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .footer-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .footer-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            opacity: 0.7;
+        }
+
+        .stamp-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+
+        .stamp-box {
+            width: 200px;
+            text-align: center;
+        }
+
+        .stamp-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .stamp-line {
+            border-top: 2px solid #334155;
+            margin-top: 60px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .actions-bar {
+                display: none;
+            }
+
+            .invoice {
+                box-shadow: none;
+                border-radius: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .invoice {
+                padding: 20px;
+            }
+
+            .invoice-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .invoice-meta {
+                text-align: right;
+            }
+
+            .payment-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Actions Bar -->
+        <div class="actions-bar">
+            <button class="btn btn-secondary" onclick="window.close()">
+                <i class="fas fa-arrow-right"></i>
+                رجوع
+            </button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="downloadPDF()">
+                    <i class="fas fa-download"></i>
+                    تحميل PDF
+                </button>
+                <button class="btn btn-primary" onclick="window.print()">
+                    <i class="fas fa-print"></i>
+                    طباعة
+                </button>
+            </div>
+        </div>
+
+        <!-- Invoice -->
+        <div class="invoice" id="invoice">
+            <!-- Header -->
+            <div class="invoice-header">
+                <div class="company-info">
+                    <div class="logo-container">
+                        <img src="../aldlma/assets/img/aldlma.png" alt="Dalma Logo" class="logo">
+                        <div>
+                            <div class="company-name">منصة الدلما</div>
+                            <div style="font-size: 14px; color: #10b981; font-weight: 700;">Dalma Platform</div>
+                        </div>
+                    </div>
+                    <div class="company-details">
+                        <div><strong>شركة كارمار للتقنية</strong></div>
+                        <div>Karmar Technology Company</div>
+                        <div style="margin-top: 10px;">
+                            <i class="fas fa-map-marker-alt" style="color: #10b981;"></i> المملكة العربية السعودية - منطقة الحدود الشمالية
+                        </div>
+                        <div>
+                            <i class="fas fa-phone" style="color: #10b981;"></i> +966 XX XXX XXXX
+                        </div>
+                        <div>
+                            <i class="fas fa-envelope" style="color: #10b981;"></i> info@dalma.sa
+                        </div>
+                        <div>
+                            <i class="fas fa-globe" style="color: #10b981;"></i> www.dalma.sa
+                        </div>
+                    </div>
+                </div>
+
+                <div class="invoice-meta">
+                    <div class="invoice-title">فاتورة</div>
+                    <div class="invoice-number" id="invoiceNumber">رقم الفاتورة: #INV-2024-001</div>
+                    <div class="invoice-date" id="invoiceDate">التاريخ: 13 نوفمبر 2024</div>
+                    <div class="invoice-date" id="dueDate">تاريخ الاستحقاق: 13 ديسمبر 2024</div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="invoice-body">
+                <!-- Client Info -->
+                <div class="section-title">
+                    <i class="fas fa-building"></i> معلومات العميل
+                </div>
+                <div class="client-info">
+                    <div class="info-row">
+                        <span class="info-label">اسم المكتب:</span>
+                        <span class="info-value" id="clientName">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">المدينة:</span>
+                        <span class="info-value" id="clientCity">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">رقم الجوال:</span>
+                        <span class="info-value" id="clientPhone">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">البريد الإلكتروني:</span>
+                        <span class="info-value" id="clientEmail">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">رقم الرخصة:</span>
+                        <span class="info-value" id="clientLicense">-</span>
+                    </div>
+                </div>
+
+                <!-- Items Table -->
+                <div class="section-title">
+                    <i class="fas fa-list"></i> تفاصيل الفاتورة
+                </div>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>الوصف</th>
+                            <th style="text-align: center;">الفترة</th>
+                            <th style="text-align: center;">السعر</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsBody">
+                        <!-- سيتم ملؤها ديناميكياً -->
+                    </tbody>
+                </table>
+
+                <!-- Total Section -->
+                <div class="total-section">
+                    <div class="total-box">
+                        <div class="total-row subtotal">
+                            <span>المجموع الفرعي:</span>
+                            <span id="subtotal">0 ر.س</span>
+                        </div>
+                        <div class="total-row tax">
+                            <span>ضريبة القيمة المضافة (15%):</span>
+                            <span id="taxAmount">0 ر.س</span>
+                        </div>
+                        <div class="total-row grand-total">
+                            <span>المجموع الإجمالي:</span>
+                            <span id="grandTotal">0 ر.س</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="invoice-footer">
+                <!-- Payment Info -->
+                <div class="payment-info">
+                    <div class="payment-info-title">
+                        <i class="fas fa-credit-card"></i>
+                        معلومات الدفع
+                    </div>
+                    <div class="payment-details">
+                        <div class="payment-item">
+                            <span class="payment-label">اسم البنك:</span>
+                            <span class="payment-value">البنك الأهلي السعودي</span>
+                        </div>
+                        <div class="payment-item">
+                            <span class="payment-label">رقم الحساب (IBAN):</span>
+                            <span class="payment-value">SA00 0000 0000 0000 0000 0000</span>
+                        </div>
+                        <div class="payment-item">
+                            <span class="payment-label">اسم الحساب:</span>
+                            <span class="payment-value">شركة كارمار للتقنية</span>
+                        </div>
+                        <div class="payment-item">
+                            <span class="payment-label">رقم السجل التجاري:</span>
+                            <span class="payment-value">XXXXXXXXXX</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="notes">
+                    <div class="notes-title">
+                        <i class="fas fa-info-circle"></i> ملاحظات مهمة
+                    </div>
+                    <div class="notes-content">
+                        • يرجى تحويل المبلغ خلال 30 يوماً من تاريخ الفاتورة<br>
+                        • يرجى إرفاق رقم الفاتورة عند التحويل<br>
+                        • في حالة وجود أي استفسار، يرجى التواصل معنا<br>
+                        • شكراً لاختياركم منصة الدلما
+                    </div>
+                </div>
+
+                <!-- Stamp Section -->
+                <div class="stamp-section">
+                    <div class="stamp-box">
+                        <div class="stamp-label">ختم الشركة</div>
+                        <div class="stamp-line"></div>
+                    </div>
+                    <div class="stamp-box">
+                        <div class="stamp-label">التوقيع</div>
+                        <div class="stamp-line"></div>
+                    </div>
+                </div>
+
+                <!-- Footer Text -->
+                <div class="footer-text">
+                    <p>شكراً لثقتكم بمنصة الدلما</p>
+                    <p>Thank you for trusting Dalma Platform</p>
+                </div>
+
+                <!-- Footer Logos -->
+                <div class="footer-logos">
+                    <img src="../aldlma/assets/img/aldlma.png" alt="Dalma" class="footer-logo">
+                    <img src="../aldlma/assets/img/logo_karmar.png" alt="Karmar" class="footer-logo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        // جلب البيانات من URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const subscriptionData = {
+            id: urlParams.get('id') || '001',
+            office_name: urlParams.get('office_name') || 'مكتب الدلما العقاري',
+            city: urlParams.get('city') || 'عرعر',
+            phone: urlParams.get('phone') || '0500000000',
+            email: urlParams.get('email') || 'info@office.com',
+            license: urlParams.get('license') || '1234567890',
+            plan: urlParams.get('plan') || 'vip',
+            plan_name: urlParams.get('plan_name') || 'VIP',
+            price: parseFloat(urlParams.get('price')) || 1999
+        };
+
+        // تعبئة البيانات
+        function populateInvoice() {
+            const today = new Date();
+            const dueDate = new Date(today);
+            dueDate.setDate(dueDate.getDate() + 30);
+
+            // رقم الفاتورة
+            const invoiceNum = `INV-${today.getFullYear()}-${String(subscriptionData.id).padStart(4, '0')}`;
+            document.getElementById('invoiceNumber').textContent = `رقم الفاتورة: #${invoiceNum}`;
+            document.getElementById('invoiceDate').textContent = `التاريخ: ${today.toLocaleDateString('ar-SA')}`;
+            document.getElementById('dueDate').textContent = `تاريخ الاستحقاق: ${dueDate.toLocaleDateString('ar-SA')}`;
+
+            // معلومات العميل
+            document.getElementById('clientName').textContent = subscriptionData.office_name;
+            document.getElementById('clientCity').textContent = subscriptionData.city;
+            document.getElementById('clientPhone').textContent = subscriptionData.phone;
+            document.getElementById('clientEmail').textContent = subscriptionData.email;
+            document.getElementById('clientLicense').textContent = subscriptionData.license;
+
+            // البنود
+            const itemsBody = document.getElementById('itemsBody');
+            itemsBody.innerHTML = `
+                <tr>
+                    <td>اشتراك باقة ${subscriptionData.plan_name} - منصة الدلما العقارية</td>
+                    <td style="text-align: center;">30 يوم</td>
+                    <td style="text-align: center; font-weight: 700;">${subscriptionData.price.toLocaleString()} ر.س</td>
+                </tr>
+            `;
+
+            // الحسابات
+            const subtotal = subscriptionData.price;
+            const tax = subtotal * 0.15;
+            const total = subtotal + tax;
+
+            document.getElementById('subtotal').textContent = `${subtotal.toLocaleString()} ر.س`;
+            document.getElementById('taxAmount').textContent = `${tax.toLocaleString()} ر.س`;
+            document.getElementById('grandTotal').textContent = `${total.toLocaleString()} ر.س`;
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('invoice');
+            const opt = {
+                margin: 10,
+                filename: `فاتورة-${subscriptionData.office_name}-${new Date().getTime()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // تعبئة البيانات عند التحميل
+        populateInvoice();
+    </script>
+</body>
+</html>
+
