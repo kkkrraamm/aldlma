@@ -3,11 +3,512 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>طلبات تسجيل المكاتب - لوحة تحكم الدلما</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/unified-sidebar.css">
+    <title>طلبات تسجيل المكاتب - Dalma Admin Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/unified-sidebar.css">
+    <style>
+        .office-registrations-page {
+            padding: 30px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title i {
+            color: var(--primary);
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 12px;
+        }
+
+        .stat-badge {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .stat-badge.pending {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .stat-badge.total {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* Tabs */
+        .tabs-container {
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .tabs-header {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            background: var(--bg-secondary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-badge {
+            background: var(--danger);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .tab-btn.active .tab-badge {
+            background: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 25px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Requests Grid */
+        .requests-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .request-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .request-card:hover {
+            box-shadow: 0 8px 25px var(--shadow-lg);
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .office-info h3 {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .office-info h3 i {
+            color: var(--primary);
+        }
+
+        .office-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meta-item i {
+            color: var(--primary);
+            width: 18px;
+            text-align: center;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+            border: 2px solid #fbbf24;
+        }
+
+        .status-approved {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+
+        .status-rejected {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+
+        .plan-section {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .plan-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .plan-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 15px;
+        }
+
+        .plan-free {
+            background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+            color: #374151;
+        }
+
+        .plan-basic {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+        }
+
+        .plan-pro {
+            background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+            color: #5b21b6;
+        }
+
+        .plan-vip {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+        }
+
+        .plan-price {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .info-box {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-right: 4px solid var(--primary);
+        }
+
+        .info-box-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .info-box-content {
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .request-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .request-date {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        .btn-reject:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-view {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-view:hover {
+            background: var(--border);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .empty-state i {
+            font-size: 80px;
+            color: var(--text-tertiary);
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading i {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .loading p {
+            color: var(--text-secondary);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: var(--bg-tertiary);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--text-secondary);
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: var(--danger);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .modal-footer {
+            padding: 25px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .office-registrations-page {
+                padding: 20px;
+            }
+
+            .page-title {
+                font-size: 22px;
+            }
+
+            .tabs-header {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                padding: 15px;
+            }
+
+            .office-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .request-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="admin-container">
@@ -18,36 +519,70 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Header -->
-            <header class="content-header">
-                <div>
-                    <h1>🏢 طلبات تسجيل المكاتب العقارية</h1>
-                    <p>مراجعة وقبول/رفض طلبات انضمام المكاتب</p>
+            <div class="office-registrations-page">
+                <!-- Header -->
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">
+                            <i class="fas fa-building"></i>
+                            طلبات تسجيل المكاتب العقارية
+                        </h1>
+                        <p style="color: var(--text-secondary); margin-top: 8px;">
+                            مراجعة وقبول/رفض طلبات انضمام المكاتب العقارية لمنصة الدلما
+                        </p>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-badge pending">
+                            <i class="fas fa-clock"></i>
+                            <span id="pendingCount">0</span>
+                            قيد المراجعة
+                        </div>
+                        <div class="stat-badge total">
+                            <i class="fas fa-list"></i>
+                            <span id="totalCount">0</span>
+                            إجمالي
+                        </div>
+                    </div>
                 </div>
-                <div class="header-actions">
-                    <span class="badge badge-primary" id="pendingCount">0 طلب جديد</span>
+
+                <!-- Tabs -->
+                <div class="tabs-container">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" data-status="all" onclick="switchTab('all')">
+                            <i class="fas fa-th-large"></i>
+                            جميع الطلبات
+                            <span class="tab-badge" id="badge-all">0</span>
+                        </button>
+                        <button class="tab-btn" data-status="pending" onclick="switchTab('pending')">
+                            <i class="fas fa-hourglass-half"></i>
+                            قيد المراجعة
+                            <span class="tab-badge" id="badge-pending">0</span>
+                        </button>
+                        <button class="tab-btn" data-status="approved" onclick="switchTab('approved')">
+                            <i class="fas fa-check-circle"></i>
+                            مقبول
+                            <span class="tab-badge" id="badge-approved">0</span>
+                        </button>
+                        <button class="tab-btn" data-status="rejected" onclick="switchTab('rejected')">
+                            <i class="fas fa-times-circle"></i>
+                            مرفوض
+                            <span class="tab-badge" id="badge-rejected">0</span>
+                        </button>
+                    </div>
+
+                    <div class="tab-content active" id="content-all">
+                        <div class="requests-grid" id="requests-all"></div>
+                    </div>
+                    <div class="tab-content" id="content-pending">
+                        <div class="requests-grid" id="requests-pending"></div>
+                    </div>
+                    <div class="tab-content" id="content-approved">
+                        <div class="requests-grid" id="requests-approved"></div>
+                    </div>
+                    <div class="tab-content" id="content-rejected">
+                        <div class="requests-grid" id="requests-rejected"></div>
+                    </div>
                 </div>
-            </header>
-
-            <!-- Filters -->
-            <div class="filters-section">
-                <button class="filter-btn active" data-status="all" onclick="filterRequests('all')">
-                    الكل <span class="count" id="count-all">0</span>
-                </button>
-                <button class="filter-btn" data-status="pending" onclick="filterRequests('pending')">
-                    قيد المراجعة <span class="count" id="count-pending">0</span>
-                </button>
-                <button class="filter-btn" data-status="approved" onclick="filterRequests('approved')">
-                    مقبول <span class="count" id="count-approved">0</span>
-                </button>
-                <button class="filter-btn" data-status="rejected" onclick="filterRequests('rejected')">
-                    مرفوض <span class="count" id="count-rejected">0</span>
-                </button>
-            </div>
-
-            <!-- Requests List -->
-            <div class="requests-container" id="requestsContainer">
-                <!-- سيتم ملؤها ديناميكياً -->
             </div>
         </main>
     </div>
@@ -59,291 +594,12 @@
                 <h2 id="modalTitle">مراجعة الطلب</h2>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
-            <div class="modal-body" id="modalBody">
-                <!-- سيتم ملؤها ديناميكياً -->
-            </div>
-            <div class="modal-footer" id="modalFooter">
-                <!-- سيتم ملؤها ديناميكياً -->
-            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer" id="modalFooter"></div>
         </div>
     </div>
 
     <script src="js/sidebar.js"></script>
     <script src="js/office-registrations.js"></script>
-
-    <style>
-        .filters-section {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 10px 20px;
-            border: 2px solid #e2e8f0;
-            background: white;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: 'Cairo', sans-serif;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .filter-btn:hover {
-            border-color: #10b981;
-            background: #f0fdf4;
-        }
-
-        .filter-btn.active {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border-color: #10b981;
-        }
-
-        .filter-btn .count {
-            background: rgba(255,255,255,0.3);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-        }
-
-        .filter-btn.active .count {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .requests-container {
-            display: grid;
-            gap: 16px;
-        }
-
-        .request-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            transition: all 0.3s;
-        }
-
-        .request-card:hover {
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-            transform: translateY(-2px);
-        }
-
-        .request-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 20px;
-        }
-
-        .office-info h3 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1a1f2e;
-            margin-bottom: 8px;
-        }
-
-        .office-meta {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            font-size: 14px;
-            color: #64748b;
-        }
-
-        .office-meta i {
-            color: #10b981;
-            width: 16px;
-        }
-
-        .status-badge {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-approved {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-rejected {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .plan-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-weight: 700;
-            margin-top: 16px;
-        }
-
-        .plan-free {
-            background: rgba(107, 114, 128, 0.1);
-            color: #6b7280;
-        }
-
-        .plan-basic {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-        }
-
-        .plan-pro {
-            background: rgba(139, 92, 246, 0.1);
-            color: #8b5cf6;
-        }
-
-        .plan-vip {
-            background: rgba(245, 158, 11, 0.1);
-            color: #f59e0b;
-        }
-
-        .request-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-family: 'Cairo', sans-serif;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-approve {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-        }
-
-        .btn-approve:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-        }
-
-        .btn-reject {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-        }
-
-        .btn-reject:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-        }
-
-        .btn-view {
-            background: #f1f5f9;
-            color: #334155;
-        }
-
-        .btn-view:hover {
-            background: #e2e8f0;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            padding: 24px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h2 {
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .modal-close {
-            background: #f1f5f9;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 24px;
-            color: #64748b;
-        }
-
-        .modal-body {
-            padding: 24px;
-        }
-
-        .modal-footer {
-            padding: 24px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            gap: 12px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #64748b;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .empty-state i {
-            font-size: 64px;
-            color: #cbd5e1;
-            margin-bottom: 16px;
-        }
-
-        .empty-state h3 {
-            font-size: 18px;
-            color: #64748b;
-            margin-bottom: 8px;
-        }
-    </style>
 </body>
 </html>
-
