@@ -34,9 +34,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
   bool _isLoadingStats = true;
   late AnimationController _statsAnimationController;
   Set<String> _favoriteTools = {};
-  String? _animatingTool;
-  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
-  Map<String, int> _oldPositions = {}; // لتتبع المواضع القديمة
+  Set<String> _likedTools = {};
 
   @override
   void initState() {
@@ -63,6 +61,13 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
       if (favoritesJson != null && favoritesJson.isNotEmpty) {
         final decoded = json.decode(favoritesJson) as List;
         _favoriteTools = decoded.map((e) => e.toString()).toSet();
+      }
+      
+      // تحميل الأدوات المعجب بها
+      final likedJson = prefs.getString('liked_ai_tools');
+      if (likedJson != null && likedJson.isNotEmpty) {
+        final decoded = json.decode(likedJson) as List;
+        _likedTools = decoded.map((e) => e.toString()).toSet();
       }
       
       // تحميل آخر الأدوات المستخدمة
@@ -94,6 +99,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
             'last_tool': recentTools.isNotEmpty ? recentTools.first['name'] ?? '' : '',
             'last_tool_icon': recentTools.isNotEmpty ? recentTools.first['icon'] ?? '' : '',
             'favorite_count': _favoriteTools.length,
+            'liked_count': _likedTools.length,
             'tools_used': recentTools.length,
           };
           _isLoadingStats = false;
@@ -113,22 +119,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // حفظ الموضع القديم قبل التغيير
-      final oldTools = _getFilteredTools();
-      int? oldIndex;
-      for (int i = 0; i < oldTools.length; i++) {
-        if (oldTools[i]['title'] == toolTitle) {
-          oldIndex = i;
-          break;
-        }
-      }
-      
       setState(() {
-        _animatingTool = toolTitle;
-        if (oldIndex != null) {
-          _oldPositions[toolTitle] = oldIndex;
-        }
-        
         if (_favoriteTools.contains(toolTitle)) {
           _favoriteTools.remove(toolTitle);
         } else {
@@ -139,17 +130,28 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
       
       // حفظ في SharedPreferences
       await prefs.setString('favorite_ai_tools', json.encode(_favoriteTools.toList()));
-      
-      // إزالة الانيميشن بعد فترة (أطول من مدة انيميشن الانتقال)
-      await Future.delayed(const Duration(milliseconds: 800));
-      if (mounted) {
-        setState(() {
-          _animatingTool = null;
-          _oldPositions.remove(toolTitle); // إزالة الموضع القديم
-        });
-      }
     } catch (e) {
       print('❌ فشل حفظ المفضلة: $e');
+    }
+  }
+
+  Future<void> _toggleLike(String toolTitle) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      setState(() {
+        if (_likedTools.contains(toolTitle)) {
+          _likedTools.remove(toolTitle);
+        } else {
+          _likedTools.add(toolTitle);
+        }
+        _usageStats['liked_count'] = _likedTools.length;
+      });
+      
+      // حفظ في SharedPreferences
+      await prefs.setString('liked_ai_tools', json.encode(_likedTools.toList()));
+    } catch (e) {
+      print('❌ فشل حفظ الإعجاب: $e');
     }
   }
 
@@ -871,21 +873,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final tool = _getFilteredTools()[index];
-                  final toolTitle = tool['title'];
-                  final isAnimating = _animatingTool == toolTitle;
-                  final oldIndex = _oldPositions[toolTitle];
-                  final isMoving = isAnimating && oldIndex != null && oldIndex != index;
-                  
-                  return _buildToolCard(
-                    context,
-                    tool,
-                    theme,
-                    isDark,
-                    key: ValueKey('${toolTitle}_$index'),
-                    isMoving: isMoving,
-                    oldIndex: oldIndex,
-                    newIndex: index,
-                  );
+                  return _buildToolCard(context, tool, theme, isDark);
                 },
                 childCount: _getFilteredTools().length,
               ),
@@ -905,17 +893,10 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
     BuildContext context,
     Map<String, dynamic> tool,
     ThemeConfig theme,
-    bool isDark, {
-    Key? key,
-    bool isMoving = false,
-    int? oldIndex,
-    int? newIndex,
-  }) {
-    final isAnimating = _animatingTool == tool['title'];
-    final isFavorite = _favoriteTools.contains(tool['title']);
-    
-    Widget card = GestureDetector(
-        onTap: () {
+    bool isDark,
+  ) {
+    return GestureDetector(
+      onTap: () {
         if (tool['page'] != null) {
           Navigator.push(
             context,
@@ -955,31 +936,28 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           borderRadius: BorderRadius.circular(25),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.2),
-                    Colors.white.withOpacity(0.05),
-                  ],
-                ),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1.5,
-                ),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Stack(
+            child: Stack(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(0.2),
+                        Colors.white.withOpacity(0.05),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
                   // Icon
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -997,13 +975,12 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                   Text(
                     tool['title'],
                     style: GoogleFonts.cairo(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      height: 1.2,
                     ),
                     textAlign: TextAlign.center,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
@@ -1021,7 +998,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   // Badge إذا كانت جاهزة
                   if (tool['page'] != null)
                     Container(
@@ -1061,131 +1038,86 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
                         ),
                       ),
                     ),
-                    ],
-                    ),
-                  ),
-                  
-                  // زر المفضلة في أعلى يمين البطاقة
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: TweenAnimationBuilder<double>(
-                      duration: const Duration(milliseconds: 300),
-                      tween: Tween(begin: 1.0, end: isAnimating ? 1.3 : 1.0),
-                      curve: Curves.elasticOut,
-                      builder: (context, heartScale, child) {
-                        return Transform.scale(
-                          scale: heartScale,
-                          child: GestureDetector(
-                            onTap: () => _toggleFavorite(tool['title']),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: isFavorite
-                                    ? Colors.red.withOpacity(0.95)
-                                    : Colors.white.withOpacity(0.25),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.6),
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                  if (isAnimating && isFavorite)
-                                    BoxShadow(
-                                      color: Colors.red.withOpacity(0.5),
-                                      blurRadius: 12,
-                                      spreadRadius: 2,
-                                    ),
-                                ],
-                              ),
-                              child: Icon(
-                                isFavorite
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: Colors.white,
-                                size: 14,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+                
+                // زر الإعجاب في أعلى يسار البطاقة
+                Positioned(
+                  top: 14,
+                  left: 14,
+                  child: GestureDetector(
+                    onTap: () => _toggleLike(tool['title']),
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: _likedTools.contains(tool['title'])
+                            ? const Color(0xFF2196F3).withOpacity(0.95)
+                            : Colors.white.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.7),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _likedTools.contains(tool['title'])
+                            ? Icons.thumb_up
+                            : Icons.thumb_up_outlined,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // زر المفضلة في أعلى يمين البطاقة
+                Positioned(
+                  top: 14,
+                  right: 14,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(tool['title']),
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: _favoriteTools.contains(tool['title'])
+                            ? Colors.red.withOpacity(0.95)
+                            : Colors.white.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.7),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _favoriteTools.contains(tool['title'])
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-      );
-    
-    // إضافة انيميشن الانتقال من الأعلى إلى الموضع الجديد
-    if (isMoving && oldIndex != null && newIndex != null) {
-      // حساب المسافة بناءً على حجم الشاشة
-      final screenWidth = MediaQuery.of(context).size.width;
-      final padding = 20.0;
-      final spacing = 15.0;
-      final crossAxisCount = 2;
-      
-      // حساب عرض البطاقة
-      final availableWidth = screenWidth - (padding * 2);
-      final cardWidth = (availableWidth - spacing) / crossAxisCount;
-      final cardHeight = cardWidth / 0.85;
-      
-      // حساب الموضع الأفقي (لتوسيط البطاقة)
-      final oldCol = oldIndex % crossAxisCount;
-      final newCol = newIndex % crossAxisCount;
-      final deltaCol = oldCol - newCol;
-      final deltaX = deltaCol * (cardWidth + spacing);
-      
-      // البطاقة تبدأ من الأعلى (خارج الشاشة) وتنزل إلى موضعها
-      // نستخدم مسافة كبيرة من الأعلى لضمان أنها تبدأ من خارج الإطار
-      final startY = -cardHeight - 100; // تبدأ من فوق الإطار
-      
-      return TweenAnimationBuilder<double>(
-        key: key,
-        duration: const Duration(milliseconds: 600),
-        tween: Tween(begin: 0.0, end: 1.0),
-        curve: Curves.easeOutCubic,
-        builder: (context, value, child) {
-          // البطاقة تبدأ من الأعلى (startY) وتنزل إلى موضعها (0)
-          // وتتحرك أفقياً من الموضع القديم (deltaX) إلى الجديد (0)
-          return Transform.translate(
-            offset: Offset(
-              deltaX * (1 - value), // الحركة الأفقية
-              startY * (1 - value), // الحركة العمودية (من الأعلى)
-            ),
-            child: Transform.scale(
-              scale: 0.8 + (0.2 * value), // تكبر من 0.8 إلى 1.0
-              child: Opacity(
-                opacity: 0.5 + (0.5 * value), // تظهر تدريجياً
-                child: child,
-              ),
-            ),
-          );
-        },
-        child: card,
-      );
-    }
-    
-    // انيميشن تكبير البطاقة عند الضغط على القلب
-    return TweenAnimationBuilder<double>(
-      key: key,
-      duration: const Duration(milliseconds: 300),
-      tween: Tween(begin: 1.0, end: isAnimating ? 1.05 : 1.0),
-      curve: Curves.easeOutBack,
-      builder: (context, scale, child) {
-        return Transform.scale(
-          scale: scale,
-          child: child,
-        );
-      },
-      child: card,
     );
   }
 
@@ -1286,7 +1218,7 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
             ),
           ),
           
-          // البطاقات الإحصائية
+          // البطاقات الإحصائية - الصف الأول
           Row(
             children: [
               Expanded(
@@ -1312,9 +1244,19 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           ),
           const SizedBox(height: 12),
           
-          // المفضلة
+          // البطاقات الإحصائية - الصف الثاني
           Row(
             children: [
+              Expanded(
+                child: _buildStatCard(
+                  icon: '👍',
+                  title: 'الإعجابات',
+                  value: (_usageStats['liked_count'] ?? 0).toString(),
+                  color: const Color(0xFF2196F3),
+                  theme: theme,
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: _buildStatCard(
                   icon: '❤️',
@@ -1330,66 +1272,13 @@ class _AIToolsPageState extends State<AIToolsPage> with SingleTickerProviderStat
           
           // آخر أداة مستخدمة
           if (_usageStats['last_tool'].isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFFFF9800).withOpacity(0.1),
-                    const Color(0xFFF57C00).withOpacity(0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFFFF9800).withOpacity(0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF9800).withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _usageStats['last_tool_icon'],
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'آخر استخدام',
-                          style: GoogleFonts.cairo(
-                            fontSize: 12,
-                            color: theme.textPrimaryColor.withOpacity(0.6),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _usageStats['last_tool'],
-                          style: GoogleFonts.cairo(
-                            fontSize: 15,
-                            color: theme.textPrimaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: theme.textPrimaryColor.withOpacity(0.3),
-                  ),
-                ],
-              ),
+            _buildStatCard(
+              icon: _usageStats['last_tool_icon'],
+              title: 'آخر استخدام',
+              value: _usageStats['last_tool'],
+              color: const Color(0xFFFF9800),
+              theme: theme,
+              isCompact: true,
             ),
         ],
       ),
