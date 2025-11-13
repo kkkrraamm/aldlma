@@ -67,6 +67,15 @@ function createUnifiedSidebar() {
                 </a>
             </div>
 
+            <!-- Realty System -->
+            <div class="nav-section">
+                <span class="nav-section-title">نظام العقار</span>
+                <a href="realty-subscriptions.html" class="nav-item" data-page="realty-subscriptions">
+                    <i class="fas fa-chart-line"></i>
+                    <span>إدارة الاشتراكات المالية</span>
+                </a>
+            </div>
+
             <!-- Finance -->
             <div class="nav-section">
                 <span class="nav-section-title">المالية</span>
