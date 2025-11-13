@@ -1,5 +1,5 @@
 // office-registrations.js
-const API_URL = 'https://dalma-api.onrender.com';
+// API_URL is defined in main.js
 let allRequests = [];
 let filteredRequests = [];
 
