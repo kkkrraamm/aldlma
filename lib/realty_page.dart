@@ -24,6 +24,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
   bool _isLoading = true;
   bool _showFilters = false;
   bool _showMapView = true; // التبديل بين الخريطة والقائمة
+  bool _showOfficeBanner = true; // إظهار بانر تسجيل المكتب
   late AnimationController _filterAnimController;
   late Animation<double> _filterAnimation;
   
@@ -231,6 +232,15 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
             child: _buildQuickFilters(theme),
           ),
           
+          // بانر "سجّل كمكتب عقاري"
+          if (!_showFilters && _showOfficeBanner)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 80,
+              left: 16,
+              right: 16,
+              child: _buildOfficeBanner(theme),
+            ),
+          
           // أزرار التحكم بالخريطة (يمين) - فقط في وضع الخريطة
           if (_showMapView)
             Positioned(
@@ -391,7 +401,10 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
             ..._listings
                 .where((l) => l['lat'] != null && l['lng'] != null)
                 .map((listing) {
-              final isForSale = listing['status'] == 'for_sale';
+              final type = listing['type'] ?? 'apartment';
+              final icon = _getIconForType(type);
+              final color = _getColorForType(type, theme);
+              
               return Marker(
                 point: LatLng(
                   double.parse(listing['lat'].toString()),
@@ -412,7 +425,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: theme.primaryColor.withOpacity(0.4),
+                              color: color.withOpacity(0.4),
                               blurRadius: 12,
                               spreadRadius: 2,
                             ),
@@ -426,8 +439,8 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              theme.primaryColor,
-                              theme.primaryColor.withOpacity(0.8),
+                              color,
+                              color.withOpacity(0.8),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -439,7 +452,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                           ),
                         ),
                         child: Icon(
-                          isForSale ? Icons.sell : Icons.key,
+                          icon,
                           color: Colors.white,
                           size: 18,
                         ),
@@ -1038,6 +1051,10 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
 
   // Popup حديث للعقار
   void _showModernListingPopup(dynamic listing, ThemeConfig theme) {
+    // جلب الصور
+    final images = listing['images'] as List<dynamic>? ?? [];
+    final hasImages = images.isNotEmpty;
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1072,6 +1089,44 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                 ),
               ),
               const SizedBox(height: 20),
+              
+              // الصورة (إذا موجودة)
+              if (hasImages) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    images[0],
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFf1f5f9),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.home_work, size: 48, color: theme.textSecondaryColor),
+                            const SizedBox(height: 8),
+                            Text(
+                              listing['title'] ?? 'عقار',
+                              style: GoogleFonts.cairo(
+                                fontSize: 14,
+                                color: theme.textSecondaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              
               // العنوان
               Text(
                 listing['title'] ?? 'بدون عنوان',
@@ -1488,7 +1543,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                   Row(
                     children: [
                       if (area != null) ...[
-                        _buildSpecChip(Icons.square_foot, '${area.toStringAsFixed(0)} م²', theme),
+                        _buildSpecChip(Icons.square_foot, '${double.tryParse(area.toString())?.toStringAsFixed(0) ?? area} م²', theme),
                         const SizedBox(width: 8),
                       ],
                       if (rooms != null) ...[
@@ -1539,6 +1594,879 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
         ],
       ),
     );
+  }
+
+  // أيقونة حسب نوع العقار
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'apartment':
+        return Icons.apartment;
+      case 'villa':
+        return Icons.villa;
+      case 'land':
+        return Icons.landscape;
+      case 'building':
+        return Icons.business;
+      case 'farm':
+        return Icons.agriculture;
+      case 'warehouse':
+        return Icons.warehouse;
+      case 'office':
+        return Icons.corporate_fare;
+      case 'shop':
+        return Icons.storefront;
+      default:
+        return Icons.home_work;
+    }
+  }
+
+  // لون حسب نوع العقار
+  Color _getColorForType(String type, ThemeConfig theme) {
+    switch (type) {
+      case 'apartment':
+        return theme.primaryColor; // أخضر (شقة)
+      case 'villa':
+        return const Color(0xFF8b5cf6); // بنفسجي (فيلا)
+      case 'land':
+        return const Color(0xFFf59e0b); // برتقالي (أرض)
+      case 'building':
+        return const Color(0xFF3b82f6); // أزرق (عمارة)
+      case 'farm':
+        return const Color(0xFF10b981); // أخضر فاتح (مزرعة)
+      case 'warehouse':
+        return const Color(0xFF6b7280); // رمادي (مستودع)
+      case 'office':
+        return const Color(0xFF06b6d4); // سماوي (مكتب)
+      case 'shop':
+        return const Color(0xFFec4899); // وردي (محل)
+      default:
+        return theme.primaryColor;
+    }
+  }
+
+  // بانر تسجيل المكتب
+  Widget _buildOfficeBanner(ThemeConfig theme) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const OfficeRegistrationPage()),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF3b82f6),
+              Color(0xFF2563eb),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF3b82f6).withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.business_center, color: Colors.white, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'أنت مكتب عقاري؟',
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'سجّل الآن واعرض عقاراتك مجاناً',
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // زر الإغلاق
+            GestureDetector(
+              onTap: () {
+                setState(() => _showOfficeBanner = false);
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// صفحة تسجيل المكتب العقاري
+// ============================================================
+
+class OfficeRegistrationPage extends StatefulWidget {
+  const OfficeRegistrationPage({super.key});
+
+  @override
+  State<OfficeRegistrationPage> createState() => _OfficeRegistrationPageState();
+}
+
+class _OfficeRegistrationPageState extends State<OfficeRegistrationPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _officeNameController = TextEditingController();
+  final _licenseController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _notesController = TextEditingController();
+  
+  String _selectedCity = 'عرعر';
+  String _selectedPlan = 'free';
+  bool _isSubmitting = false;
+
+  final List<String> _cities = [
+    'عرعر', 'رفحاء', 'طريف', 'القريات', 'سكاكا',
+    'حائل', 'تبوك', 'الجوف', 'دومة الجندل',
+  ];
+
+  final Map<String, Map<String, dynamic>> _plans = {
+    'free': {
+      'name': 'مجاني',
+      'subtitle': 'ابدأ بدون تكلفة',
+      'price': 0,
+      'color': const Color(0xFF6b7280),
+      'icon': Icons.stars,
+      'features': [
+        {'icon': Icons.home_work, 'text': '5 إعلانات نشطة'},
+        {'icon': Icons.image, 'text': '8 صور لكل إعلان'},
+        {'icon': Icons.visibility, 'text': 'معاينة الطلبات الخاصة'},
+        {'icon': Icons.search, 'text': 'ظهور في نتائج البحث'},
+      ],
+    },
+    'basic': {
+      'name': 'أساسي',
+      'subtitle': 'للمكاتب المتوسطة',
+      'price': 149,
+      'badge': 'الأكثر شعبية',
+      'color': const Color(0xFF10b981),
+      'icon': Icons.trending_up,
+      'features': [
+        {'icon': Icons.home_work, 'text': '20 إعلان نشط'},
+        {'icon': Icons.image, 'text': '12 صورة لكل إعلان'},
+        {'icon': Icons.location_city, 'text': 'طلبات خاصة من مدينتك'},
+        {'icon': Icons.analytics, 'text': 'إحصائيات أساسية'},
+        {'icon': Icons.mail, 'text': 'رد على الطلبات'},
+      ],
+    },
+    'pro': {
+      'name': 'احترافي',
+      'subtitle': 'للمكاتب الكبيرة',
+      'price': 499,
+      'badge': 'الأفضل قيمة',
+      'color': const Color(0xFF8b5cf6),
+      'icon': Icons.rocket_launch,
+      'features': [
+        {'icon': Icons.home_work, 'text': '80 إعلان نشط'},
+        {'icon': Icons.image, 'text': '20 صورة لكل إعلان'},
+        {'icon': Icons.public, 'text': 'طلبات من كامل المنطقة'},
+        {'icon': Icons.insights, 'text': 'تحليلات متقدمة + أوقات الذروة'},
+        {'icon': Icons.map, 'text': 'خريطة توزيع الطلبات'},
+        {'icon': Icons.priority_high, 'text': 'ترتيب أعلى في البحث'},
+      ],
+    },
+    'vip': {
+      'name': 'VIP',
+      'subtitle': 'للشركات العقارية',
+      'price': 1999,
+      'badge': '🔥 حصري',
+      'color': const Color(0xFFf59e0b),
+      'icon': Icons.workspace_premium,
+      'features': [
+        {'icon': Icons.all_inclusive, 'text': 'إعلانات غير محدودة'},
+        {'icon': Icons.image, 'text': '30 صورة لكل إعلان'},
+        {'icon': Icons.flash_on, 'text': 'أولوية مطلقة في الطلبات'},
+        {'icon': Icons.notifications_active, 'text': 'تنبيهات فورية (SMS + Push)'},
+        {'icon': Icons.thermostat, 'text': 'Heatmap كامل للسوق'},
+        {'icon': Icons.picture_as_pdf, 'text': 'تقارير PDF أسبوعية'},
+        {'icon': Icons.verified, 'text': 'شارة VIP للثقة'},
+        {'icon': Icons.support_agent, 'text': 'دعم فني أولوية'},
+      ],
+    },
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeConfig>(context);
+    
+    return Scaffold(
+      backgroundColor: theme.isDarkMode ? const Color(0xFF0b0f14) : const Color(0xFFf5f7fa),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            _buildHeader(theme),
+            
+            // المحتوى
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // معلومات المكتب
+                      _buildSectionTitle('معلومات المكتب', Icons.business, theme),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _officeNameController,
+                        label: 'اسم المكتب',
+                        hint: 'مكتب الدلما العقاري',
+                        icon: Icons.store,
+                        theme: theme,
+                        isRequired: true,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCityDropdown(theme),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _licenseController,
+                        label: 'رقم الترخيص',
+                        hint: 'اختياري',
+                        icon: Icons.badge,
+                        theme: theme,
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // معلومات التواصل
+                      _buildSectionTitle('معلومات التواصل', Icons.contact_phone, theme),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _phoneController,
+                        label: 'رقم الجوال',
+                        hint: '05XXXXXXXX',
+                        icon: Icons.phone,
+                        keyboardType: TextInputType.phone,
+                        theme: theme,
+                        isRequired: true,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _emailController,
+                        label: 'البريد الإلكتروني',
+                        hint: 'info@office.com',
+                        icon: Icons.email,
+                        keyboardType: TextInputType.emailAddress,
+                        theme: theme,
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // اختيار الباقة
+                      _buildSectionTitle('اختر الباقة', Icons.workspace_premium, theme),
+                      const SizedBox(height: 16),
+                      _buildPlanSelector(theme),
+                      const SizedBox(height: 24),
+                      
+                      // ملاحظات
+                      _buildSectionTitle('ملاحظات (اختياري)', Icons.note, theme),
+                      const SizedBox(height: 16),
+                      _buildNotesField(theme),
+                      const SizedBox(height: 32),
+                      
+                      // زر الإرسال
+                      _buildSubmitButton(theme),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(ThemeConfig theme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFF3b82f6), const Color(0xFF2563eb)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF3b82f6).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'انضم كمكتب عقاري',
+                  style: GoogleFonts.cairo(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'اعرض عقاراتك وتواصل مع آلاف العملاء',
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon, ThemeConfig theme) {
+    return Row(
+      children: [
+        Icon(icon, color: theme.primaryColor, size: 22),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: GoogleFonts.cairo(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: theme.textPrimaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    String? hint,
+    IconData? icon,
+    TextInputType? keyboardType,
+    required ThemeConfig theme,
+    bool isRequired = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.isDarkMode ? const Color(0xFF2a2f3e) : const Color(0xFFe2e8f0),
+          width: 2,
+        ),
+      ),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        style: GoogleFonts.cairo(color: theme.textPrimaryColor),
+        validator: isRequired
+            ? (v) => v == null || v.isEmpty ? '$label مطلوب' : null
+            : null,
+        decoration: InputDecoration(
+          labelText: label + (isRequired ? ' *' : ''),
+          hintText: hint,
+          prefixIcon: icon != null ? Icon(icon, color: theme.primaryColor) : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.all(16),
+          labelStyle: GoogleFonts.cairo(color: theme.textSecondaryColor),
+          hintStyle: GoogleFonts.cairo(color: theme.textSecondaryColor.withOpacity(0.5)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCityDropdown(ThemeConfig theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.isDarkMode ? const Color(0xFF2a2f3e) : const Color(0xFFe2e8f0),
+          width: 2,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedCity,
+          isExpanded: true,
+          icon: Icon(Icons.keyboard_arrow_down, color: theme.primaryColor),
+          style: GoogleFonts.cairo(color: theme.textPrimaryColor),
+          dropdownColor: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+          items: _cities.map((city) {
+            return DropdownMenuItem(
+              value: city,
+              child: Row(
+                children: [
+                  Icon(Icons.location_city, size: 18, color: theme.primaryColor),
+                  const SizedBox(width: 12),
+                  Text(city),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (value) => setState(() => _selectedCity = value!),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlanSelector(ThemeConfig theme) {
+    return Column(
+      children: _plans.entries.map((e) {
+        final isSelected = _selectedPlan == e.key;
+        final plan = e.value;
+        final features = (plan['features'] as List?) ?? [];
+        
+        return GestureDetector(
+          onTap: () => setState(() => _selectedPlan = e.key),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: isSelected 
+                  ? LinearGradient(
+                      colors: [
+                        (plan['color'] as Color).withOpacity(0.15),
+                        (plan['color'] as Color).withOpacity(0.05),
+                      ],
+                    )
+                  : null,
+              color: isSelected ? null : (theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected 
+                    ? (plan['color'] as Color)
+                    : (theme.isDarkMode ? const Color(0xFF2a2f3e) : const Color(0xFFe2e8f0)),
+                width: isSelected ? 3 : 2,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: (plan['color'] as Color).withOpacity(0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header الباقة
+                Row(
+                  children: [
+                    // الأيقونة
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            (plan['color'] as Color),
+                            (plan['color'] as Color).withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        (plan['icon'] as IconData?) ?? Icons.card_membership,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // الاسم والوصف
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                plan['name'],
+                                style: GoogleFonts.cairo(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected 
+                                      ? (plan['color'] as Color)
+                                      : theme.textPrimaryColor,
+                                ),
+                              ),
+                              if (plan['badge'] != null) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: (plan['color'] as Color),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    plan['badge'] ?? '',
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          Text(
+                            plan['subtitle'] ?? '',
+                            style: GoogleFonts.cairo(
+                              fontSize: 12,
+                              color: theme.textSecondaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // السعر
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (plan['price'] == 0)
+                          Text(
+                            'مجاني',
+                            style: GoogleFonts.cairo(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: (plan['color'] as Color),
+                            ),
+                          )
+                        else ...[
+                          Text(
+                            '${plan['price']}',
+                            style: GoogleFonts.cairo(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: (plan['color'] as Color),
+                            ),
+                          ),
+                          Text(
+                            'ر.س/شهر',
+                            style: GoogleFonts.cairo(
+                              fontSize: 11,
+                              color: theme.textSecondaryColor,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // المميزات
+                if (features.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: (plan['color'] as Color).withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: features.map<Widget>((feature) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              Icon(
+                                (feature['icon'] as IconData?) ?? Icons.check_circle_outline,
+                                size: 18,
+                                color: (plan['color'] as Color),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  feature['text'] ?? '',
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.textPrimaryColor,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+                
+                if (isSelected) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: (plan['color'] as Color).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: (plan['color'] as Color),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'تم الاختيار',
+                          style: GoogleFonts.cairo(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: (plan['color'] as Color),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildNotesField(ThemeConfig theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.isDarkMode ? const Color(0xFF2a2f3e) : const Color(0xFFe2e8f0),
+          width: 2,
+        ),
+      ),
+      child: TextFormField(
+        controller: _notesController,
+        maxLines: 3,
+        style: GoogleFonts.cairo(color: theme.textPrimaryColor),
+        decoration: InputDecoration(
+          labelText: 'ملاحظات أو طلبات خاصة',
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.all(16),
+          labelStyle: GoogleFonts.cairo(color: theme.textSecondaryColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton(ThemeConfig theme) {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF3b82f6), Color(0xFF2563eb)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF3b82f6).withOpacity(0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitRegistration,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child: _isSubmitting
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.send, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Text(
+                    'إرسال طلب التسجيل',
+                    style: GoogleFonts.cairo(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Future<void> _submitRegistration() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/office/register-request'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'office_name': _officeNameController.text,
+          'city': _selectedCity,
+          'license_number': _licenseController.text,
+          'phone': _phoneController.text,
+          'email': _emailController.text,
+          'requested_plan': _selectedPlan,
+          'notes': _notesController.text,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        if (!mounted) return;
+        
+        final theme = Provider.of<ThemeConfig>(context, listen: false);
+        
+        showDialog(
+          context: context,
+          builder: (context) => _buildSuccessDialog(theme),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ خطأ: $e');
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('حدث خطأ', style: GoogleFonts.cairo()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Widget _buildSuccessDialog(ThemeConfig theme) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Container(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF10b981), Color(0xFF059669)],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle, color: Colors.white, size: 50),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'تم إرسال طلبك!',
+              style: GoogleFonts.cairo(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'سنراجع طلبك ونتواصل معك خلال 24 ساعة',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.cairo(fontSize: 14, color: theme.textSecondaryColor),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10b981),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text('حسناً', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _officeNameController.dispose();
+    _licenseController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _notesController.dispose();
+    super.dispose();
   }
 }
 
