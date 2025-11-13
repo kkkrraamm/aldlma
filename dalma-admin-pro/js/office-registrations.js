@@ -1,33 +1,33 @@
 // office-registrations.js
 const API_URL = 'https://dalma-api.onrender.com';
-let currentTab = 'all';
 let allRequests = [];
+let filteredRequests = [];
 
 // تحميل الطلبات عند فتح الصفحة
 document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ Office Registrations Page Loaded');
     loadRequests();
-    setInterval(loadRequests, 30000); // تحديث كل 30 ثانية
+    setInterval(loadRequests, 60000); // تحديث كل دقيقة
 });
 
 async function loadRequests() {
     try {
-        showLoading();
-        
         console.log('📥 Loading office registration requests...');
         const response = await fetch(`${API_URL}/api/admin/office-registration-requests`);
         const data = await response.json();
         
         if (data.success) {
             allRequests = data.requests;
+            filteredRequests = allRequests;
             console.log(`✅ Loaded ${allRequests.length} requests`);
             updateStats();
-            updateCounts();
-            displayAllTabs();
+            displayRequests();
+        } else {
+            showError('فشل تحميل البيانات');
         }
     } catch (error) {
         console.error('❌ Error loading requests:', error);
-        showError('فشل تحميل الطلبات');
+        showError('حدث خطأ في الاتصال بالسيرفر');
     }
 }
 
@@ -36,299 +36,255 @@ function updateStats() {
     const approved = allRequests.filter(r => r.status === 'approved').length;
     const rejected = allRequests.filter(r => r.status === 'rejected').length;
     
-    document.getElementById('stat-pending').textContent = pending;
-    document.getElementById('stat-approved').textContent = approved;
-    document.getElementById('stat-rejected').textContent = rejected;
-    document.getElementById('stat-total').textContent = allRequests.length;
+    document.getElementById('pendingCount').textContent = pending;
+    document.getElementById('approvedCount').textContent = approved;
+    document.getElementById('rejectedCount').textContent = rejected;
+    document.getElementById('totalCount').textContent = allRequests.length;
 }
 
-function updateCounts() {
-    const pending = allRequests.filter(r => r.status === 'pending').length;
-    const approved = allRequests.filter(r => r.status === 'approved').length;
-    const rejected = allRequests.filter(r => r.status === 'rejected').length;
+function filterRequests() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const plan = document.getElementById('planFilter').value;
+    const city = document.getElementById('cityFilter').value;
     
-    document.getElementById('badge-all').textContent = allRequests.length;
-    document.getElementById('badge-pending').textContent = pending;
-    document.getElementById('badge-approved').textContent = approved;
-    document.getElementById('badge-rejected').textContent = rejected;
-}
-
-function switchTab(status) {
-    currentTab = status;
-    
-    // تحديث الأزرار
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
+    filteredRequests = allRequests.filter(request => {
+        const matchSearch = request.office_name.toLowerCase().includes(search) ||
+                          request.phone.includes(search) ||
+                          (request.email && request.email.toLowerCase().includes(search));
+        const matchStatus = status === 'all' || request.status === status;
+        const matchPlan = plan === 'all' || request.requested_plan === plan;
+        const matchCity = city === 'all' || request.city === city;
+        
+        return matchSearch && matchStatus && matchPlan && matchCity;
     });
-    event.target.closest('.tab-btn').classList.add('active');
     
-    // تحديث المحتوى
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    document.getElementById(`content-${status}`).classList.add('active');
+    displayRequests();
 }
 
-function displayAllTabs() {
-    displayRequests('all');
-    displayRequests('pending');
-    displayRequests('approved');
-    displayRequests('rejected');
-}
-
-function displayRequests(status) {
-    const container = document.getElementById(`requests-${status}`);
-    if (!container) return;
+function displayRequests() {
+    const tbody = document.getElementById('requestsTableBody');
+    const count = document.getElementById('requestsCount');
     
-    const filtered = status === 'all' 
-        ? allRequests 
-        : allRequests.filter(r => r.status === status);
+    count.textContent = `${filteredRequests.length} طلب`;
     
-    if (filtered.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-inbox"></i>
-                <h3>لا توجد طلبات</h3>
-                <p>${getEmptyMessage(status)}</p>
-            </div>
+    if (filteredRequests.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 60px;">
+                    <i class="fas fa-inbox" style="font-size: 60px; color: var(--text-tertiary); opacity: 0.5;"></i>
+                    <p style="margin-top: 20px; color: var(--text-secondary); font-weight: 600;">لا توجد طلبات</p>
+                </td>
+            </tr>
         `;
         return;
     }
     
-    container.innerHTML = filtered.map(request => createRequestCard(request)).join('');
+    tbody.innerHTML = filteredRequests.map(request => createRequestRow(request)).join('');
 }
 
-function getEmptyMessage(status) {
-    const messages = {
-        'all': 'لا توجد طلبات تسجيل حتى الآن',
-        'pending': 'لا توجد طلبات قيد المراجعة',
-        'approved': 'لا توجد طلبات مقبولة',
-        'rejected': 'لا توجد طلبات مرفوضة'
+function createRequestRow(request) {
+    const statusBadge = getStatusBadge(request.status);
+    const planBadge = getPlanBadge(request.requested_plan);
+    const date = new Date(request.created_at).toLocaleDateString('ar-SA');
+    const initial = request.office_name.charAt(0);
+    
+    return `
+        <tr>
+            <td>
+                <div class="office-cell">
+                    <div class="office-icon">${initial}</div>
+                    <div class="office-info">
+                        <div class="office-name">${escapeHtml(request.office_name)}</div>
+                        <div class="office-city"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(request.city)}</div>
+                    </div>
+                </div>
+            </td>
+            <td><span class="badge ${request.requested_plan}">${planBadge}</span></td>
+            <td><span class="badge ${request.status}">${statusBadge}</span></td>
+            <td>${escapeHtml(request.phone)}</td>
+            <td>${date}</td>
+            <td>
+                <div class="table-actions-cell">
+                    <button class="btn-icon view" onclick="viewRequest(${request.id})" title="عرض التفاصيل">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${request.status === 'pending' ? `
+                        <button class="btn-icon approve" onclick="approveRequest(${request.id})" title="قبول">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn-icon reject" onclick="rejectRequest(${request.id})" title="رفض">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'pending': '⏳ قيد المراجعة',
+        'approved': '✅ مقبول',
+        'rejected': '❌ مرفوض'
     };
-    return messages[status] || '';
+    return badges[status] || status;
 }
 
-function createRequestCard(request) {
-    const statusClass = `status-${request.status}`;
-    const statusLabel = getStatusLabel(request.status);
-    const planClass = `plan-${request.requested_plan}`;
-    const planIcon = getPlanIcon(request.requested_plan);
-    const planLabel = request.plan_name || request.requested_plan.toUpperCase();
-    const planPrice = request.plan_price || 0;
+function getPlanBadge(plan) {
+    const badges = {
+        'free': '🎁 مجاني',
+        'basic': '⭐ أساسي',
+        'pro': '🚀 احترافي',
+        'vip': '👑 VIP'
+    };
+    return badges[plan] || plan;
+}
+
+function viewRequest(id) {
+    const request = allRequests.find(r => r.id === id);
+    if (!request) return;
     
-    const createdDate = new Date(request.created_at).toLocaleString('ar-SA', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    const modal = document.getElementById('officeModal');
+    const modalBody = document.getElementById('modalBody');
+    const modalFooter = document.getElementById('modalFooter');
     
-    // حساب تاريخ انتهاء الاشتراك (30 يوم من تاريخ القبول)
-    let subscriptionInfo = '';
+    // حساب معلومات الاشتراك
+    let subscriptionHTML = '';
     if (request.status === 'approved' && request.reviewed_at) {
         const approvedDate = new Date(request.reviewed_at);
         const expiryDate = new Date(approvedDate);
         expiryDate.setDate(expiryDate.getDate() + 30);
         
         const daysLeft = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
-        const daysLeftColor = daysLeft < 7 ? 'var(--danger)' : daysLeft < 15 ? 'var(--warning)' : 'var(--success)';
+        const daysClass = daysLeft < 7 ? 'danger' : daysLeft < 15 ? 'warning' : 'success';
         
-        subscriptionInfo = `
-            <div class="info-box" style="border-right-color: ${daysLeftColor}">
-                <div class="info-box-title">📅 معلومات الاشتراك</div>
-                <div class="info-box-content">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 8px;">
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 12px;">تاريخ البدء:</strong>
-                            <div style="color: var(--text-primary); font-weight: 600;">${approvedDate.toLocaleDateString('ar-SA')}</div>
+        subscriptionHTML = `
+            <div class="subscription-info">
+                <div class="subscription-header">
+                    <h3 style="margin: 0; color: var(--text-primary);">📊 معلومات الاشتراك</h3>
+                    <div class="days-left ${daysClass}">${daysLeft} يوم متبقي</div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">تاريخ البدء</div>
+                        <div class="info-value">${approvedDate.toLocaleDateString('ar-SA')}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">تاريخ الانتهاء</div>
+                        <div class="info-value">${expiryDate.toLocaleDateString('ar-SA')}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">حالة الدفع</div>
+                        <div class="info-value" style="color: var(--success);">
+                            <i class="fas fa-check-circle"></i> مدفوع
                         </div>
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 12px;">تاريخ الانتهاء:</strong>
-                            <div style="color: var(--text-primary); font-weight: 600;">${expiryDate.toLocaleDateString('ar-SA')}</div>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 12px;">الأيام المتبقية:</strong>
-                            <div style="color: ${daysLeftColor}; font-weight: 800; font-size: 18px;">${daysLeft} يوم</div>
-                        </div>
-                        <div>
-                            <strong style="color: var(--text-secondary); font-size: 12px;">حالة الدفع:</strong>
-                            <div style="color: var(--success); font-weight: 600;">
-                                <i class="fas fa-check-circle"></i> مدفوع
-                            </div>
-                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">المبلغ</div>
+                        <div class="info-value">${request.plan_price || 0} ر.س</div>
                     </div>
                 </div>
             </div>
         `;
     }
     
-    return `
-        <div class="request-card">
-            <div class="request-header">
-                <div class="office-info">
-                    <h3>
-                        <i class="fas fa-building"></i>
-                        ${escapeHtml(request.office_name)}
-                    </h3>
-                    <div class="office-meta">
-                        <div class="meta-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>${escapeHtml(request.city)}</span>
-                        </div>
-                        <div class="meta-item">
-                            <i class="fas fa-phone"></i>
-                            <span>${escapeHtml(request.phone)}</span>
-                        </div>
-                        ${request.email ? `
-                            <div class="meta-item">
-                                <i class="fas fa-envelope"></i>
-                                <span>${escapeHtml(request.email)}</span>
-                            </div>
-                        ` : ''}
-                        ${request.license_number ? `
-                            <div class="meta-item">
-                                <i class="fas fa-certificate"></i>
-                                <span>رخصة: ${escapeHtml(request.license_number)}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-                <span class="status-badge ${statusClass}">
-                    ${getStatusIcon(request.status)} ${statusLabel}
-                </span>
+    modalBody.innerHTML = `
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">اسم المكتب</div>
+                <div class="info-value">${escapeHtml(request.office_name)}</div>
             </div>
-            
-            <div class="plan-section">
-                <div class="plan-header">
-                    <div class="plan-badge ${planClass}">
-                        <i class="${planIcon}"></i>
-                        باقة ${planLabel}
-                    </div>
-                    <div class="plan-price">
-                        ${planPrice > 0 ? `${planPrice} ر.س/شهر` : 'مجاناً'}
-                    </div>
-                </div>
-                ${getPlanFeatures(request.requested_plan)}
+            <div class="info-item">
+                <div class="info-label">المدينة</div>
+                <div class="info-value">${escapeHtml(request.city)}</div>
             </div>
-            
-            ${subscriptionInfo}
-            
-            ${request.notes ? `
-                <div class="info-box">
-                    <div class="info-box-title">📝 ملاحظات المكتب</div>
-                    <div class="info-box-content">${escapeHtml(request.notes)}</div>
-                </div>
-            ` : ''}
-            
-            ${request.review_notes ? `
-                <div class="info-box" style="border-right-color: ${request.status === 'approved' ? 'var(--success)' : 'var(--danger)'}">
-                    <div class="info-box-title">📋 ملاحظات المراجعة</div>
-                    <div class="info-box-content">${escapeHtml(request.review_notes)}</div>
-                </div>
-            ` : ''}
-            
-            <div class="request-footer">
-                <div class="request-date">
-                    <i class="fas fa-clock"></i>
-                    ${createdDate}
-                </div>
-                <div class="request-actions">
-                    ${request.status === 'pending' ? `
-                        <button class="btn-approve" onclick="approveRequest(${request.id}, '${escapeHtml(request.office_name)}')">
-                            <i class="fas fa-check"></i>
-                            قبول وإنشاء حساب
-                        </button>
-                        <button class="btn-reject" onclick="rejectRequest(${request.id}, '${escapeHtml(request.office_name)}')">
-                            <i class="fas fa-times"></i>
-                            رفض
-                        </button>
-                    ` : request.status === 'approved' ? `
-                        <button class="btn-approve" onclick="viewOfficeDetails(${request.id})">
-                            <i class="fas fa-eye"></i>
-                            عرض تفاصيل المكتب
-                        </button>
-                    ` : ''}
-                </div>
+            <div class="info-item">
+                <div class="info-label">رقم الجوال</div>
+                <div class="info-value">${escapeHtml(request.phone)}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">البريد الإلكتروني</div>
+                <div class="info-value">${escapeHtml(request.email || '-')}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">رقم الرخصة</div>
+                <div class="info-value">${escapeHtml(request.license_number || '-')}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">الباقة المطلوبة</div>
+                <div class="info-value">${getPlanBadge(request.requested_plan)}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">الحالة</div>
+                <div class="info-value">${getStatusBadge(request.status)}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">تاريخ الطلب</div>
+                <div class="info-value">${new Date(request.created_at).toLocaleString('ar-SA')}</div>
             </div>
         </div>
+        
+        ${request.notes ? `
+            <div class="info-item" style="margin-top: 20px;">
+                <div class="info-label">📝 ملاحظات المكتب</div>
+                <div class="info-value" style="white-space: pre-wrap;">${escapeHtml(request.notes)}</div>
+            </div>
+        ` : ''}
+        
+        ${request.review_notes ? `
+            <div class="info-item" style="margin-top: 20px;">
+                <div class="info-label">📋 ملاحظات المراجعة</div>
+                <div class="info-value" style="white-space: pre-wrap;">${escapeHtml(request.review_notes)}</div>
+            </div>
+        ` : ''}
+        
+        ${subscriptionHTML}
     `;
-}
-
-function getPlanFeatures(plan) {
-    const features = {
-        'free': [
-            '5 إعلانات مجانية',
-            '8 صور لكل إعلان',
-            'معاينة طلبات العملاء'
-        ],
-        'basic': [
-            '20 إعلان شهرياً',
-            '12 صورة لكل إعلان',
-            'طلبات من نفس المدينة',
-            'تحليلات أساسية'
-        ],
-        'pro': [
-            '80 إعلان شهرياً',
-            '20 صورة لكل إعلان',
-            'طلبات من المنطقة كاملة',
-            'تحليلات متقدمة'
-        ],
-        'vip': [
-            'إعلانات غير محدودة',
-            '30 صورة لكل إعلان',
-            'أولوية في الطلبات',
-            'خرائط حرارية + تقارير PDF'
-        ]
-    };
     
-    const planFeatures = features[plan] || [];
-    return `
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 12px;">
-            ${planFeatures.map(f => `
-                <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary);">
-                    <i class="fas fa-check" style="color: var(--primary); font-size: 11px;"></i>
-                    <span>${f}</span>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    if (request.status === 'pending') {
+        modalFooter.innerHTML = `
+            <button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>
+            <button class="btn btn-danger" onclick="rejectRequestFromModal(${request.id})">
+                <i class="fas fa-times"></i> رفض
+            </button>
+            <button class="btn btn-primary" onclick="approveRequestFromModal(${request.id})">
+                <i class="fas fa-check"></i> قبول
+            </button>
+        `;
+    } else {
+        modalFooter.innerHTML = `
+            <button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>
+        `;
+    }
+    
+    modal.classList.add('active');
 }
 
-function getStatusLabel(status) {
-    const labels = {
-        'pending': 'قيد المراجعة',
-        'approved': 'مقبول',
-        'rejected': 'مرفوض'
-    };
-    return labels[status] || status;
-}
-
-function getStatusIcon(status) {
-    const icons = {
-        'pending': '⏳',
-        'approved': '✅',
-        'rejected': '❌'
-    };
-    return icons[status] || '';
-}
-
-function getPlanIcon(plan) {
-    const icons = {
-        'free': 'fas fa-gift',
-        'basic': 'fas fa-star',
-        'pro': 'fas fa-rocket',
-        'vip': 'fas fa-crown'
-    };
-    return icons[plan] || 'fas fa-building';
-}
-
-async function approveRequest(id, officeName) {
-    const notes = prompt(`✅ قبول طلب تسجيل: ${officeName}\n\nأدخل ملاحظات للمكتب (اختياري):`);
+async function approveRequest(id) {
+    const request = allRequests.find(r => r.id === id);
+    if (!confirm(`هل أنت متأكد من قبول طلب: ${request.office_name}؟`)) return;
+    
+    const notes = prompt('ملاحظات (اختياري):');
     if (notes === null) return;
     
+    await processApproval(id, notes);
+}
+
+async function approveRequestFromModal(id) {
+    const request = allRequests.find(r => r.id === id);
+    if (!confirm(`هل أنت متأكد من قبول طلب: ${request.office_name}؟`)) return;
+    
+    const notes = prompt('ملاحظات (اختياري):');
+    if (notes === null) return;
+    
+    await processApproval(id, notes);
+    closeModal();
+}
+
+async function processApproval(id, notes) {
     try {
-        console.log(`✅ Approving request #${id}...`);
         const response = await fetch(`${API_URL}/api/admin/office-registration/${id}/approve`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -338,7 +294,7 @@ async function approveRequest(id, officeName) {
         const data = await response.json();
         
         if (data.success) {
-            alert(`🎉 تم قبول الطلب وإنشاء المكتب بنجاح!\n\n📊 رقم المكتب: ${data.office_id}\n✉️ سيتم إرسال بيانات الدخول للمكتب قريباً`);
+            alert(`✅ تم قبول الطلب بنجاح!\n\n📊 رقم المكتب: ${data.office_id}`);
             loadRequests();
         } else {
             alert('❌ خطأ: ' + (data.error || 'حدث خطأ'));
@@ -349,19 +305,35 @@ async function approveRequest(id, officeName) {
     }
 }
 
-async function rejectRequest(id, officeName) {
-    const notes = prompt(`❌ رفض طلب تسجيل: ${officeName}\n\n⚠️ يرجى إدخال سبب الرفض (مطلوب):`);
+async function rejectRequest(id) {
+    const request = allRequests.find(r => r.id === id);
+    if (!confirm(`هل أنت متأكد من رفض طلب: ${request.office_name}؟`)) return;
+    
+    const notes = prompt('سبب الرفض (مطلوب):');
     if (!notes || notes.trim() === '') {
         alert('⚠️ يجب إدخال سبب الرفض');
         return;
     }
     
-    if (!confirm(`هل أنت متأكد من رفض طلب: ${officeName}؟`)) {
+    await processRejection(id, notes);
+}
+
+async function rejectRequestFromModal(id) {
+    const request = allRequests.find(r => r.id === id);
+    if (!confirm(`هل أنت متأكد من رفض طلب: ${request.office_name}؟`)) return;
+    
+    const notes = prompt('سبب الرفض (مطلوب):');
+    if (!notes || notes.trim() === '') {
+        alert('⚠️ يجب إدخال سبب الرفض');
         return;
     }
     
+    await processRejection(id, notes);
+    closeModal();
+}
+
+async function processRejection(id, notes) {
     try {
-        console.log(`❌ Rejecting request #${id}...`);
         const response = await fetch(`${API_URL}/api/admin/office-registration/${id}/reject`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -371,7 +343,7 @@ async function rejectRequest(id, officeName) {
         const data = await response.json();
         
         if (data.success) {
-            alert('✅ تم رفض الطلب بنجاح');
+            alert('✅ تم رفض الطلب');
             loadRequests();
         } else {
             alert('❌ خطأ: ' + (data.error || 'حدث خطأ'));
@@ -382,40 +354,27 @@ async function rejectRequest(id, officeName) {
     }
 }
 
-function viewOfficeDetails(requestId) {
-    alert(`🏢 عرض تفاصيل المكتب\n\nهذه الميزة قيد التطوير...`);
+function closeModal() {
+    document.getElementById('officeModal').classList.remove('active');
 }
 
-function showLoading() {
-    ['all', 'pending', 'approved', 'rejected'].forEach(status => {
-        const container = document.getElementById(`requests-${status}`);
-        if (container) {
-            container.innerHTML = `
-                <div class="loading">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>جاري تحميل الطلبات...</p>
-                </div>
-            `;
-        }
-    });
+function exportData() {
+    alert('🚧 ميزة التصدير قيد التطوير...');
 }
 
 function showError(message) {
-    ['all', 'pending', 'approved', 'rejected'].forEach(status => {
-        const container = document.getElementById(`requests-${status}`);
-        if (container) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>${message}</h3>
-                    <button class="btn-approve" onclick="loadRequests()" style="margin-top: 20px;">
-                        <i class="fas fa-redo"></i>
-                        إعادة المحاولة
-                    </button>
-                </div>
-            `;
-        }
-    });
+    const tbody = document.getElementById('requestsTableBody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align: center; padding: 60px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 60px; color: var(--danger); opacity: 0.5;"></i>
+                <p style="margin-top: 20px; color: var(--text-secondary); font-weight: 600;">${message}</p>
+                <button class="btn btn-primary" onclick="loadRequests()" style="margin-top: 15px;">
+                    <i class="fas fa-redo"></i> إعادة المحاولة
+                </button>
+            </td>
+        </tr>
+    `;
 }
 
 function escapeHtml(text) {
