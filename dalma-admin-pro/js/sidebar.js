@@ -74,6 +74,11 @@ function createUnifiedSidebar() {
                     <i class="fas fa-building"></i>
                     <span>إدارة المكاتب النشطة</span>
                 </a>
+                <a href="upgrade-requests.html" class="nav-item" data-page="upgrade-requests">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>طلبات الترقية</span>
+                    <span class="badge badge-warning" id="upgradeRequestsBadge">0</span>
+                </a>
                 <a href="realty-subscriptions.html" class="nav-item" data-page="realty-subscriptions">
                     <i class="fas fa-chart-line"></i>
                     <span>إدارة الاشتراكات المالية</span>

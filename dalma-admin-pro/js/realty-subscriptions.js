@@ -18,32 +18,28 @@ async function loadSubscriptions() {
     try {
         console.log('📥 Loading subscriptions data...');
         
-        // جلب جميع الطلبات المقبولة (التي أصبحت اشتراكات)
-        const response = await fetch(`${API_URL}/api/admin/office-registration-requests?status=approved`);
+        // جلب الاشتراكات الحقيقية من جدول realty_subscriptions
+        const response = await fetch(`${API_URL}/api/admin/subscriptions`);
         const data = await response.json();
         
         if (data.success) {
-            // تحويل الطلبات المقبولة إلى اشتراكات
-            allSubscriptions = data.requests.map(request => {
-                const approvedDate = new Date(request.reviewed_at);
-                const expiryDate = new Date(approvedDate);
-                expiryDate.setDate(expiryDate.getDate() + 30);
-                
-                const daysLeft = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+            allSubscriptions = data.subscriptions.map(sub => {
+                const endDate = new Date(sub.end_date);
+                const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
                 const isExpired = daysLeft < 0;
                 const isExpiring = daysLeft >= 0 && daysLeft <= 7;
                 
                 return {
-                    id: request.id,
-                    office_name: request.office_name,
-                    city: request.city,
-                    phone: request.phone,
-                    email: request.email,
-                    plan: request.requested_plan,
-                    plan_name: request.plan_name,
-                    price: request.plan_price || 0,
-                    start_date: approvedDate,
-                    expiry_date: expiryDate,
+                    id: sub.office_id,
+                    office_name: sub.office_name,
+                    city: sub.city,
+                    phone: sub.phone,
+                    email: sub.email,
+                    plan: sub.plan_code,
+                    plan_name: sub.plan_name,
+                    price: sub.plan_price || 0,
+                    start_date: new Date(sub.start_date),
+                    expiry_date: endDate,
                     days_left: daysLeft,
                     status: isExpired ? 'expired' : isExpiring ? 'expiring' : 'active',
                     payment_status: 'paid' // افتراضياً مدفوع عند القبول
