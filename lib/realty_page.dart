@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -2810,7 +2811,7 @@ class _TrianglePainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
     
-    final path = Path()
+    final path = ui.Path()
       ..moveTo(size.width / 2, size.height)
       ..lineTo(0, 0)
       ..lineTo(size.width, 0)
