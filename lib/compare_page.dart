@@ -547,10 +547,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
       final areaRaw = widget.properties[i]['area'];
       final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
       final area = areaRaw is String ? double.tryParse(areaRaw) ?? 1 : (areaRaw as num?)?.toDouble() ?? 1;
-      final pricePerMeter = area > 0 ? price / area : 0;
+      final pricePerMeter = area > 0 ? (price / area).toDouble() : 0.0;
       
       if (pricePerMeter < bestPricePerMeter && pricePerMeter > 0) {
-        bestPricePerMeter = pricePerMeter;
+        bestPricePerMeter = pricePerMeter.toDouble();
         bestValueIndex = i;
       }
     }
