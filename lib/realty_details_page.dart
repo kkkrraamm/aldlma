@@ -365,7 +365,7 @@ class _RealtyDetailsPageState extends State<RealtyDetailsPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => MortgageCalculatorPage(
-                                      initialPrice: _listing!['price']?.toDouble(),
+                                      initialPrice: double.tryParse(_listing!['price']?.toString() ?? '0'),
                                     ),
                                   ),
                                 );

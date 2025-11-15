@@ -534,24 +534,24 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                       ),
                       // نوع العقار (فوق)
                       Positioned(
-                        top: -8,
+                        top: -10,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: color, width: 1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: color, width: 1.5),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 3,
+                                color: Colors.black.withOpacity(0.25),
+                                blurRadius: 4,
                               ),
                             ],
                           ),
                           child: Text(
                             typeLabel,
                             style: GoogleFonts.cairo(
-                              fontSize: 7,
+                              fontSize: 9,
                               fontWeight: FontWeight.bold,
                               color: color,
                             ),
@@ -560,25 +560,25 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                       ),
                       // السعر (تحت)
                       Positioned(
-                        bottom: -8,
+                        bottom: -10,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [color, color.withOpacity(0.9)],
                             ),
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(6),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 3,
+                                color: Colors.black.withOpacity(0.25),
+                                blurRadius: 4,
                               ),
                             ],
                           ),
                           child: Text(
                             priceK,
                             style: GoogleFonts.cairo(
-                              fontSize: 7,
+                              fontSize: 9,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -588,19 +588,19 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                       // لوجو المكتب (يمين فوق)
                       if (officeLogo != null)
                         Positioned(
-                          top: -2,
-                          right: -2,
+                          top: -4,
+                          right: -4,
                           child: Container(
-                            width: 16,
-                            height: 16,
+                            width: 20,
+                            height: 20,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.white,
-                              border: Border.all(color: color, width: 1.5),
+                              border: Border.all(color: color, width: 2),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 4,
+                                  color: Colors.black.withOpacity(0.25),
+                                  blurRadius: 6,
                                 ),
                               ],
                             ),
@@ -610,7 +610,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Icon(
                                   Icons.business,
-                                  size: 10,
+                                  size: 12,
                                   color: color,
                                 ),
                               ),
