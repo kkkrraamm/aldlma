@@ -128,19 +128,51 @@ class _SavingsCalculatorPageState extends State<SavingsCalculatorPage> {
             if (_showHelp) const SizedBox(height: 20),
             
 
-            _buildInputCard(theme, 'المبلغ الحالي', _initialController, 'المبلغ المدخر حالياً', Icons.account_balance),
+            _buildInputCard(
+              theme, 
+              'المبلغ الحالي', 
+              _initialController, 
+              'المبلغ المدخر حالياً', 
+              Icons.account_balance,
+              'المبلغ الذي تملكه حالياً في حساب الادخار.\n\nمثال: إذا كان لديك 10,000 ريال مدخرة، أدخل 10000',
+            ),
             const SizedBox(height: 16),
-            _buildInputCard(theme, 'الادخار الشهري', _monthlyController, 'المبلغ الشهري', Icons.calendar_month),
+            _buildInputCard(
+              theme, 
+              'الادخار الشهري', 
+              _monthlyController, 
+              'المبلغ الشهري', 
+              Icons.calendar_month,
+              'المبلغ الذي ستضيفه كل شهر.\n\nمثال: إذا كنت ستدخر 1,000 ريال شهرياً، أدخل 1000',
+            ),
             const SizedBox(height: 16),
-            _buildSliderCard(theme, 'نسبة الفائدة السنوية', _interestRate, 0, 10, '%', (v) {
-              setState(() => _interestRate = v);
-              _calculate();
-            }),
+            _buildSliderCard(
+              theme, 
+              'نسبة الفائدة السنوية', 
+              _interestRate, 
+              0, 
+              10, 
+              '%', 
+              (v) {
+                setState(() => _interestRate = v);
+                _calculate();
+              },
+              'نسبة الفائدة السنوية التي يقدمها البنك.\n\nمثال: إذا كانت الفائدة 3% سنوياً، اختر 3',
+            ),
             const SizedBox(height: 16),
-            _buildSliderCard(theme, 'المدة', _years, 1, 30, 'سنة', (v) {
-              setState(() => _years = v);
-              _calculate();
-            }),
+            _buildSliderCard(
+              theme, 
+              'المدة', 
+              _years, 
+              1, 
+              30, 
+              'سنة', 
+              (v) {
+                setState(() => _years = v);
+                _calculate();
+              },
+              'عدد السنوات التي ستستمر في الادخار.\n\nمثال: إذا كنت ستدخر لمدة 10 سنوات، اختر 10',
+            ),
             const SizedBox(height: 30),
 
             if (_finalAmount != null) ...[
@@ -212,7 +244,7 @@ class _SavingsCalculatorPageState extends State<SavingsCalculatorPage> {
     );
   }
 
-  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon) {
+  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon, String helpText) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -228,6 +260,8 @@ class _SavingsCalculatorPageState extends State<SavingsCalculatorPage> {
               Icon(icon, color: theme.primaryColor, size: 20),
               const SizedBox(width: 8),
               Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              const Spacer(),
+              helpers.buildHelpButton(context, theme, label, helpText, icon, const Color(0xFF10b981)),
             ],
           ),
           const SizedBox(height: 12),
@@ -252,7 +286,7 @@ class _SavingsCalculatorPageState extends State<SavingsCalculatorPage> {
     );
   }
 
-  Widget _buildSliderCard(ThemeConfig theme, String label, double value, double min, double max, String unit, Function(double) onChanged) {
+  Widget _buildSliderCard(ThemeConfig theme, String label, double value, double min, double max, String unit, Function(double) onChanged, String helpText) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -265,7 +299,16 @@ class _SavingsCalculatorPageState extends State<SavingsCalculatorPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(child: Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor))),
+                    const SizedBox(width: 8),
+                    helpers.buildHelpButton(context, theme, label, helpText, Icons.tune, const Color(0xFF10b981)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),

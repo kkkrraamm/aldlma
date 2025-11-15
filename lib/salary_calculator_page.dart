@@ -124,16 +124,16 @@ class _SalaryCalculatorPageState extends State<SalaryCalculatorPage> {
             if (_showHelp) const SizedBox(height: 20),
             
 
-            _buildInputCard(theme, 'الراتب الأساسي', _basicSalaryController, 'أدخل الراتب', Icons.account_balance_wallet),
+            _buildInputCard(theme, 'الراتب الأساسي', _basicSalaryController, 'أدخل الراتب', Icons.account_balance_wallet, 'الراتب الأساسي قبل البدلات والخصومات.\n\nمثال: إذا كان راتبك الأساسي 10,000 ريال، أدخل 10000'),
             const SizedBox(height: 16),
-            _buildInputCard(theme, 'البدلات', _allowancesController, 'بدل سكن، نقل، إلخ', Icons.add_circle),
+            _buildInputCard(theme, 'البدلات', _allowancesController, 'بدل سكن، نقل، إلخ', Icons.add_circle, 'البدلات الإضافية (سكن، نقل، طعام، إلخ).\n\nمثال: إذا كانت بدلاتك 3,000 ريال، أدخل 3000'),
             const SizedBox(height: 16),
-            _buildInputCard(theme, 'خصومات أخرى', _deductionsController, 'قروض، إلخ', Icons.remove_circle),
+            _buildInputCard(theme, 'خصومات أخرى', _deductionsController, 'قروض، إلخ', Icons.remove_circle, 'الخصومات الأخرى غير التأمينات (قروض، غرامات، إلخ).\n\nمثال: إذا كان لديك قرض بقسط 500 ريال، أدخل 500'),
             const SizedBox(height: 16),
             _buildSliderCard(theme, 'نسبة التأمينات', _gosi, 9, 12, '%', (v) {
               setState(() => _gosi = v);
               _calculate();
-            }),
+            }, 'نسبة التأمينات الاجتماعية (9.75% للسعوديين).\n\nمثال: للسعوديين اختر 9.75'),
             const SizedBox(height: 30),
 
             if (_netSalary != null) ...[
@@ -205,7 +205,7 @@ class _SalaryCalculatorPageState extends State<SalaryCalculatorPage> {
     );
   }
 
-  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon) {
+  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon, String helpText) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -221,6 +221,8 @@ class _SalaryCalculatorPageState extends State<SalaryCalculatorPage> {
               Icon(icon, color: theme.primaryColor, size: 20),
               const SizedBox(width: 8),
               Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              const Spacer(),
+              helpers.buildHelpButton(context, theme, label, helpText, icon, const Color(0xFF6366f1)),
             ],
           ),
           const SizedBox(height: 12),
@@ -245,7 +247,7 @@ class _SalaryCalculatorPageState extends State<SalaryCalculatorPage> {
     );
   }
 
-  Widget _buildSliderCard(ThemeConfig theme, String label, double value, double min, double max, String unit, Function(double) onChanged) {
+  Widget _buildSliderCard(ThemeConfig theme, String label, double value, double min, double max, String unit, Function(double) onChanged, String helpText) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -258,7 +260,16 @@ class _SalaryCalculatorPageState extends State<SalaryCalculatorPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(child: Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor))),
+                    const SizedBox(width: 8),
+                    helpers.buildHelpButton(context, theme, label, helpText, Icons.tune, const Color(0xFF6366f1)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),

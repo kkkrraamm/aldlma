@@ -123,7 +123,14 @@ class _UnitConverterPageState extends State<UnitConverterPage> {
               ),
               child: Column(
                 children: [
-                  Text('من', style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textPrimaryColor)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('من', style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textPrimaryColor)),
+                      const SizedBox(width: 8),
+                      helpers.buildHelpButton(context, theme, 'الوحدة المصدر', 'اختر الوحدة التي تريد التحويل منها.\\n\\nمثال: إذا كان لديك 100 متر مربع، اختر "متر مربع"', Icons.straighten, const Color(0xFF06b6d4)),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _inputController,
@@ -167,7 +174,14 @@ class _UnitConverterPageState extends State<UnitConverterPage> {
               ),
               child: Column(
                 children: [
-                  Text('إلى', style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textPrimaryColor)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('إلى', style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textPrimaryColor)),
+                      const SizedBox(width: 8),
+                      helpers.buildHelpButton(context, theme, 'الوحدة المستهدفة', 'اختر الوحدة التي تريد التحويل إليها.\\n\\nمثال: إذا كنت تريد معرفة كم قدم مربع، اختر "قدم مربع"', Icons.straighten, const Color(0xFF06b6d4)),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     _result != null ? _result!.toStringAsFixed(2) : '0',

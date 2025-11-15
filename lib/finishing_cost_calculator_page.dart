@@ -143,7 +143,7 @@ class _FinishingCostCalculatorPageState extends State<FinishingCostCalculatorPag
             if (_showHelp) const SizedBox(height: 20),
             
 
-            _buildInputCard(theme, 'المساحة', _areaController, 'بالمتر المربع', Icons.square_foot),
+            _buildInputCard(theme, 'المساحة', _areaController, 'بالمتر المربع', Icons.square_foot, 'مساحة العقار المراد تشطيبه.\\n\\nمثال: إذا كانت المساحة 200 متر مربع، أدخل 200'),
             const SizedBox(height: 16),
             _buildDropdownCard(theme, 'نوع الأرضيات', _floorType, _floorCosts, (v) {
               setState(() => _floorType = v);
@@ -230,7 +230,7 @@ class _FinishingCostCalculatorPageState extends State<FinishingCostCalculatorPag
     );
   }
 
-  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon) {
+  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon, String helpText) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -246,6 +246,8 @@ class _FinishingCostCalculatorPageState extends State<FinishingCostCalculatorPag
               Icon(icon, color: theme.primaryColor, size: 20),
               const SizedBox(width: 8),
               Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              const Spacer(),
+              helpers.buildHelpButton(context, theme, label, helpText, icon, const Color(0xFFa855f7)),
             ],
           ),
           const SizedBox(height: 12),

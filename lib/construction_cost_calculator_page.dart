@@ -128,9 +128,9 @@ class _ConstructionCostCalculatorPageState extends State<ConstructionCostCalcula
             if (_showHelp) const SizedBox(height: 20),
             
 
-            _buildInputCard(theme, 'مساحة الأرض', _landAreaController, 'بالمتر المربع', Icons.landscape),
+            _buildInputCard(theme, 'مساحة الأرض', _landAreaController, 'بالمتر المربع', Icons.landscape, 'مساحة الأرض الإجمالية.\\n\\nمثال: إذا كانت أرضك 500 متر مربع، أدخل 500'),
             const SizedBox(height: 16),
-            _buildInputCard(theme, 'مساحة البناء', _buildAreaController, 'بالمتر المربع', Icons.home_work),
+            _buildInputCard(theme, 'مساحة البناء', _buildAreaController, 'بالمتر المربع', Icons.home_work, 'مساحة البناء الفعلية (عادة 60-70% من مساحة الأرض).\\n\\nمثال: إذا كانت مساحة البناء 300 متر، أدخل 300'),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
@@ -265,7 +265,7 @@ class _ConstructionCostCalculatorPageState extends State<ConstructionCostCalcula
     );
   }
 
-  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon) {
+  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon, String helpText) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -281,6 +281,8 @@ class _ConstructionCostCalculatorPageState extends State<ConstructionCostCalcula
               Icon(icon, color: theme.primaryColor, size: 20),
               const SizedBox(width: 8),
               Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              const Spacer(),
+              helpers.buildHelpButton(context, theme, label, helpText, icon, const Color(0xFFf97316)),
             ],
           ),
           const SizedBox(height: 12),

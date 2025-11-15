@@ -126,19 +126,19 @@ class _LoanCalculatorPageState extends State<LoanCalculatorPage> {
             if (_showHelp) const SizedBox(height: 20),
             
 
-            _buildInputCard(theme, 'مبلغ القرض', _amountController, 'أدخل المبلغ', Icons.money),
+            _buildInputCard(theme, 'مبلغ القرض', _amountController, 'أدخل المبلغ', Icons.money, 'المبلغ الذي تريد اقتراضه من البنك.\n\nمثال: إذا كنت تريد قرض 50,000 ريال، أدخل 50000'),
             const SizedBox(height: 16),
-            _buildInputCard(theme, 'الرسوم الإدارية', _feesController, 'رسوم البنك', Icons.receipt),
+            _buildInputCard(theme, 'الرسوم الإدارية', _feesController, 'رسوم البنك', Icons.receipt, 'الرسوم التي يفرضها البنك عند منح القرض.\n\nمثال: إذا كانت الرسوم 2,000 ريال، أدخل 2000'),
             const SizedBox(height: 16),
             _buildSliderCard(theme, 'نسبة الفائدة', _interestRate, 2, 15, '%', (v) {
               setState(() => _interestRate = v);
               _calculate();
-            }),
+            }, 'نسبة الفائدة السنوية على القرض.\n\nمثال: إذا كانت الفائدة 5% سنوياً، اختر 5'),
             const SizedBox(height: 16),
             _buildSliderCard(theme, 'مدة السداد', _years, 1, 10, 'سنة', (v) {
               setState(() => _years = v);
               _calculate();
-            }),
+            }, 'عدد السنوات التي ستسدد فيها القرض.\n\nمثال: إذا كانت المدة 5 سنوات، اختر 5'),
             const SizedBox(height: 30),
 
             if (_monthlyPayment != null) ...[
@@ -210,7 +210,7 @@ class _LoanCalculatorPageState extends State<LoanCalculatorPage> {
     );
   }
 
-  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon) {
+  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon, String helpText) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -226,6 +226,8 @@ class _LoanCalculatorPageState extends State<LoanCalculatorPage> {
               Icon(icon, color: theme.primaryColor, size: 20),
               const SizedBox(width: 8),
               Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              const Spacer(),
+              helpers.buildHelpButton(context, theme, label, helpText, icon, const Color(0xFFec4899)),
             ],
           ),
           const SizedBox(height: 12),
@@ -250,7 +252,7 @@ class _LoanCalculatorPageState extends State<LoanCalculatorPage> {
     );
   }
 
-  Widget _buildSliderCard(ThemeConfig theme, String label, double value, double min, double max, String unit, Function(double) onChanged) {
+  Widget _buildSliderCard(ThemeConfig theme, String label, double value, double min, double max, String unit, Function(double) onChanged, String helpText) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -263,7 +265,16 @@ class _LoanCalculatorPageState extends State<LoanCalculatorPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(child: Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor))),
+                    const SizedBox(width: 8),
+                    helpers.buildHelpButton(context, theme, label, helpText, Icons.tune, const Color(0xFFec4899)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
