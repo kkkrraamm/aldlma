@@ -1856,69 +1856,164 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
   
   Future<void> _shareComparison() async {
     try {
-      // إنشاء نص المقارنة
-      String shareText = '🏠 مقارنة العقارات - تطبيق الدلما 🏠\n\n';
-      shareText += '━━━━━━━━━━━━━━━━━━━━━━\n\n';
+      // عرض مؤشر التحميل
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Center(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10b981)),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'جاري إنشاء المستند...',
+                    style: GoogleFonts.cairo(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1e293b),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
+      final pdf = pw.Document();
       
-      for (int i = 0; i < widget.properties.length; i++) {
-        final property = widget.properties[i];
-        final priceRaw = property['price'];
-        final areaRaw = property['area'];
-        final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
-        final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
-        final pricePerMeter = area > 0 ? (price / area).toDouble() : 0.0;
-        
-        shareText += '📍 العقار ${i + 1}: ${property['title'] ?? 'بدون عنوان'}\n';
-        shareText += '💰 السعر: ${_formatPrice(price)}\n';
-        shareText += '📐 المساحة: ${area.toStringAsFixed(0)} م²\n';
-        shareText += '💵 السعر/م²: ${_formatPrice(pricePerMeter)}\n';
-        shareText += '📍 الموقع: ${property['city'] ?? '-'}, ${property['neighborhood'] ?? '-'}\n';
-        shareText += '🏷️ النوع: ${_getTypeLabel(property['type'])}\n';
-        
-        if (property['rooms'] != null) {
-          shareText += '🛏️ غرف النوم: ${property['rooms']}\n';
-        }
-        if (property['bathrooms'] != null) {
-          shareText += '🚿 دورات المياه: ${property['bathrooms']}\n';
-        }
-        
-        shareText += '\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
+      // تحميل الشعار
+      pw.MemoryImage? logo;
+      try {
+        final ByteData logoData = await rootBundle.load('assets/img/aldlma.png');
+        final Uint8List logoBytes = logoData.buffer.asUint8List();
+        logo = pw.MemoryImage(logoBytes);
+      } catch (e) {
+        print('تحذير: لم يتم العثور على الشعار');
       }
       
-      // إضافة أفضل قيمة
-      double bestPricePerMeter = double.infinity;
-      int bestIndex = 0;
-      
-      for (int i = 0; i < widget.properties.length; i++) {
-        final property = widget.properties[i];
-        final priceRaw = property['price'];
-        final areaRaw = property['area'];
-        final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
-        final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
-        
-        if (area > 0) {
-          final pricePerMeter = (price / area).toDouble();
-          if (pricePerMeter < bestPricePerMeter) {
-            bestPricePerMeter = pricePerMeter;
-            bestIndex = i;
-          }
-        }
+      // تحميل الخط العربي
+      pw.Font? arabicFont;
+      try {
+        final fontData = await rootBundle.load('assets/fonts/Cairo-Variable.ttf');
+        arabicFont = pw.Font.ttf(fontData);
+      } catch (e) {
+        print('تحذير: لم يتم العثور على الخط العربي: $e');
       }
-      
-      shareText += '⭐ أفضل قيمة: العقار ${bestIndex + 1}\n';
-      shareText += '(أقل سعر للمتر المربع: ${_formatPrice(bestPricePerMeter)})\n\n';
-      
-      shareText += '━━━━━━━━━━━━━━━━━━━━━━\n\n';
-      shareText += '📱 تطبيق الدلما للعقارات\n';
-      shareText += '🌐 dalma.sa\n';
-      shareText += '✨ اكتشف أفضل العقارات في منطقتك';
-      
-      // مشاركة النص
-      await Share.share(
-        shareText,
-        subject: 'مقارنة العقارات - تطبيق الدلما',
+
+      // إنشاء صفحة PDF
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          textDirection: pw.TextDirection.rtl,
+          theme: arabicFont != null
+              ? pw.ThemeData.withFont(
+                  base: arabicFont,
+                  bold: arabicFont,
+                )
+              : pw.ThemeData(),
+          build: (pw.Context context) {
+            return [
+              // الهيدر مع شعار الدلما
+              _buildPDFHeaderSimple(logo),
+              pw.SizedBox(height: 30),
+              
+              // العنوان
+              pw.Container(
+                padding: const pw.EdgeInsets.all(15),
+                decoration: pw.BoxDecoration(
+                  color: PdfColor.fromHex('#10b981'),
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+                ),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  children: [
+                    pw.Text(
+                      'تقرير مقارنة العقارات الشامل',
+                      style: pw.TextStyle(
+                        fontSize: 20,
+                        color: PdfColors.white,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 20),
+              
+              // معلومات التقرير
+              _buildPDFInfoSectionSimple(),
+              pw.SizedBox(height: 30),
+              
+              // القسم الأول: نظرة عامة
+              _buildPDFSectionTitle('نظرة عامة', '#10b981'),
+              pw.SizedBox(height: 15),
+              
+              _buildPDFComparisonTableSimple(),
+              pw.SizedBox(height: 20),
+              
+              _buildPDFBestValue(),
+              pw.SizedBox(height: 30),
+              
+              // القسم الثاني: التحليل المالي
+              _buildPDFSectionTitle('التحليل المالي', '#3b82f6'),
+              pw.SizedBox(height: 15),
+              
+              _buildPDFPriceComparison(),
+              pw.SizedBox(height: 20),
+              
+              _buildPDFPricePerMeterComparison(),
+              pw.SizedBox(height: 30),
+              
+              // القسم الثالث: التفاصيل الكاملة
+              _buildPDFSectionTitle('التفاصيل الكاملة', '#ec4899'),
+              pw.SizedBox(height: 15),
+              
+              ..._buildPDFPropertyDetails(),
+              pw.SizedBox(height: 30),
+              
+              // القسم الرابع: النصائح الذكية
+              _buildPDFSectionTitle('نصائح ذكية', '#f59e0b'),
+              pw.SizedBox(height: 15),
+              
+              _buildPDFSmartTipsSimple(),
+              pw.SizedBox(height: 30),
+              
+              // الفوتر
+              _buildPDFFooterSimple(logo),
+            ];
+          },
+        ),
+      );
+
+      // حفظ الملف
+      final output = await getTemporaryDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File('${output.path}/dalma_comparison_$timestamp.pdf');
+      await file.writeAsBytes(await pdf.save());
+
+      // إغلاق مؤشر التحميل
+      if (mounted) Navigator.pop(context);
+
+      // مشاركة ملف PDF مباشرة
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'تقرير مقارنة العقارات الشامل من تطبيق الدلما',
       );
     } catch (e) {
+      // إغلاق مؤشر التحميل في حالة الخطأ
+      if (mounted) Navigator.pop(context);
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
