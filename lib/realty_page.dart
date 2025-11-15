@@ -494,8 +494,8 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                   double.parse(listing['lat'].toString()),
                   double.parse(listing['lng'].toString()),
                 ),
-                width: 70,
-                height: 100,
+                width: 60,
+                height: 85,
                 child: GestureDetector(
                   onTap: () => _showModernListingPopup(listing, theme),
                   child: Column(
@@ -504,8 +504,8 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                       // لوجو المكتب في الأعلى
                       if (officeLogo != null) ...[
                         Container(
-                          width: 22,
-                          height: 22,
+                          width: 18,
+                          height: 18,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Colors.white,
@@ -529,7 +529,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                             ),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                       ],
                       // الدائرة الرئيسية
                       Stack(
@@ -537,14 +537,14 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                         children: [
                           // ظل
                           Container(
-                            width: 44,
-                            height: 44,
+                            width: 38,
+                            height: 38,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
                                   color: color.withOpacity(0.4),
-                                  blurRadius: 12,
+                                  blurRadius: 10,
                                   spreadRadius: 2,
                                 ),
                               ],
@@ -552,8 +552,8 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                           ),
                           // الدائرة
                           Container(
-                            width: 44,
-                            height: 44,
+                            width: 38,
+                            height: 38,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [color, color.withOpacity(0.8)],
@@ -561,31 +561,31 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                                 end: Alignment.bottomRight,
                               ),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 3),
+                              border: Border.all(color: Colors.white, width: 2.5),
                             ),
-                            child: Icon(icon, color: Colors.white, size: 20),
+                            child: Icon(icon, color: Colors.white, size: 18),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       // نوع العقار
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                           border: Border.all(color: color, width: 1.5),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.2),
-                              blurRadius: 4,
+                              blurRadius: 3,
                             ),
                           ],
                         ),
                         child: Text(
                           typeLabel,
                           style: GoogleFonts.cairo(
-                            fontSize: 9,
+                            fontSize: 8,
                             fontWeight: FontWeight.bold,
                             color: color,
                           ),
@@ -594,23 +594,23 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                       const SizedBox(height: 2),
                       // السعر
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [color, color.withOpacity(0.9)],
                           ),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.2),
-                              blurRadius: 4,
+                              blurRadius: 3,
                             ),
                           ],
                         ),
                         child: Text(
                           priceK,
                           style: GoogleFonts.cairo(
-                            fontSize: 9,
+                            fontSize: 8,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
