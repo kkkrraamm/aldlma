@@ -144,11 +144,9 @@ class AuthState extends ChangeNotifier {
       _userRole = tokenUserRole;
       
       // التأكد من وجود user_token للمفضلة والدردشة
-      final userToken = prefs.getString('user_token');
-      if (userToken == null || userToken.isEmpty) {
-        await prefs.setString('user_token', token);
-        print('✅ [AUTH] تم تحديث user_token للمفضلة والدردشة');
-      }
+      // دائماً نحدثه لضمان التزامن
+      await prefs.setString('user_token', token);
+      print('✅ [AUTH] تم تحديث user_token للمفضلة والدردشة');
       
       print('🔐 [AUTH STATE] تحميل من Token - مسجل دخول ✅');
       print('👤 الاسم: $_userName');
