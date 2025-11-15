@@ -2499,7 +2499,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
       itemCount: _conversations.length,
       itemBuilder: (context, index) {
         final conv = _conversations[index];
-        final unreadCount = conv['unread_count'] ?? 0;
+        final unreadCount = int.tryParse(conv['unread_count']?.toString() ?? '0') ?? 0;
         
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
