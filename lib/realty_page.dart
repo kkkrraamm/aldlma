@@ -12,6 +12,7 @@ import 'theme_config.dart';
 import 'api_config.dart';
 import 'realty_details_page.dart';
 import 'rfp_form_page.dart';
+import 'add_property_page.dart';
 import 'compare_page.dart';
 import 'favorites_page.dart';
 import 'chat_list_page.dart';
@@ -347,6 +348,14 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
               left: 16,
               bottom: 100,
               child: _buildRfpButton(theme),
+            ),
+          
+          // زر ضيف عقارك - في وضع الخريطة فقط (يسار أسفل تحت زر طلب عقار)
+          if (_currentView == 0)
+            Positioned(
+              left: 16,
+              bottom: 30,
+              child: _buildAddPropertyButton(theme),
             ),
           
           // مؤشر التحميل
@@ -1640,6 +1649,49 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
             const SizedBox(width: 8),
             Text(
               'أطلب عقار',
+              style: GoogleFonts.cairo(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // زر ضيف عقارك
+  Widget _buildAddPropertyButton(ThemeConfig theme) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddPropertyPage()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF3b82f6), Color(0xFF2563eb)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF3b82f6).withOpacity(0.4),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.home_work, color: Colors.white, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              'ضيف عقارك',
               style: GoogleFonts.cairo(
                 color: Colors.white,
                 fontSize: 14,
