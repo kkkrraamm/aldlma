@@ -2502,7 +2502,10 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
         final unreadCount = int.tryParse(conv['unread_count']?.toString() ?? '0') ?? 0;
         
         return Card(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: EdgeInsets.only(
+            top: index == 0 ? 16 : 0,
+            bottom: 12,
+          ),
           color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
