@@ -225,8 +225,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
   Widget _buildPropertyCard(Map<String, dynamic> property, ThemeConfig theme, int index) {
     final images = property['images'] as List? ?? [];
     final thumbnail = images.isNotEmpty ? images[0] : null;
-    final price = property['price'] ?? 0;
-    final area = property['area'] ?? 0;
+    final priceRaw = property['price'];
+    final areaRaw = property['area'];
+    final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+    final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
     final pricePerMeter = area > 0 ? (price / area).toStringAsFixed(0) : '-';
     
     final colors = [
@@ -541,9 +543,11 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
     double bestPricePerMeter = double.infinity;
     
     for (int i = 0; i < widget.properties.length; i++) {
-      final price = widget.properties[i]['price'] ?? 0;
-      final area = widget.properties[i]['area'] ?? 1;
-      final pricePerMeter = price / area;
+      final priceRaw = widget.properties[i]['price'];
+      final areaRaw = widget.properties[i]['area'];
+      final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+      final area = areaRaw is String ? double.tryParse(areaRaw) ?? 1 : (areaRaw as num?)?.toDouble() ?? 1;
+      final pricePerMeter = area > 0 ? price / area : 0;
       
       if (pricePerMeter < bestPricePerMeter && pricePerMeter > 0) {
         bestPricePerMeter = pricePerMeter;
@@ -767,8 +771,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
     double totalPricePerMeter = 0;
     int validCount = 0;
     for (var property in widget.properties) {
-      final price = property['price'] ?? 0;
-      final area = property['area'] ?? 0;
+      final priceRaw = property['price'];
+      final areaRaw = property['area'];
+      final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+      final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
       if (area > 0) {
         totalPricePerMeter += price / area;
         validCount++;
@@ -1555,8 +1561,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
   }
 
   String _calculatePricePerMeter(Map<String, dynamic> property) {
-    final price = property['price'] ?? 0;
-    final area = property['area'] ?? 0;
+    final priceRaw = property['price'];
+    final areaRaw = property['area'];
+    final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+    final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
     if (area == 0) return '-';
     return (price / area).toStringAsFixed(0);
   }
