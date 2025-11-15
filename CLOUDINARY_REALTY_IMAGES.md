@@ -240,3 +240,4 @@ CLOUDINARY_API_SECRET=your_api_secret
 **الحالة:** ✅ جاهز للاستخدام  
 **الإصدار:** 2.0
 
+

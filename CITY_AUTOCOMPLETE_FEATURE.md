@@ -319,3 +319,4 @@ function moveMapToCity(cityName) {
 
 **50+ مدينة في متناول يدك!** ✨
 
+

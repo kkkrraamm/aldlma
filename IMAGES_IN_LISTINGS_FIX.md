@@ -238,3 +238,4 @@ file:///Users/kimaalanzi/Desktop/aaldma/dalma-office-portal/listings.html
 **التاريخ:** 13 نوفمبر 2025
 **Commit:** `3fc1efb - feat: return all images array in GET /api/office/listings endpoint`
 
+

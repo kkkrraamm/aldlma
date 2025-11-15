@@ -36,3 +36,4 @@ FROM realty_listings l
 WHERE l.is_active = true
 ORDER BY images_count, l.id;
 
+
