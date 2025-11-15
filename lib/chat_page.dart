@@ -49,8 +49,28 @@ class _ChatPageState extends State<ChatPage> {
     _autoRefreshTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (!_isSending && mounted) {
         _loadMessages(silent: true);
+        _checkOnlineStatus();
       }
     });
+  }
+  
+  Future<void> _checkOnlineStatus() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/office/online-status/${widget.officeId}'),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            _isOnline = data['is_online'] ?? false;
+          });
+        }
+      }
+    } catch (e) {
+      // لا نعرض خطأ، فقط نترك الحالة كما هي
+    }
   }
   
   void _onTyping() {
