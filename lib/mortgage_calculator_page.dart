@@ -148,7 +148,7 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
               _priceController,
               'أدخل سعر العقار',
               Icons.home_work,
-              hint: 'السعر الكامل للعقار الذي تريد شراءه',
+              hint: 'السعر الكامل للعقار الذي تريد شراءه (شقة، فيلا، أرض، إلخ).\n\nمثال: إذا كان سعر الشقة 500,000 ريال، أدخل هذا المبلغ هنا. هذا هو السعر قبل أي خصومات أو دفعات.',
             ),
             const SizedBox(height: 20),
 
@@ -164,6 +164,9 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
                 setState(() => _downPaymentPercent = value);
                 _calculate();
               },
+              hint: 'المبلغ الذي ستدفعه من جيبك عند شراء العقار. كلما زادت النسبة، قل مبلغ التمويل والفوائد.\n\nمثال: إذا كان سعر العقار 500,000 ر.س ونسبة الدفعة 20%، ستدفع 100,000 ر.س والباقي 400,000 ر.س تمويل من البنك.',
+              icon: Icons.account_balance_wallet,
+              color: const Color(0xFF3b82f6),
             ),
             const SizedBox(height: 20),
 
@@ -179,6 +182,9 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
                 setState(() => _years = value.toInt());
                 _calculate();
               },
+              hint: 'عدد السنوات التي ستسدد فيها القرض. كلما زادت المدة، قل القسط الشهري لكن تزيد الفوائد الإجمالية.\n\nمثال: 20 سنة = 240 قسط شهري. إذا اخترت 10 سنوات، القسط سيكون أعلى لكن الفوائد أقل.',
+              icon: Icons.calendar_today,
+              color: const Color(0xFFf59e0b),
             ),
             const SizedBox(height: 20),
 
@@ -194,6 +200,9 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
                 setState(() => _interestRate = value);
                 _calculate();
               },
+              hint: 'الفائدة السنوية التي يفرضها البنك على مبلغ التمويل. تختلف من بنك لآخر وحسب نوع التمويل.\n\nمثال: البنوك السعودية عادة تقدم فوائد بين 3-5% سنوياً للتمويل العقاري.',
+              icon: Icons.percent,
+              color: const Color(0xFFef4444),
             ),
             const SizedBox(height: 30),
 
@@ -341,27 +350,34 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
             children: [
               Icon(icon, color: theme.primaryColor, size: 24),
               const SizedBox(width: 12),
-              Text(
-                label,
-                style: GoogleFonts.cairo(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: theme.textPrimaryColor,
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: theme.textPrimaryColor,
+                  ),
                 ),
               ),
+              if (hint != null)
+                GestureDetector(
+                  onTap: () => _showFieldHelp(context, theme, label, hint, icon, theme.primaryColor),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: theme.primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.help_outline,
+                      size: 18,
+                      color: theme.primaryColor,
+                    ),
+                  ),
+                ),
             ],
           ),
-          if (hint != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              hint,
-              style: GoogleFonts.cairo(
-                fontSize: 12,
-                color: theme.textSecondaryColor,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
           const SizedBox(height: 16),
           TextField(
             controller: controller,
@@ -406,8 +422,11 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
     double min,
     double max,
     String unit,
-    Function(double) onChanged,
-  ) {
+    Function(double) onChanged, {
+    String? hint,
+    IconData? icon,
+    Color? color,
+  }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -427,14 +446,39 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                label,
-                style: GoogleFonts.cairo(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: theme.textPrimaryColor,
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: theme.textPrimaryColor,
+                        ),
+                      ),
+                    ),
+                    if (hint != null)
+                      GestureDetector(
+                        onTap: () => _showFieldHelp(context, theme, label, hint, icon ?? Icons.tune, color ?? theme.primaryColor),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: theme.primaryColor.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.help_outline,
+                            size: 18,
+                            color: theme.primaryColor,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -792,6 +836,100 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showFieldHelp(BuildContext context, ThemeConfig theme, String title, String description, IconData icon, Color color) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // الأيقونة
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color, color.withOpacity(0.8)],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: Colors.white, size: 32),
+              ),
+              const SizedBox(height: 20),
+              
+              // العنوان
+              Text(
+                title,
+                style: GoogleFonts.cairo(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textPrimaryColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              
+              // الوصف
+              Text(
+                description,
+                style: GoogleFonts.cairo(
+                  fontSize: 15,
+                  color: theme.textSecondaryColor,
+                  height: 1.6,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              
+              // زر الإغلاق
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: color,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'فهمت!',
+                    style: GoogleFonts.cairo(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
