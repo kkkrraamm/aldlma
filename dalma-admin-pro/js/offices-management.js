@@ -63,6 +63,7 @@ function createOfficeRow(office) {
     const planBadge = getPlanBadge(office.plan_code);
     const daysLeft = getDaysLeft(office.subscription_end);
     const lastLogin = office.last_login ? new Date(office.last_login).toLocaleDateString('ar-SA') : '-';
+    const isApproved = office.status === 'approved';
     
     return `
         <tr style="border-bottom: 1px solid var(--border);">
@@ -72,7 +73,10 @@ function createOfficeRow(office) {
                         ${initial}
                     </div>
                     <div>
-                        <div style="font-weight: 700; color: var(--text-primary);">${escapeHtml(office.name)}</div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-weight: 700; color: var(--text-primary);">${escapeHtml(office.name)}</span>
+                            ${isApproved ? '<span style="color: #10b981;" title="مكتب معتمد">✅</span>' : ''}
+                        </div>
                         <div style="font-size: 12px; color: var(--text-secondary);">
                             <i class="fas fa-map-marker-alt"></i> ${escapeHtml(office.city)}
                         </div>
@@ -88,10 +92,19 @@ function createOfficeRow(office) {
             <td style="padding: 18px 20px;">${daysLeft}</td>
             <td style="padding: 18px 20px; color: var(--text-secondary);">${lastLogin}</td>
             <td style="padding: 18px 20px;">
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button class="btn-icon view" onclick="viewOffice(${office.id})" title="عرض" style="width: 35px; height: 35px; border: none; border-radius: 8px; background: var(--bg-tertiary); cursor: pointer;">
                         <i class="fas fa-eye"></i>
                     </button>
+                    ${!isApproved ? `
+                        <button class="btn-icon" onclick="approveOffice(${office.id}, '${escapeHtml(office.name)}')" title="اعتماد المكتب" style="width: 35px; height: 35px; border: none; border-radius: 8px; background: linear-gradient(135deg, #10b981, #059669); color: white; cursor: pointer;">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    ` : `
+                        <button class="btn-icon" onclick="unapproveOffice(${office.id}, '${escapeHtml(office.name)}')" title="إلغاء الاعتماد" style="width: 35px; height: 35px; border: none; border-radius: 8px; background: #fef3c7; color: #92400e; cursor: pointer;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `}
                     ${office.status === 'active' ? `
                         <button class="btn-icon" onclick="suspendOffice(${office.id}, '${escapeHtml(office.name)}')" title="تعليق" style="width: 35px; height: 35px; border: none; border-radius: 8px; background: var(--bg-tertiary); cursor: pointer;">
                             <i class="fas fa-pause"></i>
@@ -113,6 +126,7 @@ function createOfficeRow(office) {
 function getStatusBadge(status) {
     const badges = {
         'active': '<span style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #d1fae5; color: #065f46;">✅ نشط</span>',
+        'approved': '<span style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #d1fae5; color: #065f46;">✅ معتمد</span>',
         'suspended': '<span style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #fef3c7; color: #92400e;">⏸️ معلق</span>',
         'blocked': '<span style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #fee2e2; color: #991b1b;">🚫 محظور</span>',
         'pending': '<span style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #e5e7eb; color: #374151;">⏳ معلق</span>'
@@ -226,6 +240,50 @@ async function renewSubscription(id, name) {
     }
 }
 
+async function approveOffice(id, name) {
+    if (!confirm(`هل تريد اعتماد المكتب: ${name}؟\n\nسيظهر في قائمة المكاتب المعتمدة في التطبيق`)) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/api/admin/offices/${id}/approve`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ تم اعتماد المكتب بنجاح');
+            loadOffices();
+        } else {
+            alert('❌ ' + (data.error || 'حدث خطأ'));
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('❌ حدث خطأ');
+    }
+}
+
+async function unapproveOffice(id, name) {
+    if (!confirm(`هل تريد إلغاء اعتماد المكتب: ${name}؟\n\nلن يظهر في قائمة المكاتب المعتمدة`)) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/api/admin/offices/${id}/unapprove`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ تم إلغاء اعتماد المكتب');
+            loadOffices();
+        } else {
+            alert('❌ ' + (data.error || 'حدث خطأ'));
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('❌ حدث خطأ');
+    }
+}
+
 function exportOffices() {
     alert('🚧 ميزة التصدير قيد التطوير');
 }
@@ -268,5 +326,6 @@ function escapeHtml(text) {
 }
 
 console.log('✅ Offices Management JS Loaded');
+
 
 
