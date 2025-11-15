@@ -132,12 +132,23 @@ class _FavoritesPageState extends State<FavoritesPage> {
               : RefreshIndicator(
                   onRefresh: _loadFavorites,
                   color: theme.primaryColor,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _favorites.length,
-                    itemBuilder: (context, index) {
-                      final item = _favorites[index];
-                      return _buildFavoriteCard(item, theme);
+                  child: Builder(
+                    builder: (context) {
+                      // فلترة المفضلة لإخفاء المكاتب العقارية
+                      final filteredFavorites = _favorites.where((item) => item['type'] != 'office').toList();
+                      
+                      if (filteredFavorites.isEmpty) {
+                        return _buildEmptyState(theme);
+                      }
+                      
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: filteredFavorites.length,
+                        itemBuilder: (context, index) {
+                          final item = filteredFavorites[index];
+                          return _buildFavoriteCard(item, theme);
+                        },
+                      );
                     },
                   ),
                 ),
