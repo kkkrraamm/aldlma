@@ -485,7 +485,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
               final color = _getColorForType(type, theme);
               
               final officeLogo = listing['office_logo'];
-              final price = listing['price'];
+              final price = double.tryParse(listing['price']?.toString() ?? '0') ?? 0;
               final typeLabel = _types[listing['type']] ?? '';
               
               return Marker(
