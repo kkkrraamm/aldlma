@@ -66,13 +66,25 @@ function createOfficeRow(office) {
     const isApproved = office.status === 'approved';
     const hasLogo = office.logo_url && office.logo_url.trim() !== '';
     
+    // بناء رابط الصورة الصحيح
+    let logoUrl = '';
+    if (hasLogo) {
+        if (office.logo_url.startsWith('http')) {
+            logoUrl = office.logo_url;
+        } else if (office.logo_url.startsWith('/')) {
+            logoUrl = `${API_URL}${office.logo_url}`;
+        } else {
+            logoUrl = `${API_URL}/uploads/${office.logo_url}`;
+        }
+    }
+    
     return `
         <tr style="border-bottom: 1px solid var(--border);">
             <td style="padding: 18px 20px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     ${hasLogo ? `
                         <div style="width: 45px; height: 45px; border-radius: 10px; overflow: hidden; border: 2px solid var(--border); background: white;">
-                            <img src="${API_URL}${office.logo_url}" 
+                            <img src="${logoUrl}" 
                                  alt="${escapeHtml(office.name)}" 
                                  style="width: 100%; height: 100%; object-fit: cover;"
                                  onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;\\'>${initial}</div>'">
