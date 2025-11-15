@@ -17,7 +17,6 @@ import 'my_rfps_page.dart';
 import 'auth.dart';
 import 'login_page.dart';
 import 'favorites_page.dart';
-import 'calculators_page.dart';
 import 'notifications.dart';
 import 'orders_service.dart';
 import 'my_account_page.dart';
@@ -986,7 +985,6 @@ class _QuickGrid extends StatelessWidget {
       ('مزاد/حراج', '🏷️'),
       ('الوظائف', '💼'),
       ('محفوظاتي', '⭐'),
-      ('الحاسبات', '🧮'),
       ('الصلاة', '🕌'),
       ('التذكيرات', Icons.calendar_today),
       ('الترندات', '🔥'),
@@ -1033,13 +1031,6 @@ class _QuickGrid extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const FavoritesPage(),
-                  ),
-                );
-              } else if (item.$1 == 'الحاسبات') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CalculatorsPage(),
                   ),
                 );
               } else if (item.$1 == 'طلباتي') {
@@ -1166,7 +1157,6 @@ class _QuickGrid extends StatelessWidget {
       case 'مزاد/حراج': return 'تصفح المزادات المتاحة';
       case 'الوظائف': return 'ابحث عن فرص عمل';
       case 'محفوظاتي': return 'أماكنك المحفوظة';
-      case 'الحاسبات': return '11 حاسبة مالية وعقارية';
       case 'الصلاة': return 'أوقات الصلاة والأذكار';
       case 'التذكيرات': return 'إدارة المواعيد والتذكيرات';
       case 'الترندات': return 'الخدمات الأكثر طلباً';
