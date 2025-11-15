@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'dart:convert';
 import 'theme_config.dart';
 import 'chat_page.dart';
+import 'api_config.dart';
 
 class AddPropertyPage extends StatefulWidget {
   const AddPropertyPage({super.key});
@@ -17,51 +20,9 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
   late AnimationController _animationController;
   Timer? _autoScrollTimer;
   
-  // قائمة المكاتب المعتمدة (مثال)
-  final List<Map<String, dynamic>> _approvedOffices = [
-    {
-      'id': '1',
-      'name': 'مكتب الدلما العقاري',
-      'logo': 'https://via.placeholder.com/150/10b981/FFFFFF?text=الدلما',
-      'rating': 4.8,
-      'properties': 120,
-    },
-    {
-      'id': '2',
-      'name': 'مكتب العقارات الذهبية',
-      'logo': 'https://via.placeholder.com/150/f59e0b/FFFFFF?text=الذهبية',
-      'rating': 4.9,
-      'properties': 95,
-    },
-    {
-      'id': '3',
-      'name': 'مكتب النخبة للعقارات',
-      'logo': 'https://via.placeholder.com/150/3b82f6/FFFFFF?text=النخبة',
-      'rating': 4.7,
-      'properties': 150,
-    },
-    {
-      'id': '4',
-      'name': 'مكتب الرائد العقاري',
-      'logo': 'https://via.placeholder.com/150/ec4899/FFFFFF?text=الرائد',
-      'rating': 4.6,
-      'properties': 80,
-    },
-    {
-      'id': '5',
-      'name': 'مكتب الأمانة للعقارات',
-      'logo': 'https://via.placeholder.com/150/8b5cf6/FFFFFF?text=الأمانة',
-      'rating': 4.9,
-      'properties': 110,
-    },
-    {
-      'id': '6',
-      'name': 'مكتب التميز العقاري',
-      'logo': 'https://via.placeholder.com/150/ef4444/FFFFFF?text=التميز',
-      'rating': 4.8,
-      'properties': 130,
-    },
-  ];
+  // قائمة المكاتب المعتمدة
+  List<Map<String, dynamic>> _approvedOffices = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -72,10 +33,40 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
       duration: const Duration(milliseconds: 500),
     );
     
-    // بدء التمرير التلقائي
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startAutoScroll();
-    });
+    // جلب المكاتب من API
+    _fetchApprovedOffices();
+  }
+  
+  Future<void> _fetchApprovedOffices() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/offices/approved'),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _approvedOffices = List<Map<String, dynamic>>.from(data['offices'] ?? []);
+          _isLoading = false;
+        });
+        
+        // بدء التمرير التلقائي بعد تحميل البيانات
+        if (_approvedOffices.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _startAutoScroll();
+          });
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('خطأ في جلب المكاتب: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _startAutoScroll() {
@@ -136,33 +127,74 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
                 _buildHeader(theme),
                 
                 Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
-                        
-                        // العنوان الرئيسي
-                        _buildMainTitle(theme),
-                        
-                        const SizedBox(height: 30),
-                        
-                        // شعارات المكاتب المتحركة
-                        _buildAnimatedLogos(theme),
-                        
-                        const SizedBox(height: 40),
-                        
-                        // نص الدعوة للتواصل
-                        _buildCallToAction(theme),
-                        
-                        const SizedBox(height: 30),
-                        
-                        // قائمة المكاتب
-                        _buildOfficesList(theme),
-                        
-                        const SizedBox(height: 30),
-                      ],
-                    ),
-                  ),
+                  child: _isLoading
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'جاري تحميل المكاتب المعتمدة...',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 14,
+                                  color: theme.isDarkMode ? Colors.white70 : const Color(0xFF64748b),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _approvedOffices.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.business_outlined,
+                                    size: 80,
+                                    color: theme.isDarkMode ? Colors.white24 : Colors.grey[300],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'لا توجد مكاتب معتمدة حالياً',
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.isDarkMode ? Colors.white70 : const Color(0xFF64748b),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  const SizedBox(height: 20),
+                                  
+                                  // العنوان الرئيسي
+                                  _buildMainTitle(theme),
+                                  
+                                  const SizedBox(height: 30),
+                                  
+                                  // شعارات المكاتب المتحركة
+                                  _buildAnimatedLogos(theme),
+                                  
+                                  const SizedBox(height: 40),
+                                  
+                                  // نص الدعوة للتواصل
+                                  _buildCallToAction(theme),
+                                  
+                                  const SizedBox(height: 30),
+                                  
+                                  // قائمة المكاتب
+                                  _buildOfficesList(theme),
+                                  
+                                  const SizedBox(height: 30),
+                                ],
+                              ),
+                            ),
                 ),
               ],
             ),
@@ -285,20 +317,29 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: Image.network(
-                      office['logo'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: theme.primaryColor.withOpacity(0.1),
-                          child: Icon(
-                            Icons.business,
-                            color: theme.primaryColor,
-                            size: 40,
+                    child: office['logo'] != null && office['logo'].toString().isNotEmpty
+                        ? Image.network(
+                            '${ApiConfig.baseUrl}${office['logo']}',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: theme.primaryColor.withOpacity(0.1),
+                                child: Icon(
+                                  Icons.business,
+                                  color: theme.primaryColor,
+                                  size: 40,
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
+                            color: theme.primaryColor.withOpacity(0.1),
+                            child: Icon(
+                              Icons.business,
+                              color: theme.primaryColor,
+                              size: 40,
+                            ),
                           ),
-                        );
-                      },
-                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -452,20 +493,29 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      office['logo'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: theme.primaryColor.withOpacity(0.1),
-                          child: Icon(
-                            Icons.business,
-                            color: theme.primaryColor,
-                            size: 35,
+                    child: office['logo'] != null && office['logo'].toString().isNotEmpty
+                        ? Image.network(
+                            '${ApiConfig.baseUrl}${office['logo']}',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: theme.primaryColor.withOpacity(0.1),
+                                child: Icon(
+                                  Icons.business,
+                                  color: theme.primaryColor,
+                                  size: 35,
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
+                            color: theme.primaryColor.withOpacity(0.1),
+                            child: Icon(
+                              Icons.business,
+                              color: theme.primaryColor,
+                              size: 35,
+                            ),
                           ),
-                        );
-                      },
-                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -580,13 +630,17 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
 
   void _openChatWithOffice(Map<String, dynamic> office) {
     // فتح صفحة الدردشة مع المكتب
+    final officeId = office['id'] is int ? office['id'] : int.tryParse(office['id'].toString()) ?? 0;
+    final officeName = office['name'] ?? office['office_name'] ?? 'مكتب عقاري';
+    final officeLogo = office['logo'];
+    
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ChatPage(
-          officeId: int.parse(office['id']),
-          officeName: office['name'],
-          officeLogo: office['logo'],
+          officeId: officeId,
+          officeName: officeName,
+          officeLogo: officeLogo,
         ),
       ),
     );
