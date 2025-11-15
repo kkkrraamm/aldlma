@@ -484,56 +484,132 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
               final icon = _getIconForType(type);
               final color = _getColorForType(type, theme);
               
+              final officeLogo = listing['office_logo'];
+              final price = listing['price'];
+              final typeLabel = _types[listing['type']] ?? '';
+              
               return Marker(
                 point: LatLng(
                   double.parse(listing['lat'].toString()),
                   double.parse(listing['lng'].toString()),
                 ),
-                width: 50,
-                height: 50,
+                width: 100,
+                height: 120,
                 child: GestureDetector(
                   onTap: () => _showModernListingPopup(listing, theme),
-                  child: Stack(
-                    alignment: Alignment.center,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // ظل
+                      // لوجو المكتب في الأعلى
+                      if (officeLogo != null)
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            border: Border.all(color: color, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: Image.network(
+                              officeLogo,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.business,
+                                size: 14,
+                                color: color,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (officeLogo != null) const SizedBox(height: 4),
+                      // الدائرة الرئيسية
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // ظل
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: color.withOpacity(0.4),
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                          ),
+                          // الدائرة
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [color, color.withOpacity(0.8)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                            ),
+                            child: Icon(icon, color: Colors.white, size: 20),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      // نوع العقار
                       Container(
-                        width: 40,
-                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: color, width: 1),
                           boxShadow: [
                             BoxShadow(
-                              color: color.withOpacity(0.4),
-                              blurRadius: 12,
-                              spreadRadius: 2,
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 4,
                             ),
                           ],
                         ),
-                      ),
-                      // الدائرة الرئيسية
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              color,
-                              color.withOpacity(0.8),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 3,
+                        child: Text(
+                          typeLabel,
+                          style: GoogleFonts.cairo(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: color,
                           ),
                         ),
-                        child: Icon(
-                          icon,
-                          color: Colors.white,
-                          size: 18,
+                      ),
+                      const SizedBox(height: 2),
+                      // السعر
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          '${(price / 1000).toStringAsFixed(0)}k',
+                          style: GoogleFonts.cairo(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
