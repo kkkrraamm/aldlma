@@ -73,13 +73,47 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
       appBar: AppBar(
         backgroundColor: theme.primaryColor,
         elevation: 0,
-        title: Text(
-          'حاسبة التمويل العقاري',
-          style: GoogleFonts.cairo(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
           ),
+        ),
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.calculate, color: Colors.white, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'حاسبة التمويل',
+              style: GoogleFonts.cairo(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
       ),
@@ -145,11 +179,36 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
 
             // النتائج
             if (_monthlyPayment != null) ...[
+              // عنوان النتائج
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [theme.primaryColor.withOpacity(0.1), theme.primaryColor.withOpacity(0.05)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.analytics, color: theme.primaryColor, size: 24),
+                    const SizedBox(width: 12),
+                    Text(
+                      'نتائج الحساب',
+                      style: GoogleFonts.cairo(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
               _buildResultCard(
                 theme,
                 'القسط الشهري',
                 _monthlyPayment!,
-                Colors.green,
+                const Color(0xFF10b981),
                 Icons.calendar_month,
               ),
               const SizedBox(height: 16),
@@ -157,7 +216,7 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
                 theme,
                 'إجمالي المبلغ المدفوع',
                 _totalPayment!,
-                theme.primaryColor,
+                const Color(0xFF3b82f6),
                 Icons.payments,
               ),
               const SizedBox(height: 16),
@@ -165,8 +224,34 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
                 theme,
                 'إجمالي الفوائد',
                 _totalInterest!,
-                Colors.orange,
+                const Color(0xFFf59e0b),
                 Icons.trending_up,
+              ),
+              const SizedBox(height: 20),
+              
+              // معلومات إضافية
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoCard(
+                      theme,
+                      'الدفعة الأولى',
+                      '${((double.tryParse(_priceController.text) ?? 0) * (_downPaymentPercent / 100)).toStringAsFixed(0)} ر.س',
+                      Icons.money,
+                      theme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildInfoCard(
+                      theme,
+                      'مبلغ التمويل',
+                      '${((double.tryParse(_priceController.text) ?? 0) * (1 - _downPaymentPercent / 100)).toStringAsFixed(0)} ر.س',
+                      Icons.account_balance,
+                      Colors.purple,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 30),
 
@@ -367,25 +452,40 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
+          colors: [color.withOpacity(0.15), color.withOpacity(0.08)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
+          color: color.withOpacity(0.4),
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [color, color.withOpacity(0.8)],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.3),
+                  blurRadius: 8,
+                ),
+              ],
             ),
-            child: Icon(icon, color: color, size: 28),
+            child: Icon(icon, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -395,21 +495,74 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
                 Text(
                   label,
                   style: GoogleFonts.cairo(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: theme.textSecondaryColor,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
-                  '${value.toStringAsFixed(2)} ر.س',
+                  '${value.toStringAsFixed(0)} ر.س',
                   style: GoogleFonts.cairo(
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: color,
+                    height: 1.2,
                   ),
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildInfoCard(
+    ThemeConfig theme,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(theme.isDarkMode ? 0.3 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.cairo(
+              fontSize: 12,
+              color: theme.textSecondaryColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: theme.textPrimaryColor,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
