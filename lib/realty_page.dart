@@ -324,8 +324,8 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
             child: _buildQuickFilters(theme),
           ),
           
-          // بانر "سجّل كمكتب عقاري"
-          if (!_showFilters && _showOfficeBanner)
+          // بانر "سجّل كمكتب عقاري" - فقط في وضع الخريطة
+          if (_currentView == 0 && !_showFilters && _showOfficeBanner)
             Positioned(
               top: MediaQuery.of(context).padding.top + 80,
               left: 16,
@@ -2067,10 +2067,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
 
   // عرض القائمة الكاملة
   Widget _buildFullListView(ThemeConfig theme) {
-    // فلترة العقارات لإخفاء المكاتب العقارية
-    final filteredListings = _listings.where((listing) => listing['type'] != 'office').toList();
-    
-    if (filteredListings.isEmpty) {
+    if (_listings.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2109,9 +2106,9 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
         right: 16,
         bottom: 100,
       ),
-      itemCount: filteredListings.length,
+      itemCount: _listings.length,
       itemBuilder: (context, index) {
-        return _buildFullListingCard(filteredListings[index], theme);
+        return _buildFullListingCard(_listings[index], theme);
       },
     );
   }
