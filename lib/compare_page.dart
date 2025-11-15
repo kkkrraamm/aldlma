@@ -2078,12 +2078,9 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
             padding: const pw.EdgeInsets.all(12),
             decoration: pw.BoxDecoration(
               color: PdfColor.fromHex('#f1f5f9'),
-              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
-              border: pw.Border(
-                left: pw.BorderSide(
-                  color: PdfColor.fromHex('#10b981'),
-                  width: 4,
-                ),
+              border: pw.Border.all(
+                color: PdfColor.fromHex('#10b981'),
+                width: 2,
               ),
             ),
             child: pw.Text(
