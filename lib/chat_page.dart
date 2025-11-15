@@ -687,6 +687,8 @@ class _ChatPageState extends State<ChatPage> {
     bool isUser,
     ThemeConfig theme,
   ) {
+    final hasListing = message['listing_id'] != null;
+    
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -767,6 +769,81 @@ class _ChatPageState extends State<ChatPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // بطاقة العقار إذا كانت موجودة
+                    if (hasListing) ...[
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RealtyDetailsPage(
+                                listingId: message['listing_id'],
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isUser
+                                ? Colors.white.withOpacity(0.2)
+                                : theme.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isUser
+                                  ? Colors.white.withOpacity(0.3)
+                                  : theme.primaryColor.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.home_work,
+                                color: isUser ? Colors.white : theme.primaryColor,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      message['listing_title'] ?? 'عقار',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: isUser ? Colors.white : theme.textPrimaryColor,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${message['listing_price']} ر.س • ${message['listing_city']}',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 12,
+                                        color: isUser
+                                            ? Colors.white.withOpacity(0.9)
+                                            : theme.textSecondaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: 14,
+                                color: isUser
+                                    ? Colors.white.withOpacity(0.7)
+                                    : theme.textSecondaryColor,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                     Text(
                       message['message'] ?? '',
                       style: GoogleFonts.cairo(

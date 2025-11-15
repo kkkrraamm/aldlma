@@ -838,7 +838,7 @@ class _RealtyDetailsPageState extends State<RealtyDetailsPage> {
 
   void _handleChat() {
     // التحقق من تسجيل الدخول
-    SharedPreferences.getInstance().then((prefs) {
+    SharedPreferences.getInstance().then((prefs) async {
       final token = prefs.getString('user_token');
       
       if (token == null) {
@@ -857,6 +857,41 @@ class _RealtyDetailsPageState extends State<RealtyDetailsPage> {
           ),
         );
         return;
+      }
+
+      // إرسال رسالة تلقائية بتفاصيل العقار
+      try {
+        final autoMessage = '''
+مرحباً، أنا مهتم بهذا العقار:
+
+🏠 ${_listing!['title']}
+💰 السعر: ${_formatPrice(_listing!['price'])} ر.س
+📍 الموقع: ${_listing!['city']}${_listing!['district'] != null ? ' - ${_listing!['district']}' : ''}
+${_listing!['area'] != null ? '📐 المساحة: ${_listing!['area']} م²' : ''}
+${_listing!['rooms'] != null ? '🛏️ الغرف: ${_listing!['rooms']}' : ''}
+
+🔗 رقم العقار: #${widget.listingId}
+
+أرجو التواصل معي للمزيد من التفاصيل.
+        '''.trim();
+
+        await http.post(
+          Uri.parse('${ApiConfig.baseUrl}/api/chat/send'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'office_id': _listing!['office_id'],
+            'message': autoMessage,
+            'listing_id': widget.listingId,
+          }),
+        );
+        
+        debugPrint('✅ [CHAT] تم إرسال رسالة تلقائية للمكتب');
+      } catch (e) {
+        debugPrint('⚠️ [CHAT] فشل إرسال الرسالة التلقائية: $e');
+        // نكمل حتى لو فشلت الرسالة التلقائية
       }
 
       // فتح صفحة الدردشة
