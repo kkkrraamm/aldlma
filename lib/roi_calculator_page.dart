@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
+import 'calculator_helpers.dart' as helpers;
 
 class ROICalculatorPage extends StatefulWidget {
   const ROICalculatorPage({super.key});
@@ -114,18 +115,57 @@ class _ROICalculatorPageState extends State<ROICalculatorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInputCard(theme, 'سعر الشراء', _purchasePriceController, 'أدخل سعر العقار', Icons.home_work),
+            _buildInputCard(
+              theme,
+              'سعر الشراء',
+              _purchasePriceController,
+              'أدخل سعر العقار',
+              Icons.home_work,
+              hint: 'السعر الذي دفعته لشراء العقار (شقة، فيلا، أرض تجارية، إلخ).\n\nمثال: إذا اشتريت شقة بـ 400,000 ريال، أدخل هذا المبلغ هنا.',
+            ),
             const SizedBox(height: 16),
-            _buildInputCard(theme, 'تكاليف الشراء', _purchaseCostsController, 'رسوم، صيانة، إلخ', Icons.receipt),
+            _buildInputCard(
+              theme,
+              'تكاليف الشراء',
+              _purchaseCostsController,
+              'رسوم، صيانة، إلخ',
+              Icons.receipt,
+              hint: 'المصاريف الإضافية عند الشراء (رسوم التسجيل، العمولة، الصيانة الأولية، إلخ).\n\nمثال: إذا دفعت 20,000 ريال رسوم ومصاريف، أدخلها هنا.',
+            ),
             const SizedBox(height: 16),
-            _buildInputCard(theme, 'الإيجار الشهري المتوقع', _monthlyRentController, 'أدخل الإيجار', Icons.attach_money),
+            _buildInputCard(
+              theme,
+              'الإيجار الشهري المتوقع',
+              _monthlyRentController,
+              'أدخل الإيجار',
+              Icons.attach_money,
+              hint: 'المبلغ الذي تحصل عليه شهرياً من تأجير العقار.\n\nمثال: إذا كنت تؤجر الشقة بـ 2,000 ريال شهرياً، أدخل هذا المبلغ.',
+            ),
             const SizedBox(height: 16),
-            _buildInputCard(theme, 'تكاليف الصيانة السنوية', _maintenanceCostController, 'صيانة، إدارة، إلخ', Icons.build),
+            _buildInputCard(
+              theme,
+              'تكاليف الصيانة السنوية',
+              _maintenanceCostController,
+              'صيانة، إدارة، إلخ',
+              Icons.build,
+              hint: 'المصاريف السنوية للصيانة والإصلاحات (عادة 1-2% من قيمة العقار).\n\nمثال: إذا كانت الصيانة السنوية 5,000 ريال، أدخلها هنا.',
+            ),
             const SizedBox(height: 16),
-            _buildSliderCard(theme, 'نسبة الشواغر المتوقعة', _vacancyRate, 0, 20, '%', (v) {
-              setState(() => _vacancyRate = v);
-              _calculate();
-            }),
+            _buildSliderCard(
+              theme,
+              'نسبة الشواغر المتوقعة',
+              _vacancyRate,
+              0,
+              20,
+              '%',
+              (v) {
+                setState(() => _vacancyRate = v);
+                _calculate();
+              },
+              hint: 'النسبة المتوقعة لبقاء العقار فارغاً بدون مستأجر خلال السنة.\n\nمثال: 5% يعني أن العقار قد يبقى فارغاً شهر واحد من السنة (خسارة إيجار شهر).',
+              icon: Icons.event_busy,
+              color: const Color(0xFF8b5cf6),
+            ),
             const SizedBox(height: 30),
 
             if (_roi != null) ...[
@@ -187,7 +227,7 @@ class _ROICalculatorPageState extends State<ROICalculatorPage> {
     );
   }
 
-  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon) {
+  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String placeholder, IconData icon, {String? hint}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -202,7 +242,11 @@ class _ROICalculatorPageState extends State<ROICalculatorPage> {
             children: [
               Icon(icon, color: theme.primaryColor, size: 20),
               const SizedBox(width: 8),
-              Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              Expanded(
+                child: Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              ),
+              if (hint != null)
+                helpers.buildHelpButton(context, theme, label, hint, icon, theme.primaryColor),
             ],
           ),
           const SizedBox(height: 12),
@@ -213,7 +257,7 @@ class _ROICalculatorPageState extends State<ROICalculatorPage> {
             onChanged: (_) => _calculate(),
             style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textPrimaryColor),
             decoration: InputDecoration(
-              hintText: hint,
+              hintText: placeholder,
               hintStyle: GoogleFonts.cairo(color: theme.textSecondaryColor, fontSize: 14),
               suffixText: 'ر.س',
               suffixStyle: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.primaryColor),
@@ -227,7 +271,7 @@ class _ROICalculatorPageState extends State<ROICalculatorPage> {
     );
   }
 
-  Widget _buildSliderCard(ThemeConfig theme, String label, double value, double min, double max, String unit, Function(double) onChanged) {
+  Widget _buildSliderCard(ThemeConfig theme, String label, double value, double min, double max, String unit, Function(double) onChanged, {String? hint, IconData? icon, Color? color}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -240,7 +284,18 @@ class _ROICalculatorPageState extends State<ROICalculatorPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+                    ),
+                    if (hint != null)
+                      helpers.buildHelpButton(context, theme, label, hint, icon ?? Icons.tune, color ?? theme.primaryColor),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
