@@ -1822,7 +1822,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
-                  Share.shareXFiles([XFile(file.path)], text: 'تقرير مقارنة العقارات الشامل من تطبيق الدلما');
+                  Share.shareXFiles([XFile(file.path)]);
                 },
                 icon: const Icon(Icons.share, size: 18),
                 label: Text('مشاركة', style: GoogleFonts.cairo()),
@@ -2005,11 +2005,8 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
       // إغلاق مؤشر التحميل
       if (mounted) Navigator.pop(context);
 
-      // مشاركة ملف PDF مباشرة
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'تقرير مقارنة العقارات الشامل من تطبيق الدلما',
-      );
+      // مشاركة ملف PDF فقط بدون نص
+      await Share.shareXFiles([XFile(file.path)]);
     } catch (e) {
       // إغلاق مؤشر التحميل في حالة الخطأ
       if (mounted) Navigator.pop(context);
