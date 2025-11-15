@@ -16,6 +16,17 @@ import 'compare_page.dart';
 import 'favorites_page.dart';
 import 'chat_list_page.dart';
 import 'chat_page.dart';
+import 'mortgage_calculator_page.dart';
+import 'roi_calculator_page.dart';
+import 'purchase_costs_calculator_page.dart';
+import 'affordability_calculator_page.dart';
+import 'rent_calculator_page.dart';
+import 'unit_converter_page.dart';
+import 'savings_calculator_page.dart';
+import 'loan_calculator_page.dart';
+import 'salary_calculator_page.dart';
+import 'construction_cost_calculator_page.dart';
+import 'finishing_cost_calculator_page.dart';
 
 class RealtyPage extends StatefulWidget {
   const RealtyPage({super.key});
@@ -31,7 +42,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
   bool _showFilters = false;
   bool _showMapView = true; // التبديل بين الخريطة والقائمة
   bool _showOfficeBanner = true; // إظهار بانر تسجيل المكتب
-  int _currentView = 0; // 0: خريطة، 1: قائمة، 2: محادثات
+  int _currentView = 0; // 0: خريطة، 1: قائمة، 2: محادثات، 3: حاسبات
   late AnimationController _filterAnimController;
   late Animation<double> _filterAnimation;
   
@@ -284,8 +295,10 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
       currentView = _buildModernMapView(theme);
     } else if (_currentView == 1) {
       currentView = _buildFullListView(theme);
-    } else {
+    } else if (_currentView == 2) {
       currentView = _buildConversationsView(theme);
+    } else {
+      currentView = _buildCalculatorsView(theme);
     }
     
     return Scaffold(
@@ -1989,6 +2002,62 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                   ),
                 ),
               ),
+              const SizedBox(width: 6),
+              // الحاسبات
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() => _currentView = 3);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      gradient: _currentView == 3
+                          ? LinearGradient(
+                              colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
+                            )
+                          : null,
+                      color: _currentView == 3
+                          ? null
+                          : (theme.isDarkMode
+                              ? const Color(0xFF2a2f3e)
+                              : const Color(0xFFf1f5f9)),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: _currentView == 3
+                          ? [
+                              BoxShadow(
+                                color: theme.primaryColor.withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.calculate,
+                            color: _currentView == 3 ? Colors.white : theme.textSecondaryColor,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'حاسبات',
+                            style: GoogleFonts.cairo(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: _currentView == 3 ? Colors.white : theme.textSecondaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -2704,6 +2773,98 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                   ),
                 ],
               ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  // ═══════════════════════════════════════════════════════════
+  // دوال الحاسبات
+  // ═══════════════════════════════════════════════════════════
+  
+  Widget _buildCalculatorsView(ThemeConfig theme) {
+    final calculators = [
+      {'title': 'حاسبة التمويل', 'icon': Icons.calculate, 'color': const Color(0xFF10b981), 'page': const MortgageCalculatorPage()},
+      {'title': 'العائد على الاستثمار', 'icon': Icons.trending_up, 'color': const Color(0xFF3b82f6), 'page': const ROICalculatorPage()},
+      {'title': 'تكاليف الشراء', 'icon': Icons.receipt_long, 'color': const Color(0xFFf59e0b), 'page': const PurchaseCostsCalculatorPage()},
+      {'title': 'القدرة الشرائية', 'icon': Icons.account_balance_wallet, 'color': const Color(0xFFef4444), 'page': const AffordabilityCalculatorPage()},
+      {'title': 'الإيجار المثالي', 'icon': Icons.home_work, 'color': const Color(0xFF8b5cf6), 'page': const RentCalculatorPage()},
+      {'title': 'محول الوحدات', 'icon': Icons.straighten, 'color': const Color(0xFF06b6d4), 'page': const UnitConverterPage()},
+      {'title': 'الادخار', 'icon': Icons.savings, 'color': const Color(0xFF10b981), 'page': const SavingsCalculatorPage()},
+      {'title': 'القرض الشخصي', 'icon': Icons.credit_card, 'color': const Color(0xFFec4899), 'page': const LoanCalculatorPage()},
+      {'title': 'الراتب الصافي', 'icon': Icons.payments, 'color': const Color(0xFF6366f1), 'page': const SalaryCalculatorPage()},
+      {'title': 'تكلفة البناء', 'icon': Icons.construction, 'color': const Color(0xFFf97316), 'page': const ConstructionCostCalculatorPage()},
+      {'title': 'تكلفة التشطيب', 'icon': Icons.brush, 'color': const Color(0xFFa855f7), 'page': const FinishingCostCalculatorPage()},
+    ];
+
+    return GridView.builder(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 80,
+        left: 16,
+        right: 16,
+        bottom: 100,
+      ),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.1,
+      ),
+      itemCount: calculators.length,
+      itemBuilder: (context, index) {
+        final calc = calculators[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => calc['page'] as Widget),
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: (calc['color'] as Color).withOpacity(0.3),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(theme.isDarkMode ? 0.3 : 0.05),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [calc['color'] as Color, (calc['color'] as Color).withOpacity(0.8)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(calc['icon'] as IconData, color: Colors.white, size: 28),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    calc['title'] as String,
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textPrimaryColor,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                  ),
+                ),
+              ],
             ),
           ),
         );
