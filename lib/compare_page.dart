@@ -1666,16 +1666,13 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
         print('تحذير: لم يتم العثور على الشعار');
       }
       
-      // تحميل الخطوط العربية
+      // تحميل الخط العربي
       pw.Font? arabicFont;
-      pw.Font? arabicFontBold;
       try {
-        final fontData = await rootBundle.load('assets/fonts/Cairo-Regular.ttf');
-        final fontDataBold = await rootBundle.load('assets/fonts/Cairo-Bold.ttf');
+        final fontData = await rootBundle.load('assets/fonts/Cairo-Variable.ttf');
         arabicFont = pw.Font.ttf(fontData);
-        arabicFontBold = pw.Font.ttf(fontDataBold);
       } catch (e) {
-        print('تحذير: لم يتم العثور على الخطوط العربية: $e');
+        print('تحذير: لم يتم العثور على الخط العربي: $e');
       }
 
       // إنشاء صفحة PDF
@@ -1683,10 +1680,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
           textDirection: pw.TextDirection.rtl,
-          theme: arabicFont != null && arabicFontBold != null
+          theme: arabicFont != null
               ? pw.ThemeData.withFont(
                   base: arabicFont,
-                  bold: arabicFontBold,
+                  bold: arabicFont,
                 )
               : pw.ThemeData(),
           build: (pw.Context context) {
