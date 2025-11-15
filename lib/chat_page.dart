@@ -140,6 +140,43 @@ class _ChatPageState extends State<ChatPage> {
         
         _lastMessageCount = newMessages.length;
         debugPrint('✅ [CHAT] تم جلب ${_messages.length} رسالة');
+      } else if (response.statusCode == 401) {
+        // Token منتهي الصلاحية
+        debugPrint('❌ [CHAT] Token expired - redirecting to login');
+        
+        final responseData = jsonDecode(response.body);
+        final errorMessage = responseData['error'] ?? 'انتهت صلاحية الجلسة';
+        
+        if (!silent && mounted) {
+          // إظهار رسالة وتوجيه للتسجيل
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                errorMessage,
+                style: GoogleFonts.cairo(),
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          
+          // حذف الـ token القديم
+          await prefs.remove('user_token');
+          
+          // العودة للصفحة السابقة
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              Navigator.pop(context);
+              // يمكن توجيه للـ login إذا أردت
+              // Navigator.pushReplacementNamed(context, '/login');
+            }
+          });
+        }
+        
+        setState(() {
+          _messages = [];
+          _isLoading = false;
+        });
       } else {
         debugPrint('❌ [CHAT] خطأ ${response.statusCode}: ${response.body}');
         setState(() {
@@ -200,6 +237,34 @@ class _ChatPageState extends State<ChatPage> {
         
         // إعادة تحميل الرسائل
         await _loadMessages();
+      } else if (response.statusCode == 401) {
+        // Token منتهي الصلاحية
+        setState(() => _isSending = false);
+        
+        final responseData = jsonDecode(response.body);
+        final errorMessage = responseData['error'] ?? 'انتهت صلاحية الجلسة';
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                errorMessage,
+                style: GoogleFonts.cairo(),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+          
+          // حذف الـ token القديم
+          await prefs.remove('user_token');
+          
+          // العودة للصفحة السابقة
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              Navigator.pop(context);
+            }
+          });
+        }
       } else {
         throw Exception('فشل إرسال الرسالة');
       }
