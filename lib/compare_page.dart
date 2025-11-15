@@ -1641,7 +1641,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'جاري إنشاء ملف PDF...',
+                  'جاري إنشاء التقرير الشامل...',
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1703,7 +1703,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
                   mainAxisAlignment: pw.MainAxisAlignment.center,
                   children: [
                     pw.Text(
-                      'تقرير مقارنة العقارات - تطبيق الدلما',
+                      'تقرير مقارنة العقارات الشامل',
                       style: pw.TextStyle(
                         fontSize: 20,
                         color: PdfColors.white,
@@ -1717,13 +1717,49 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
               
               // معلومات التقرير
               _buildPDFInfoSectionSimple(),
-              pw.SizedBox(height: 25),
+              pw.SizedBox(height: 30),
               
-              // جدول المقارنة
+              // ═══════════════════════════════════════
+              // القسم الأول: نظرة عامة
+              // ═══════════════════════════════════════
+              _buildPDFSectionTitle('نظرة عامة', '#10b981'),
+              pw.SizedBox(height: 15),
+              
+              // جدول المقارنة السريعة
               _buildPDFComparisonTableSimple(),
-              pw.SizedBox(height: 25),
+              pw.SizedBox(height: 20),
               
-              // النصائح الذكية
+              // أفضل قيمة
+              _buildPDFBestValue(),
+              pw.SizedBox(height: 30),
+              
+              // ═══════════════════════════════════════
+              // القسم الثاني: التحليل المالي
+              // ═══════════════════════════════════════
+              _buildPDFSectionTitle('التحليل المالي', '#3b82f6'),
+              pw.SizedBox(height: 15),
+              
+              _buildPDFPriceComparison(),
+              pw.SizedBox(height: 20),
+              
+              _buildPDFPricePerMeterComparison(),
+              pw.SizedBox(height: 30),
+              
+              // ═══════════════════════════════════════
+              // القسم الثالث: التفاصيل الكاملة
+              // ═══════════════════════════════════════
+              _buildPDFSectionTitle('التفاصيل الكاملة', '#ec4899'),
+              pw.SizedBox(height: 15),
+              
+              ..._buildPDFPropertyDetails(),
+              pw.SizedBox(height: 30),
+              
+              // ═══════════════════════════════════════
+              // القسم الرابع: النصائح الذكية
+              // ═══════════════════════════════════════
+              _buildPDFSectionTitle('نصائح ذكية', '#f59e0b'),
+              pw.SizedBox(height: 15),
+              
               _buildPDFSmartTipsSimple(),
               pw.SizedBox(height: 30),
               
@@ -1771,7 +1807,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
               ],
             ),
             content: Text(
-              'تم إنشاء تقرير المقارنة بنجاح',
+              'تم إنشاء تقرير المقارنة الشامل بنجاح\nيحتوي على جميع التفاصيل والتحليلات',
               style: GoogleFonts.cairo(fontSize: 14),
               textAlign: TextAlign.center,
             ),
@@ -1786,7 +1822,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
-                  Share.shareXFiles([XFile(file.path)], text: 'تقرير مقارنة العقارات من تطبيق الدلما');
+                  Share.shareXFiles([XFile(file.path)], text: 'تقرير مقارنة العقارات الشامل من تطبيق الدلما');
                 },
                 icon: const Icon(Icons.share, size: 18),
                 label: Text('مشاركة', style: GoogleFonts.cairo()),
@@ -2159,5 +2195,298 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
     } else {
       return '${price.toStringAsFixed(0)} ريال';
     }
+  }
+  
+  // دوال PDF الإضافية للتقرير الشامل
+  
+  pw.Widget _buildPDFSectionTitle(String title, String colorHex) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+      decoration: pw.BoxDecoration(
+        color: PdfColor.fromHex(colorHex),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+      ),
+      child: pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: 16,
+          color: PdfColors.white,
+          fontWeight: pw.FontWeight.bold,
+        ),
+      ),
+    );
+  }
+  
+  pw.Widget _buildPDFBestValue() {
+    double bestPricePerMeter = double.infinity;
+    int bestIndex = 0;
+    String bestTitle = '';
+    
+    for (int i = 0; i < widget.properties.length; i++) {
+      final property = widget.properties[i];
+      final priceRaw = property['price'];
+      final areaRaw = property['area'];
+      final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+      final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
+      
+      if (area > 0) {
+        final pricePerMeter = (price / area).toDouble();
+        if (pricePerMeter < bestPricePerMeter) {
+          bestPricePerMeter = pricePerMeter;
+          bestIndex = i;
+          bestTitle = property['title'] ?? 'عقار ${i + 1}';
+        }
+      }
+    }
+    
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(15),
+      decoration: pw.BoxDecoration(
+        color: PdfColor.fromHex('#fef3c7'),
+        border: pw.Border.all(color: PdfColor.fromHex('#f59e0b'), width: 2),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            '⭐ أفضل قيمة',
+            style: pw.TextStyle(
+              fontSize: 14,
+              color: PdfColor.fromHex('#f59e0b'),
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 8),
+          pw.Text(
+            bestTitle,
+            style: pw.TextStyle(
+              fontSize: 13,
+              color: PdfColor.fromHex('#1e293b'),
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'أقل سعر للمتر المربع: ${_formatPrice(bestPricePerMeter)}',
+            style: pw.TextStyle(
+              fontSize: 11,
+              color: PdfColor.fromHex('#64748b'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  pw.Widget _buildPDFPriceComparison() {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'مقارنة الأسعار',
+          style: pw.TextStyle(
+            fontSize: 13,
+            color: PdfColor.fromHex('#1e293b'),
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColor.fromHex('#e2e8f0'), width: 1),
+          children: [
+            pw.TableRow(
+              decoration: pw.BoxDecoration(color: PdfColor.fromHex('#f1f5f9')),
+              children: [
+                _buildPDFTableCellSimple('العقار', isHeader: true),
+                _buildPDFTableCellSimple('السعر الإجمالي', isHeader: true),
+              ],
+            ),
+            ...widget.properties.asMap().entries.map((entry) {
+              final index = entry.key;
+              final property = entry.value;
+              final priceRaw = property['price'];
+              final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+              
+              return pw.TableRow(
+                decoration: pw.BoxDecoration(
+                  color: index % 2 == 0 ? PdfColors.white : PdfColor.fromHex('#f8fafc'),
+                ),
+                children: [
+                  _buildPDFTableCellSimple(property['title'] ?? 'عقار ${index + 1}'),
+                  _buildPDFTableCellSimple(_formatPrice(price)),
+                ],
+              );
+            }).toList(),
+          ],
+        ),
+      ],
+    );
+  }
+  
+  pw.Widget _buildPDFPricePerMeterComparison() {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'مقارنة السعر للمتر المربع',
+          style: pw.TextStyle(
+            fontSize: 13,
+            color: PdfColor.fromHex('#1e293b'),
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColor.fromHex('#e2e8f0'), width: 1),
+          children: [
+            pw.TableRow(
+              decoration: pw.BoxDecoration(color: PdfColor.fromHex('#f1f5f9')),
+              children: [
+                _buildPDFTableCellSimple('العقار', isHeader: true),
+                _buildPDFTableCellSimple('السعر/م²', isHeader: true),
+              ],
+            ),
+            ...widget.properties.asMap().entries.map((entry) {
+              final index = entry.key;
+              final property = entry.value;
+              final priceRaw = property['price'];
+              final areaRaw = property['area'];
+              final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+              final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
+              final pricePerMeter = area > 0 ? (price / area).toDouble() : 0.0;
+              
+              return pw.TableRow(
+                decoration: pw.BoxDecoration(
+                  color: index % 2 == 0 ? PdfColors.white : PdfColor.fromHex('#f8fafc'),
+                ),
+                children: [
+                  _buildPDFTableCellSimple(property['title'] ?? 'عقار ${index + 1}'),
+                  _buildPDFTableCellSimple(_formatPrice(pricePerMeter)),
+                ],
+              );
+            }).toList(),
+          ],
+        ),
+      ],
+    );
+  }
+  
+  List<pw.Widget> _buildPDFPropertyDetails() {
+    return widget.properties.asMap().entries.map((entry) {
+      final index = entry.key;
+      final property = entry.value;
+      final priceRaw = property['price'];
+      final areaRaw = property['area'];
+      final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+      final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
+      final pricePerMeter = area > 0 ? (price / area).toDouble() : 0.0;
+      
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 15),
+        padding: const pw.EdgeInsets.all(15),
+        decoration: pw.BoxDecoration(
+          color: PdfColor.fromHex('#f8fafc'),
+          borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+          border: pw.Border.all(color: PdfColor.fromHex('#e2e8f0'), width: 1),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            // العنوان
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromHex('#10b981'),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+              ),
+              child: pw.Text(
+                'العقار ${index + 1}: ${property['title'] ?? 'بدون عنوان'}',
+                style: pw.TextStyle(
+                  fontSize: 12,
+                  color: PdfColors.white,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ),
+            pw.SizedBox(height: 12),
+            
+            // المعلومات الأساسية
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Expanded(
+                  child: _buildPDFDetailItem('السعر', _formatPrice(price)),
+                ),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: _buildPDFDetailItem('المساحة', '${area.toStringAsFixed(0)} م²'),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 8),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Expanded(
+                  child: _buildPDFDetailItem('السعر/م²', _formatPrice(pricePerMeter)),
+                ),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: _buildPDFDetailItem('النوع', _getTypeLabel(property['type'])),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 8),
+            
+            // الموقع
+            _buildPDFDetailItem('الموقع', '${property['city'] ?? '-'}, ${property['neighborhood'] ?? '-'}'),
+            
+            // المميزات
+            if (property['rooms'] != null || property['bathrooms'] != null || property['furnished'] != null) ...[
+              pw.SizedBox(height: 8),
+              pw.Row(
+                children: [
+                  if (property['rooms'] != null) ...[
+                    _buildPDFDetailItem('غرف النوم', '${property['rooms']}'),
+                    pw.SizedBox(width: 10),
+                  ],
+                  if (property['bathrooms'] != null) ...[
+                    _buildPDFDetailItem('دورات المياه', '${property['bathrooms']}'),
+                    pw.SizedBox(width: 10),
+                  ],
+                  if (property['furnished'] == true)
+                    _buildPDFDetailItem('الحالة', 'مفروش'),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+    }).toList();
+  }
+  
+  pw.Widget _buildPDFDetailItem(String label, String value) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          label,
+          style: pw.TextStyle(
+            fontSize: 9,
+            color: PdfColor.fromHex('#64748b'),
+          ),
+        ),
+        pw.SizedBox(height: 3),
+        pw.Text(
+          value,
+          style: pw.TextStyle(
+            fontSize: 11,
+            color: PdfColor.fromHex('#1e293b'),
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+      ],
+    );
   }
 }
