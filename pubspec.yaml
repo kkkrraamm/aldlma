@@ -69,9 +69,10 @@ flutter:
   uses-material-design: true
   
   assets:
+    - assets/
     - assets/img/
     - assets/videos/
-    - assets/logo.png
+    - assets/fonts/
     
   fonts:
     - family: Cairo
