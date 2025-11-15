@@ -23,6 +23,7 @@ import 'my_account_page.dart';
 import 'my_account_oasis.dart';
 import 'media_dashboard.dart';
 import 'ai_tools_page.dart';
+import 'dalma_ai_page.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
 import 'theme_aware_widgets.dart';
@@ -227,6 +228,12 @@ class _HomeScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _SearchField(),
+                ),
+                const SizedBox(height: 16),
+                // زر ذكاء الدلما
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _DalmaAIButton(),
                 ),
                 const SizedBox(height: 16),
                 // زر أدوات الذكاء الاصطناعي
@@ -714,6 +721,117 @@ class _PlaceholderScreen extends StatelessWidget {
         _Footer(),
         const SizedBox(height: 20),
       ],
+    );
+  }
+}
+
+// زر ذكاء الدلما
+class _DalmaAIButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF10b981),
+            Color(0xFF059669),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10b981).withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const DalmaAIPage(),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              children: [
+                // لوقو الدلما
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/logo.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                
+                // النص
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ذكاء الدلما',
+                        style: GoogleFonts.cairo(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'خوي من عرعر، راعي سوالف وعلوم رجال',
+                        style: GoogleFonts.cairo(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.95),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // سهم
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

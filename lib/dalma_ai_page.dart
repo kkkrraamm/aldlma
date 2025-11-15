@@ -1,0 +1,602 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'dart:async';
+import 'theme_config.dart';
+import 'api_config.dart';
+
+class DalmaAIPage extends StatefulWidget {
+  const DalmaAIPage({super.key});
+
+  @override
+  State<DalmaAIPage> createState() => _DalmaAIPageState();
+}
+
+class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin {
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final List<Map<String, dynamic>> _messages = [];
+  bool _isTyping = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMessages();
+    _addWelcomeMessage();
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedMessages = prefs.getString('dalma_ai_messages');
+    if (savedMessages != null) {
+      setState(() {
+        _messages.addAll(List<Map<String, dynamic>>.from(jsonDecode(savedMessages)));
+      });
+    }
+  }
+
+  Future<void> _saveMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('dalma_ai_messages', jsonEncode(_messages));
+  }
+
+  void _addWelcomeMessage() {
+    if (_messages.isEmpty) {
+      setState(() {
+        _messages.add({
+          'role': 'assistant',
+          'content': 'يا هلا بالقرابة 🤝 النور نورك يا وجه الخير! وش علومك اليوم؟ 😎🔥',
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+      });
+      _saveMessages();
+    }
+  }
+
+  Future<void> _sendMessage() async {
+    final message = _messageController.text.trim();
+    if (message.isEmpty || _isTyping) return;
+
+    // إضافة رسالة المستخدم
+    setState(() {
+      _messages.add({
+        'role': 'user',
+        'content': message,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+      _isTyping = true;
+    });
+
+    _messageController.clear();
+    _scrollToBottom();
+    _saveMessages();
+
+    try {
+      // إرسال للباك إند
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/dalma-ai/chat'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'message': message,
+          'history': _messages.take(_messages.length - 1).toList(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _messages.add({
+            'role': 'assistant',
+            'content': data['reply'],
+            'timestamp': DateTime.now().toIso8601String(),
+          });
+          _isTyping = false;
+        });
+        _saveMessages();
+        _scrollToBottom();
+      } else {
+        throw Exception('فشل الاتصال');
+      }
+    } catch (e) {
+      debugPrint('❌ [DALMA AI] خطأ: $e');
+      setState(() {
+        _messages.add({
+          'role': 'assistant',
+          'content': 'عذراً يا وجه الخير، صار عندي مشكلة بالاتصال. جرب مرة ثانية 😅',
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+        _isTyping = false;
+      });
+    }
+  }
+
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _clearChat() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'مسح المحادثة',
+          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.right,
+        ),
+        content: Text(
+          'هل تريد مسح جميع الرسائل؟',
+          style: GoogleFonts.cairo(),
+          textAlign: TextAlign.right,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء', style: GoogleFonts.cairo()),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _messages.clear();
+              });
+              _saveMessages();
+              _addWelcomeMessage();
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: Text('مسح', style: GoogleFonts.cairo(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeConfig>(context);
+
+    return Scaffold(
+      backgroundColor: theme.isDarkMode ? const Color(0xFF0b0f14) : const Color(0xFFf5f7fa),
+      body: Stack(
+        children: [
+          // الخلفية المتدرجة
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF10b981).withOpacity(0.1),
+                    const Color(0xFF059669).withOpacity(0.05),
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+          ),
+
+          // المحتوى
+          Column(
+            children: [
+              // الهيدر
+              _buildHeader(theme),
+              
+              // الرسائل
+              Expanded(
+                child: _messages.isEmpty
+                    ? _buildEmptyState(theme)
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _messages.length + (_isTyping ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == _messages.length && _isTyping) {
+                            return _buildTypingIndicator(theme);
+                          }
+                          return _buildMessageBubble(_messages[index], theme);
+                        },
+                      ),
+              ),
+
+              // حقل الإدخال
+              _buildInputField(theme),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(ThemeConfig theme) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 8,
+        bottom: 16,
+        left: 16,
+        right: 16,
+      ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10b981), Color(0xFF059669)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10b981).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const SizedBox(width: 8),
+          
+          // لوقو الدلما
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/logo.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ذكاء الدلما',
+                  style: GoogleFonts.cairo(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'خوي من عرعر، راعي سوالف وعلوم رجال',
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.white),
+            onPressed: _clearChat,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ThemeConfig theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF10b981).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/logo.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'مرحباً بك في ذكاء الدلما',
+            style: GoogleFonts.cairo(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: theme.textPrimaryColor,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              'خوي من عرعر، راعي سوالف وعلوم رجال\nابدأ المحادثة الآن!',
+              style: GoogleFonts.cairo(
+                fontSize: 16,
+                color: theme.textSecondaryColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(Map<String, dynamic> message, ThemeConfig theme) {
+    final isUser = message['role'] == 'user';
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isUser) ...[
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/logo.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: isUser
+                    ? const LinearGradient(
+                        colors: [Color(0xFF10b981), Color(0xFF059669)],
+                      )
+                    : null,
+                color: isUser ? null : (theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: isUser
+                        ? const Color(0xFF10b981).withOpacity(0.3)
+                        : Colors.black.withOpacity(theme.isDarkMode ? 0.3 : 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Text(
+                message['content'],
+                style: GoogleFonts.cairo(
+                  fontSize: 16,
+                  color: isUser ? Colors.white : theme.textPrimaryColor,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ),
+          
+          if (isUser) ...[
+            const SizedBox(width: 8),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: theme.primaryColor.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.person,
+                color: theme.primaryColor,
+                size: 24,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTypingIndicator(ThemeConfig theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/logo.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(theme.isDarkMode ? 0.3 : 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDot(theme, 0),
+                const SizedBox(width: 4),
+                _buildDot(theme, 200),
+                const SizedBox(width: 4),
+                _buildDot(theme, 400),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDot(ThemeConfig theme, int delay) {
+    return TweenAnimationBuilder(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 600),
+      builder: (context, double value, child) {
+        return Opacity(
+          opacity: (value * 2).clamp(0, 1),
+          child: Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: theme.primaryColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInputField(ThemeConfig theme) {
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).padding.bottom + 8,
+        top: 8,
+        left: 16,
+        right: 16,
+      ),
+      decoration: BoxDecoration(
+        color: theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: theme.isDarkMode ? const Color(0xFF0f172a) : const Color(0xFFf5f7fa),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: TextField(
+                controller: _messageController,
+                style: GoogleFonts.cairo(
+                  color: theme.textPrimaryColor,
+                  fontSize: 16,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'اكتب رسالتك...',
+                  hintStyle: GoogleFonts.cairo(
+                    color: theme.textSecondaryColor,
+                  ),
+                  border: InputBorder.none,
+                ),
+                maxLines: null,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _sendMessage(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF10b981), Color(0xFF059669)],
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF10b981).withOpacity(0.4),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.send, color: Colors.white),
+              onPressed: _sendMessage,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
