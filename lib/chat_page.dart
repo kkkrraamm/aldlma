@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -29,15 +30,48 @@ class _ChatPageState extends State<ChatPage> {
   List<Map<String, dynamic>> _messages = [];
   bool _isLoading = true;
   bool _isSending = false;
+  bool _isOnline = true;
+  bool _isTyping = false;
+  Timer? _autoRefreshTimer;
+  Timer? _typingTimer;
+  int _lastMessageCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadMessages();
+    _startAutoRefresh();
+    _messageController.addListener(_onTyping);
+  }
+  
+  void _startAutoRefresh() {
+    // تحديث تلقائي كل 3 ثوان
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (!_isSending && mounted) {
+        _loadMessages(silent: true);
+      }
+    });
+  }
+  
+  void _onTyping() {
+    // TODO: إرسال حالة "جاري الكتابة" للسيرفر
+    // الآن فقط نعرض محلياً
+  }
+  
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    _typingTimer?.cancel();
+    _messageController.removeListener(_onTyping);
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
-  Future<void> _loadMessages() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadMessages({bool silent = false}) async {
+    if (!silent) {
+      setState(() => _isLoading = true);
+    }
     
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -61,18 +95,29 @@ class _ChatPageState extends State<ChatPage> {
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final newMessages = List<Map<String, dynamic>>.from(data['messages'] ?? []);
+        final hasNewMessages = newMessages.length > _lastMessageCount;
+        
         setState(() {
-          _messages = List<Map<String, dynamic>>.from(data['messages'] ?? []);
+          _messages = newMessages;
           _isLoading = false;
+          _isOnline = true; // متصل بنجاح
         });
         
-        // التمرير للأسفل
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (_scrollController.hasClients) {
-            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-          }
-        });
+        // التمرير للأسفل فقط عند رسالة جديدة
+        if (hasNewMessages || _lastMessageCount == 0) {
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        }
         
+        _lastMessageCount = newMessages.length;
         debugPrint('✅ [CHAT] تم جلب ${_messages.length} رسالة');
       } else {
         debugPrint('❌ [CHAT] خطأ ${response.statusCode}: ${response.body}');
@@ -84,8 +129,11 @@ class _ChatPageState extends State<ChatPage> {
     } catch (e) {
       debugPrint('❌ [CHAT] خطأ: $e');
       setState(() {
-        _messages = [];
+        if (!silent) {
+          _messages = [];
+        }
         _isLoading = false;
+        _isOnline = false; // غير متصل
       });
     }
   }
@@ -213,12 +261,34 @@ class _ChatPageState extends State<ChatPage> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    'مكتب عقاري',
-                    style: GoogleFonts.cairo(
-                      fontSize: 12,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _isOnline ? Colors.greenAccent : Colors.grey,
+                          shape: BoxShape.circle,
+                          boxShadow: _isOnline
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.greenAccent.withOpacity(0.5),
+                                    blurRadius: 4,
+                                    spreadRadius: 1,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _isOnline ? 'متصل' : 'غير متصل',
+                        style: GoogleFonts.cairo(
+                          fontSize: 11,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -255,6 +325,65 @@ class _ChatPageState extends State<ChatPage> {
                         },
                       ),
           ),
+
+          // مؤشر "جاري الكتابة"
+          if (_isTyping)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              color: theme.isDarkMode
+                  ? const Color(0xFF1a1f2e).withOpacity(0.95)
+                  : Colors.white.withOpacity(0.95),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: theme.primaryColor.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: widget.officeLogo != null
+                        ? CircleAvatar(
+                            radius: 14,
+                            backgroundImage: NetworkImage(widget.officeLogo!),
+                            backgroundColor: Colors.white,
+                          )
+                        : CircleAvatar(
+                            radius: 14,
+                            backgroundColor: theme.primaryColor.withOpacity(0.1),
+                            child: Icon(
+                              Icons.business,
+                              color: theme.primaryColor,
+                              size: 14,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'جاري الكتابة',
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      color: theme.textSecondaryColor,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.primaryColor.withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // حقل الإدخال
           Container(
