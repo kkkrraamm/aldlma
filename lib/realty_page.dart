@@ -1826,6 +1826,54 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                   ),
                 ),
               ),
+              const SizedBox(width: 6),
+              // المحادثات
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    // TODO: فتح صفحة قائمة المحادثات
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'قائمة المحادثات قريباً',
+                          style: GoogleFonts.cairo(),
+                        ),
+                        backgroundColor: theme.primaryColor,
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: theme.isDarkMode
+                          ? const Color(0xFF2a2f3e)
+                          : const Color(0xFFf1f5f9),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.chat_bubble_outline,
+                            color: theme.textSecondaryColor,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'محادثات',
+                            style: GoogleFonts.cairo(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textSecondaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
