@@ -584,9 +584,9 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
       context,
       MaterialPageRoute(
         builder: (context) => ChatPage(
-          receiverId: office['id'],
-          receiverName: office['name'],
-          receiverImage: office['logo'],
+          officeId: int.parse(office['id']),
+          officeName: office['name'],
+          officeLogo: office['logo'],
         ),
       ),
     );
