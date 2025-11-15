@@ -700,11 +700,42 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
       return;
     }
     
-    // فتح صفحة الدردشة مع المكتب
+    // إرسال رسالة تلقائية
     final officeId = office['id'] is int ? office['id'] : int.tryParse(office['id'].toString()) ?? 0;
     final officeName = office['name'] ?? office['office_name'] ?? 'مكتب عقاري';
     final officeLogo = office['logo'];
     
+    try {
+      // إرسال رسالة تلقائية
+      final autoMessage = '''
+السلام عليكم ورحمة الله وبركاته
+
+أنا مهتم بعرض عقاري لديكم للبيع/الإيجار.
+
+أرجو التواصل معي لمناقشة التفاصيل والأسعار.
+
+شكراً لكم
+      '''.trim();
+
+      await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/chat/send'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'office_id': officeId,
+          'message': autoMessage,
+        }),
+      );
+      
+      debugPrint('✅ [CHAT] تم إرسال رسالة تلقائية للمكتب');
+    } catch (e) {
+      debugPrint('⚠️ [CHAT] فشل إرسال الرسالة التلقائية: $e');
+      // نكمل حتى لو فشلت الرسالة التلقائية
+    }
+    
+    // فتح صفحة الدردشة مع المكتب
     if (!mounted) return;
     
     Navigator.push(
