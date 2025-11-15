@@ -754,7 +754,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
     final tips = <Map<String, dynamic>>[];
     
     // حساب فرق الأسعار
-    final prices = widget.properties.map((p) => (p['price'] as num? ?? 0).toDouble()).toList();
+    final prices = widget.properties.map((p) {
+      final priceRaw = p['price'];
+      return priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+    }).toList();
     final maxPrice = prices.reduce(math.max);
     final minPrice = prices.reduce(math.min);
     final priceDiff = ((maxPrice - minPrice) / minPrice * 100).toStringAsFixed(0);
@@ -800,7 +803,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
     }
     
     // التحقق من المساحات
-    final areas = widget.properties.map((p) => (p['area'] as num? ?? 0).toDouble()).toList();
+    final areas = widget.properties.map((p) {
+      final areaRaw = p['area'];
+      return areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
+    }).toList();
     final maxArea = areas.reduce(math.max);
     final minArea = areas.reduce(math.min);
     if (maxArea > minArea * 1.5) {
@@ -878,7 +884,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
-                maxY: widget.properties.map((p) => (p['price'] as num? ?? 0).toDouble()).reduce(math.max) * 1.2,
+                maxY: widget.properties.map((p) {
+                  final priceRaw = p['price'];
+                  return priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+                }).reduce(math.max) * 1.2,
                 barTouchData: BarTouchData(enabled: false),
                 titlesData: FlTitlesData(
                   show: true,
@@ -921,7 +930,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: widget.properties.map((p) => (p['price'] as num? ?? 0).toDouble()).reduce(math.max) / 5,
+                  horizontalInterval: widget.properties.map((p) {
+                    final priceRaw = p['price'];
+                    return priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+                  }).reduce(math.max) / 5,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
                       color: theme.isDarkMode
@@ -1297,7 +1309,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
-                maxY: widget.properties.map((p) => (p['area'] as num? ?? 0).toDouble()).reduce(math.max) * 1.2,
+                maxY: widget.properties.map((p) {
+                  final areaRaw = p['area'];
+                  return areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
+                }).reduce(math.max) * 1.2,
                 barTouchData: BarTouchData(enabled: false),
                 titlesData: FlTitlesData(
                   show: true,
