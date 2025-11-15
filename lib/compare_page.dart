@@ -1665,11 +1665,30 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
       } catch (e) {
         print('تحذير: لم يتم العثور على الشعار');
       }
+      
+      // تحميل الخطوط العربية
+      pw.Font? arabicFont;
+      pw.Font? arabicFontBold;
+      try {
+        final fontData = await rootBundle.load('assets/fonts/Cairo-Regular.ttf');
+        final fontDataBold = await rootBundle.load('assets/fonts/Cairo-Bold.ttf');
+        arabicFont = pw.Font.ttf(fontData);
+        arabicFontBold = pw.Font.ttf(fontDataBold);
+      } catch (e) {
+        print('تحذير: لم يتم العثور على الخطوط العربية: $e');
+      }
 
-      // إنشاء صفحة PDF بسيطة
+      // إنشاء صفحة PDF
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
+          textDirection: pw.TextDirection.rtl,
+          theme: arabicFont != null && arabicFontBold != null
+              ? pw.ThemeData.withFont(
+                  base: arabicFont,
+                  bold: arabicFontBold,
+                )
+              : pw.ThemeData(),
           build: (pw.Context context) {
             return [
               // الهيدر مع شعار الدلما
@@ -1687,7 +1706,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
                   mainAxisAlignment: pw.MainAxisAlignment.center,
                   children: [
                     pw.Text(
-                      'Property Comparison Report - Dalma App',
+                      'تقرير مقارنة العقارات - تطبيق الدلما',
                       style: pw.TextStyle(
                         fontSize: 20,
                         color: PdfColors.white,
@@ -1898,7 +1917,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'Dalma App',
+                'تطبيق الدلما',
                 style: pw.TextStyle(
                   fontSize: 28,
                   color: PdfColors.white,
@@ -1907,7 +1926,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
               ),
               pw.SizedBox(height: 5),
               pw.Text(
-                'Leading Real Estate Platform',
+                'منصة العقارات الرائدة',
                 style: const pw.TextStyle(
                   fontSize: 14,
                   color: PdfColors.white,
@@ -1933,7 +1952,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
   
   pw.Widget _buildPDFInfoSectionSimple() {
     final now = DateTime.now();
-    final formatter = intl.DateFormat('yyyy/MM/dd - hh:mm a');
+    final formatter = intl.DateFormat('yyyy/MM/dd - hh:mm a', 'ar');
     
     return pw.Container(
       padding: const pw.EdgeInsets.all(15),
@@ -1948,7 +1967,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'Report Date',
+                'تاريخ التقرير',
                 style: pw.TextStyle(fontSize: 12, color: PdfColor.fromHex('#64748b')),
               ),
               pw.SizedBox(height: 5),
@@ -1962,7 +1981,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                'Properties Count',
+                'عدد العقارات',
                 style: pw.TextStyle(fontSize: 12, color: PdfColor.fromHex('#64748b')),
               ),
               pw.SizedBox(height: 5),
@@ -1985,11 +2004,11 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
         pw.TableRow(
           decoration: pw.BoxDecoration(color: PdfColor.fromHex('#10b981')),
           children: [
-            _buildPDFTableCellSimple('Property', isHeader: true),
-            _buildPDFTableCellSimple('Price', isHeader: true),
-            _buildPDFTableCellSimple('Area', isHeader: true),
-            _buildPDFTableCellSimple('Price/m²', isHeader: true),
-            _buildPDFTableCellSimple('Location', isHeader: true),
+            _buildPDFTableCellSimple('العقار', isHeader: true),
+            _buildPDFTableCellSimple('السعر', isHeader: true),
+            _buildPDFTableCellSimple('المساحة', isHeader: true),
+            _buildPDFTableCellSimple('السعر/م²', isHeader: true),
+            _buildPDFTableCellSimple('الموقع', isHeader: true),
           ],
         ),
         // Data
@@ -2007,9 +2026,9 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
               color: index % 2 == 0 ? PdfColors.white : PdfColor.fromHex('#f8fafc'),
             ),
             children: [
-              _buildPDFTableCellSimple(property['title'] ?? 'Property ${index + 1}'),
+              _buildPDFTableCellSimple(property['title'] ?? 'عقار ${index + 1}'),
               _buildPDFTableCellSimple(_formatPrice(price)),
-              _buildPDFTableCellSimple('${area.toStringAsFixed(0)} m²'),
+              _buildPDFTableCellSimple('${area.toStringAsFixed(0)} م²'),
               _buildPDFTableCellSimple(_formatPrice(pricePerMeter)),
               _buildPDFTableCellSimple('${property['city'] ?? '-'}, ${property['neighborhood'] ?? '-'}'),
             ],
@@ -2047,7 +2066,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
             borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
           ),
           child: pw.Text(
-            'Smart Tips',
+            'نصائح ذكية',
             style: pw.TextStyle(
               fontSize: 16,
               color: PdfColors.white,
@@ -2097,7 +2116,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'Dalma Real Estate App',
+                'تطبيق الدلما للعقارات',
                 style: pw.TextStyle(
                   fontSize: 14,
                   color: PdfColors.white,
@@ -2114,7 +2133,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
               ),
               pw.SizedBox(height: 3),
               pw.Text(
-                'Discover the best properties in your area',
+                'اكتشف أفضل العقارات في منطقتك',
                 style: pw.TextStyle(
                   fontSize: 10,
                   color: PdfColor.fromHex('#94a3b8'),
