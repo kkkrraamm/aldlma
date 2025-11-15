@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'theme_config.dart';
@@ -658,11 +659,53 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
     );
   }
 
-  void _openChatWithOffice(Map<String, dynamic> office) {
+  Future<void> _openChatWithOffice(Map<String, dynamic> office) async {
+    // التحقق من تسجيل الدخول أولاً
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('user_token');
+    
+    if (token == null || token.isEmpty) {
+      // المستخدم غير مسجل دخول
+      if (!mounted) return;
+      
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            'تسجيل الدخول مطلوب',
+            style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.right,
+          ),
+          content: Text(
+            'يجب عليك تسجيل الدخول أولاً للتواصل مع المكاتب العقارية',
+            style: GoogleFonts.cairo(),
+            textAlign: TextAlign.right,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('إلغاء', style: GoogleFonts.cairo()),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // الانتقال لصفحة تسجيل الدخول
+                Navigator.pushNamed(context, '/login');
+              },
+              child: Text('تسجيل الدخول', style: GoogleFonts.cairo()),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    
     // فتح صفحة الدردشة مع المكتب
     final officeId = office['id'] is int ? office['id'] : int.tryParse(office['id'].toString()) ?? 0;
     final officeName = office['name'] ?? office['office_name'] ?? 'مكتب عقاري';
     final officeLogo = office['logo'];
+    
+    if (!mounted) return;
     
     Navigator.push(
       context,
