@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
+import 'calculator_helpers.dart' as helpers;
 
 class ConstructionCostCalculatorPage extends StatefulWidget {
   const ConstructionCostCalculatorPage({super.key});
@@ -20,6 +21,8 @@ class _ConstructionCostCalculatorPageState extends State<ConstructionCostCalcula
   double? _totalCost;
   double? _costPerMeter;
   double? _estimatedDuration;
+  
+  bool _showHelp = false;
 
   final Map<String, double> _finishCosts = {
     'عادي': 800,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
+import 'calculator_helpers.dart' as helpers;
 
 class LoanCalculatorPage extends StatefulWidget {
   const LoanCalculatorPage({super.key});
@@ -21,6 +22,8 @@ class _LoanCalculatorPageState extends State<LoanCalculatorPage> {
   double? _monthlyPayment;
   double? _totalAmount;
   double? _totalInterest;
+  
+  bool _showHelp = false;
 
   void _calculate() {
     final amount = double.tryParse(_amountController.text) ?? 0;
@@ -101,11 +104,28 @@ class _LoanCalculatorPageState extends State<LoanCalculatorPage> {
           ],
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(_showHelp ? Icons.close : Icons.help_outline, color: Colors.white, size: 20),
+            ),
+            onPressed: () => setState(() => _showHelp = !_showHelp),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            if (_showHelp) _buildHelpSection(theme),
+            if (_showHelp) const SizedBox(height: 20),
+            
+
             _buildInputCard(theme, 'مبلغ القرض', _amountController, 'أدخل المبلغ', Icons.money),
             const SizedBox(height: 16),
             _buildInputCard(theme, 'الرسوم الإدارية', _feesController, 'رسوم البنك', Icons.receipt),
@@ -259,6 +279,137 @@ class _LoanCalculatorPageState extends State<LoanCalculatorPage> {
               overlayColor: theme.primaryColor.withOpacity(0.2),
             ),
             child: Slider(value: value, min: min, max: max, divisions: ((max - min) * (unit == '%' ? 10 : 1)).toInt(), onChanged: onChanged),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSection(ThemeConfig theme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFec4899).withOpacity(0.1),
+            const Color(0xFFec4899).withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFec4899).withOpacity(0.3), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFec4899), Color(0xFFdb2777)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.lightbulb, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'كيف تستخدم حاسبة القرض الشخصي؟',
+                  style: GoogleFonts.cairo(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFec4899),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'هذه الحاسبة تساعدك على معرفة القسط الشهري والتكلفة الإجمالية للقرض الشخصي.',
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              color: theme.textSecondaryColor,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFec4899).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFec4899).withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.calculate, color: Color(0xFFec4899), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'مثال عملي:',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFec4899),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'مبلغ القرض: 50,000 ريال\n'
+                  'رسوم إدارية: 2,000 ريال\n'
+                  'نسبة الفائدة: 5% سنوياً\n'
+                  'المدة: 5 سنوات',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    color: theme.textSecondaryColor,
+                    height: 1.6,
+                  ),
+                ),
+                const Divider(height: 24),
+                Text(
+                  '✅ القسط الشهري: ≈ 981 ريال\n'
+                  '✅ إجمالي المدفوعات: ≈ 58,860 ريال\n'
+                  '✅ إجمالي الفوائد: ≈ 6,860 ريال',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFec4899),
+                    height: 1.8,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFef4444).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.warning_amber, color: Color(0xFFef4444), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'تنبيه: تأكد من قدرتك على سداد القسط الشهري قبل الاقتراض!',
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      color: const Color(0xFFef4444),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
+import 'calculator_helpers.dart' as helpers;
 
 class SalaryCalculatorPage extends StatefulWidget {
   const SalaryCalculatorPage({super.key});
@@ -20,6 +21,8 @@ class _SalaryCalculatorPageState extends State<SalaryCalculatorPage> {
   double? _netSalary;
   double? _gosiAmount;
   double? _annualNet;
+  
+  bool _showHelp = false;
 
   void _calculate() {
     final basic = double.tryParse(_basicSalaryController.text) ?? 0;
@@ -99,11 +102,28 @@ class _SalaryCalculatorPageState extends State<SalaryCalculatorPage> {
           ],
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(_showHelp ? Icons.close : Icons.help_outline, color: Colors.white, size: 20),
+            ),
+            onPressed: () => setState(() => _showHelp = !_showHelp),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            if (_showHelp) _buildHelpSection(theme),
+            if (_showHelp) const SizedBox(height: 20),
+            
+
             _buildInputCard(theme, 'الراتب الأساسي', _basicSalaryController, 'أدخل الراتب', Icons.account_balance_wallet),
             const SizedBox(height: 16),
             _buildInputCard(theme, 'البدلات', _allowancesController, 'بدل سكن، نقل، إلخ', Icons.add_circle),
@@ -254,6 +274,136 @@ class _SalaryCalculatorPageState extends State<SalaryCalculatorPage> {
               overlayColor: theme.primaryColor.withOpacity(0.2),
             ),
             child: Slider(value: value, min: min, max: max, divisions: ((max - min) * 100).toInt(), onChanged: onChanged),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSection(ThemeConfig theme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF6366f1).withOpacity(0.1),
+            const Color(0xFF6366f1).withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF6366f1).withOpacity(0.3), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6366f1), Color(0xFF4f46e5)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.lightbulb, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'كيف تستخدم حاسبة الراتب الصافي؟',
+                  style: GoogleFonts.cairo(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF6366f1),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'هذه الحاسبة تساعدك على معرفة راتبك الصافي بعد خصم التأمينات والخصومات الأخرى.',
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              color: theme.textSecondaryColor,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366f1).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF6366f1).withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.calculate, color: Color(0xFF6366f1), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'مثال عملي:',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF6366f1),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'الراتب الأساسي: 10,000 ريال\n'
+                  'البدلات: 3,000 ريال\n'
+                  'خصومات أخرى: 500 ريال\n'
+                  'التأمينات (9.75%): 975 ريال',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    color: theme.textSecondaryColor,
+                    height: 1.6,
+                  ),
+                ),
+                const Divider(height: 24),
+                Text(
+                  '✅ الراتب الصافي: 11,525 ريال\n'
+                  '✅ الراتب السنوي: 138,300 ريال',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF6366f1),
+                    height: 1.8,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10b981).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, color: Color(0xFF10b981), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'ملاحظة: نسبة التأمينات الاجتماعية للسعوديين 9.75%',
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      color: const Color(0xFF10b981),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

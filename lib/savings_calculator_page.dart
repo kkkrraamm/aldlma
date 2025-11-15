@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
+import 'calculator_helpers.dart' as helpers;
 
 class SavingsCalculatorPage extends StatefulWidget {
   const SavingsCalculatorPage({super.key});
@@ -21,6 +22,8 @@ class _SavingsCalculatorPageState extends State<SavingsCalculatorPage> {
   double? _finalAmount;
   double? _totalSavings;
   double? _totalInterest;
+  
+  bool _showHelp = false;
 
   void _calculate() {
     final initial = double.tryParse(_initialController.text) ?? 0;
@@ -103,11 +106,28 @@ class _SavingsCalculatorPageState extends State<SavingsCalculatorPage> {
           ],
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(_showHelp ? Icons.close : Icons.help_outline, color: Colors.white, size: 20),
+            ),
+            onPressed: () => setState(() => _showHelp = !_showHelp),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            if (_showHelp) _buildHelpSection(theme),
+            if (_showHelp) const SizedBox(height: 20),
+            
+
             _buildInputCard(theme, 'المبلغ الحالي', _initialController, 'المبلغ المدخر حالياً', Icons.account_balance),
             const SizedBox(height: 16),
             _buildInputCard(theme, 'الادخار الشهري', _monthlyController, 'المبلغ الشهري', Icons.calendar_month),
@@ -261,6 +281,137 @@ class _SavingsCalculatorPageState extends State<SavingsCalculatorPage> {
               overlayColor: theme.primaryColor.withOpacity(0.2),
             ),
             child: Slider(value: value, min: min, max: max, divisions: ((max - min) * (unit == '%' ? 10 : 1)).toInt(), onChanged: onChanged),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSection(ThemeConfig theme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF10b981).withOpacity(0.1),
+            const Color(0xFF10b981).withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF10b981).withOpacity(0.3), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF10b981), Color(0xFF059669)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.lightbulb, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'كيف تستخدم حاسبة الادخار؟',
+                  style: GoogleFonts.cairo(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF10b981),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'هذه الحاسبة تساعدك على معرفة كم ستدخر بعد فترة معينة مع احتساب الفوائد.',
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              color: theme.textSecondaryColor,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10b981).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF10b981).withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.calculate, color: Color(0xFF10b981), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'مثال عملي:',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF10b981),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'المبلغ الأولي: 10,000 ريال\n'
+                  'الإضافة الشهرية: 1,000 ريال\n'
+                  'نسبة الفائدة: 3% سنوياً\n'
+                  'المدة: 10 سنوات',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    color: theme.textSecondaryColor,
+                    height: 1.6,
+                  ),
+                ),
+                const Divider(height: 24),
+                Text(
+                  '✅ المبلغ النهائي: ≈ 149,641 ريال\n'
+                  '✅ إجمالي المدخر: 130,000 ريال\n'
+                  '✅ الفوائد المكتسبة: ≈ 19,641 ريال',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF10b981),
+                    height: 1.8,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3b82f6).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.tips_and_updates, color: Color(0xFF3b82f6), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'نصيحة: الادخار المبكر يضاعف أرباحك بفضل الفائدة المركبة!',
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      color: const Color(0xFF3b82f6),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

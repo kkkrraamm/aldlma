@@ -23,6 +23,8 @@ class _ROICalculatorPageState extends State<ROICalculatorPage> {
   double? _roi;
   double? _paybackPeriod;
   double? _netProfit;
+  
+  bool _showHelp = false;
 
   void _calculate() {
     final purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0;
@@ -95,26 +97,47 @@ class _ROICalculatorPageState extends State<ROICalculatorPage> {
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.trending_up, color: Colors.white, size: 24),
+              child: const Icon(Icons.trending_up, color: Colors.white, size: 20),
             ),
-            const SizedBox(width: 12),
-            Text(
-              'حاسبة العائد على الاستثمار',
-              style: GoogleFonts.cairo(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                'العائد على الاستثمار',
+                style: GoogleFonts.cairo(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(_showHelp ? Icons.close : Icons.help_outline, color: Colors.white, size: 20),
+            ),
+            onPressed: () => setState(() => _showHelp = !_showHelp),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // قسم المساعدة
+            if (_showHelp) _buildHelpSection(theme),
+            if (_showHelp) const SizedBox(height: 20),
+            
+
             _buildInputCard(
               theme,
               'سعر الشراء',
@@ -343,6 +366,137 @@ class _ROICalculatorPageState extends State<ROICalculatorPage> {
                 Text(
                   isPercent ? '${value.toStringAsFixed(2)}%' : '${value.toStringAsFixed(0)}$isSuffix${isSuffix.isEmpty ? ' ر.س' : ''}',
                   style: GoogleFonts.cairo(fontSize: 24, fontWeight: FontWeight.bold, color: color, height: 1.2),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSection(ThemeConfig theme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF3b82f6).withOpacity(0.1),
+            const Color(0xFF3b82f6).withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF3b82f6).withOpacity(0.3), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF3b82f6), Color(0xFF2563eb)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.lightbulb, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'كيف تستخدم حاسبة العائد على الاستثمار؟',
+                  style: GoogleFonts.cairo(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF3b82f6),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'هذه الحاسبة تساعدك على معرفة ربحية الاستثمار العقاري وتحديد إذا كان العقار استثمار جيد أم لا.',
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              color: theme.textSecondaryColor,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3b82f6).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF3b82f6).withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.calculate, color: Color(0xFF3b82f6), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'مثال عملي:',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF3b82f6),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'اشتريت شقة بـ 400,000 ريال + 20,000 ريال مصاريف = 420,000 ريال إجمالي\n'
+                  'تؤجرها بـ 2,000 ريال شهرياً = 24,000 ريال سنوياً\n'
+                  'الصيانة السنوية 5,000 ريال\n'
+                  'نسبة الشواغر 5% (شهر فارغ)',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    color: theme.textSecondaryColor,
+                    height: 1.6,
+                  ),
+                ),
+                const Divider(height: 24),
+                Text(
+                  '✅ العائد السنوي: ≈ 17,800 ريال\n'
+                  '✅ نسبة العائد (ROI): ≈ 4.2%\n'
+                  '✅ فترة استرداد رأس المال: ≈ 24 سنة',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF3b82f6),
+                    height: 1.8,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10b981).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.tips_and_updates, color: Color(0xFF10b981), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'نصيحة: العائد الجيد عادة يكون 5-8% سنوياً',
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      color: const Color(0xFF10b981),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),

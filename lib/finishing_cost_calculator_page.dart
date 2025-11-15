@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
+import 'calculator_helpers.dart' as helpers;
 
 class FinishingCostCalculatorPage extends StatefulWidget {
   const FinishingCostCalculatorPage({super.key});
@@ -20,6 +21,8 @@ class _FinishingCostCalculatorPageState extends State<FinishingCostCalculatorPag
   
   double? _totalCost;
   Map<String, double>? _breakdown;
+  
+  bool _showHelp = false;
 
   final Map<String, double> _floorCosts = {
     'سيراميك': 80,

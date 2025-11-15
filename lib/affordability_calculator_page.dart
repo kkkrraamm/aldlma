@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
+import 'calculator_helpers.dart' as helpers;
 
 class AffordabilityCalculatorPage extends StatefulWidget {
   const AffordabilityCalculatorPage({super.key});
@@ -22,6 +23,8 @@ class _AffordabilityCalculatorPageState extends State<AffordabilityCalculatorPag
   double? _maxPrice;
   double? _monthlyPayment;
   double? _debtToIncome;
+  
+  bool _showHelp = false;
 
   void _calculate() {
     final salary = double.tryParse(_salaryController.text) ?? 0;
@@ -104,26 +107,85 @@ class _AffordabilityCalculatorPageState extends State<AffordabilityCalculatorPag
           ],
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(_showHelp ? Icons.close : Icons.help_outline, color: Colors.white, size: 20),
+            ),
+            onPressed: () => setState(() => _showHelp = !_showHelp),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _buildInputCard(theme, 'الراتب الشهري', _salaryController, 'أدخل راتبك', Icons.payments),
+            if (_showHelp) _buildHelpSection(theme),
+            if (_showHelp) const SizedBox(height: 20),
+            
+            _buildInputCard(
+              theme,
+              'الراتب الشهري',
+              _salaryController,
+              'أدخل راتبك',
+              Icons.payments,
+              hint: 'إجمالي دخلك الشهري من الراتب والمصادر الأخرى.\\n\\nمثال: إذا كان راتبك 15,000 ريال شهرياً، أدخل هذا المبلغ.',
+            ),
             const SizedBox(height: 16),
-            _buildInputCard(theme, 'الالتزامات الشهرية', _obligationsController, 'أقساط، إيجار، إلخ', Icons.credit_card),
+            _buildInputCard(
+              theme,
+              'الالتزامات الشهرية',
+              _obligationsController,
+              'أقساط، إيجار، إلخ',
+              Icons.credit_card,
+              hint: 'إجمالي مصاريفك الشهرية (أقساط، فواتير، طعام، مواصلات، إلخ).\\n\\nمثال: إذا كانت مصاريفك 7,000 ريال شهرياً، أدخلها هنا.',
+            ),
             const SizedBox(height: 16),
-            _buildInputCard(theme, 'الدفعة الأولى المتاحة', _downPaymentController, 'المبلغ المدخر', Icons.savings),
+            _buildInputCard(
+              theme,
+              'الدفعة الأولى المتاحة',
+              _downPaymentController,
+              'المبلغ المدخر',
+              Icons.savings,
+              hint: 'المبلغ الذي تملكه وجاهز لدفعه كدفعة أولى.\\n\\nمثال: إذا كان لديك 100,000 ريال مدخرات، أدخلها هنا.',
+            ),
             const SizedBox(height: 16),
-            _buildSliderCard(theme, 'مدة التمويل', _years, 5, 30, 'سنة', (v) {
-              setState(() => _years = v);
-              _calculate();
-            }),
+            _buildSliderCard(
+              theme,
+              'مدة التمويل',
+              _years,
+              5,
+              30,
+              'سنة',
+              (v) {
+                setState(() => _years = v);
+                _calculate();
+              },
+              hint: 'عدد السنوات التي تريد سداد القرض خلالها.\\n\\nمثال: 20 سنة = 240 قسط شهري. مدة أطول = قسط أقل.',
+              icon: Icons.calendar_today,
+              color: const Color(0xFFf59e0b),
+            ),
             const SizedBox(height: 16),
-            _buildSliderCard(theme, 'نسبة الفائدة', _interestRate, 2, 10, '%', (v) {
-              setState(() => _interestRate = v);
-              _calculate();
-            }),
+            _buildSliderCard(
+              theme,
+              'نسبة الفائدة',
+              _interestRate,
+              2,
+              10,
+              '%',
+              (v) {
+                setState(() => _interestRate = v);
+                _calculate();
+              },
+              hint: 'الفائدة السنوية للتمويل (تختلف من بنك لآخر).\\n\\nمثال: عادة بين 3-5% سنوياً للتمويل العقاري.',
+              icon: Icons.percent,
+              color: const Color(0xFF8b5cf6),
+            ),
             const SizedBox(height: 30),
 
             if (_maxPrice != null) ...[
@@ -222,7 +284,7 @@ class _AffordabilityCalculatorPageState extends State<AffordabilityCalculatorPag
     );
   }
 
-  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String hint, IconData icon) {
+  Widget _buildInputCard(ThemeConfig theme, String label, TextEditingController controller, String placeholder, IconData icon, {String? hint}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -237,7 +299,11 @@ class _AffordabilityCalculatorPageState extends State<AffordabilityCalculatorPag
             children: [
               Icon(icon, color: theme.primaryColor, size: 20),
               const SizedBox(width: 8),
-              Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              Expanded(
+                child: Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              ),
+              if (hint != null)
+                helpers.buildHelpButton(context, theme, label, hint, icon, theme.primaryColor),
             ],
           ),
           const SizedBox(height: 12),
@@ -248,7 +314,7 @@ class _AffordabilityCalculatorPageState extends State<AffordabilityCalculatorPag
             onChanged: (_) => _calculate(),
             style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textPrimaryColor),
             decoration: InputDecoration(
-              hintText: hint,
+              hintText: placeholder,
               hintStyle: GoogleFonts.cairo(color: theme.textSecondaryColor, fontSize: 14),
               suffixText: 'ر.س',
               suffixStyle: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.primaryColor),
@@ -262,7 +328,7 @@ class _AffordabilityCalculatorPageState extends State<AffordabilityCalculatorPag
     );
   }
 
-  Widget _buildSliderCard(ThemeConfig theme, String label, double value, double min, double max, String unit, Function(double) onChanged) {
+  Widget _buildSliderCard(ThemeConfig theme, String label, double value, double min, double max, String unit, Function(double) onChanged, {String? hint, IconData? icon, Color? color}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -275,7 +341,18 @@ class _AffordabilityCalculatorPageState extends State<AffordabilityCalculatorPag
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(label, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimaryColor)),
+                    ),
+                    if (hint != null)
+                      helpers.buildHelpButton(context, theme, label, hint, icon ?? Icons.tune, color ?? theme.primaryColor),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
@@ -291,6 +368,138 @@ class _AffordabilityCalculatorPageState extends State<AffordabilityCalculatorPag
               overlayColor: theme.primaryColor.withOpacity(0.2),
             ),
             child: Slider(value: value, min: min, max: max, divisions: ((max - min) * (unit == '%' ? 10 : 1)).toInt(), onChanged: onChanged),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSection(ThemeConfig theme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFef4444).withOpacity(0.1),
+            const Color(0xFFef4444).withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFef4444).withOpacity(0.3), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFef4444), Color(0xFFdc2626)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.lightbulb, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'كيف تستخدم حاسبة القدرة الشرائية؟',
+                  style: GoogleFonts.cairo(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFef4444),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'هذه الحاسبة تساعدك على معرفة أقصى سعر عقار يمكنك شراءه بناءً على دخلك ومصاريفك.',
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              color: theme.textSecondaryColor,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFef4444).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFef4444).withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.calculate, color: Color(0xFFef4444), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'مثال عملي:',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFef4444),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'الراتب الشهري: 15,000 ريال\n'
+                  'الالتزامات الشهرية: 7,000 ريال\n'
+                  'الدفعة الأولى المتاحة: 100,000 ريال\n'
+                  'مدة التمويل: 20 سنة\n'
+                  'نسبة الفائدة: 4%',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    color: theme.textSecondaryColor,
+                    height: 1.6,
+                  ),
+                ),
+                const Divider(height: 24),
+                Text(
+                  '✅ أقصى سعر عقار: ≈ 580,000 ريال\n'
+                  '✅ القسط الشهري: ≈ 2,640 ريال\n'
+                  '✅ نسبة الدين للدخل: 17.6%',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFef4444),
+                    height: 1.8,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10b981).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.tips_and_updates, color: Color(0xFF10b981), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'نصيحة: البنوك عادة تقبل نسبة دين حتى 33% من الدخل',
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      color: const Color(0xFF10b981),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
