@@ -206,6 +206,17 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         backgroundColor: theme.primaryColor,
         elevation: 0,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -220,28 +231,28 @@ class _ChatPageState extends State<ChatPage> {
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: Colors.white, width: 2.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
               child: widget.officeLogo != null
                   ? CircleAvatar(
-                      radius: 20,
+                      radius: 22,
                       backgroundImage: NetworkImage(widget.officeLogo!),
                       backgroundColor: Colors.white,
                     )
                   : CircleAvatar(
-                      radius: 20,
+                      radius: 22,
                       backgroundColor: Colors.white,
                       child: Icon(
                         Icons.business,
                         color: theme.primaryColor,
-                        size: 22,
+                        size: 24,
                       ),
                     ),
             ),
@@ -254,27 +265,35 @@ class _ChatPageState extends State<ChatPage> {
                   Text(
                     widget.officeName,
                     style: GoogleFonts.cairo(
-                      fontSize: 16,
+                      fontSize: 17,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.3),
+                          offset: const Offset(0, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
                   Row(
                     children: [
                       Container(
                         width: 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: _isOnline ? Colors.greenAccent : Colors.grey,
+                          color: _isOnline ? const Color(0xFF00ff88) : Colors.grey,
                           shape: BoxShape.circle,
                           boxShadow: _isOnline
                               ? [
                                   BoxShadow(
-                                    color: Colors.greenAccent.withOpacity(0.5),
-                                    blurRadius: 4,
-                                    spreadRadius: 1,
+                                    color: const Color(0xFF00ff88).withOpacity(0.6),
+                                    blurRadius: 6,
+                                    spreadRadius: 2,
                                   ),
                                 ]
                               : null,
@@ -282,10 +301,11 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        _isOnline ? 'متصل' : 'غير متصل',
+                        _isOnline ? 'متصل الآن' : 'غير متصل',
                         style: GoogleFonts.cairo(
-                          fontSize: 11,
-                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.95),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -297,9 +317,16 @@ class _ChatPageState extends State<ChatPage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.white),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.more_vert, color: Colors.white, size: 20),
+            ),
             onPressed: () {
-              // TODO: معلومات المكتب
+              _showOptionsMenu(theme);
             },
           ),
         ],
@@ -486,6 +513,158 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildBottomNavItem(
+                  icon: Icons.map_outlined,
+                  label: 'الخريطة',
+                  isActive: false,
+                  theme: theme,
+                  onTap: () {
+                    Navigator.pop(context); // العودة للخريطة
+                  },
+                ),
+                _buildBottomNavItem(
+                  icon: Icons.chat_bubble,
+                  label: 'المحادثة',
+                  isActive: true,
+                  theme: theme,
+                  onTap: () {},
+                ),
+                _buildBottomNavItem(
+                  icon: Icons.favorite,
+                  label: 'المفضلة',
+                  isActive: false,
+                  theme: theme,
+                  onTap: () {
+                    Navigator.pop(context);
+                    // TODO: الانتقال للمفضلة
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavItem({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required ThemeConfig theme,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: isActive
+              ? LinearGradient(
+                  colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
+                )
+              : null,
+          color: isActive ? null : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? Colors.white : theme.textSecondaryColor,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.cairo(
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                color: isActive ? Colors.white : theme.textSecondaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showOptionsMenu(ThemeConfig theme) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.textSecondaryColor.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.info_outline, color: theme.primaryColor),
+              title: Text(
+                'معلومات المكتب',
+                style: GoogleFonts.cairo(color: theme.textPrimaryColor),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: معلومات المكتب
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_outline, color: Colors.red),
+              title: Text(
+                'مسح المحادثة',
+                style: GoogleFonts.cairo(color: theme.textPrimaryColor),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: مسح المحادثة
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.block, color: Colors.orange),
+              title: Text(
+                'حظر المكتب',
+                style: GoogleFonts.cairo(color: theme.textPrimaryColor),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: حظر المكتب
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
