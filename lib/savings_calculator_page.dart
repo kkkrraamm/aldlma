@@ -215,7 +215,7 @@ class _SavingsCalculatorPageState extends State<SavingsCalculatorPage> {
             controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (_) => _convert(),
+            onChanged: (_) => _calculate(),
             style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textPrimaryColor),
             decoration: InputDecoration(
               hintText: hint,

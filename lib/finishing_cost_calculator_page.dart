@@ -58,8 +58,8 @@ class _FinishingCostCalculatorPageState extends State<FinishingCostCalculatorPag
       _breakdown = {
         'الأرضيات': floorCost,
         'الدهان': paintCost,
-        'الحمامات': bathroomCost,
-        'المطبخ': kitchenCost,
+        'الحمامات': bathroomCost.toDouble(),
+        'المطبخ': kitchenCost.toDouble(),
         'الكهرباء': electricCost,
         'السباكة': plumbingCost,
       };
