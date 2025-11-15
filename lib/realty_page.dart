@@ -495,7 +495,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                   double.parse(listing['lng'].toString()),
                 ),
                 width: 60,
-                height: 85,
+                height: 70,
                 child: GestureDetector(
                   onTap: () => _showModernListingPopup(listing, theme),
                   child: Column(
@@ -568,33 +568,9 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                         ],
                       ),
                       const SizedBox(height: 3),
-                      // نوع العقار
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: color, width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 3,
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          typeLabel,
-                          style: GoogleFonts.cairo(
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
                       // السعر
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [color, color.withOpacity(0.9)],
