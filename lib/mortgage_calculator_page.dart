@@ -64,6 +64,8 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
     });
   }
 
+  bool _showHelp = false;
+
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeConfig>(context);
@@ -116,12 +118,29 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
           ],
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(_showHelp ? Icons.close : Icons.help_outline, color: Colors.white, size: 20),
+            ),
+            onPressed: () => setState(() => _showHelp = !_showHelp),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // قسم المساعدة
+            if (_showHelp) _buildHelpSection(theme),
+            if (_showHelp) const SizedBox(height: 20),
+            
             // سعر العقار
             _buildInputCard(
               theme,
@@ -129,6 +148,7 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
               _priceController,
               'أدخل سعر العقار',
               Icons.home_work,
+              hint: 'السعر الكامل للعقار الذي تريد شراءه',
             ),
             const SizedBox(height: 20),
 
@@ -297,9 +317,10 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
     ThemeConfig theme,
     String label,
     TextEditingController controller,
-    String hint,
-    IconData icon,
-  ) {
+    String placeholder,
+    IconData icon, {
+    String? hint,
+  }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -330,6 +351,17 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
               ),
             ],
           ),
+          if (hint != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              hint,
+              style: GoogleFonts.cairo(
+                fontSize: 12,
+                color: theme.textSecondaryColor,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           TextField(
             controller: controller,
@@ -342,7 +374,7 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
               color: theme.textPrimaryColor,
             ),
             decoration: InputDecoration(
-              hintText: hint,
+              hintText: placeholder,
               hintStyle: GoogleFonts.cairo(
                 color: theme.textSecondaryColor,
               ),
@@ -563,6 +595,201 @@ class _MortgageCalculatorPageState extends State<MortgageCalculatorPage> {
               color: theme.textPrimaryColor,
             ),
             textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSection(ThemeConfig theme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF10b981).withOpacity(0.1),
+            const Color(0xFF10b981).withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF10b981).withOpacity(0.3), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF10b981), Color(0xFF059669)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.lightbulb, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'كيف تستخدم حاسبة التمويل؟',
+                  style: GoogleFonts.cairo(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF10b981),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildHelpItem(
+            theme,
+            Icons.home_work,
+            'سعر العقار',
+            'السعر الكامل للعقار الذي تريد شراءه',
+            'مثال: إذا كان سعر الشقة 500,000 ر.س',
+            const Color(0xFF10b981),
+          ),
+          const SizedBox(height: 16),
+          _buildHelpItem(
+            theme,
+            Icons.account_balance_wallet,
+            'الدفعة الأولى',
+            'المبلغ الذي ستدفعه من جيبك (نسبة من سعر العقار)',
+            'مثال: 20% يعني ستدفع 100,000 ر.س والباقي تمويل',
+            const Color(0xFF3b82f6),
+          ),
+          const SizedBox(height: 16),
+          _buildHelpItem(
+            theme,
+            Icons.calendar_today,
+            'مدة التمويل',
+            'عدد السنوات التي ستسدد فيها القرض',
+            'مثال: 20 سنة = 240 قسط شهري',
+            const Color(0xFFf59e0b),
+          ),
+          const SizedBox(height: 16),
+          _buildHelpItem(
+            theme,
+            Icons.percent,
+            'نسبة الفائدة',
+            'الفائدة السنوية التي يفرضها البنك على التمويل',
+            'مثال: 4% سنوياً (تختلف من بنك لآخر)',
+            const Color(0xFFef4444),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10b981).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF10b981).withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.calculate, color: Color(0xFF10b981), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'مثال عملي:',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF10b981),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildExampleRow(theme, 'سعر الشقة', '500,000 ر.س'),
+                _buildExampleRow(theme, 'الدفعة الأولى (20%)', '100,000 ر.س'),
+                _buildExampleRow(theme, 'مبلغ التمويل', '400,000 ر.س'),
+                _buildExampleRow(theme, 'المدة', '20 سنة'),
+                _buildExampleRow(theme, 'الفائدة', '4% سنوياً'),
+                const Divider(height: 24),
+                _buildExampleRow(theme, 'القسط الشهري', '≈ 2,424 ر.س', isResult: true),
+                _buildExampleRow(theme, 'إجمالي المدفوعات', '≈ 581,760 ر.س', isResult: true),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpItem(ThemeConfig theme, IconData icon, String title, String description, String example, Color color) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.cairo(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textPrimaryColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: GoogleFonts.cairo(
+                  fontSize: 13,
+                  color: theme.textSecondaryColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                example,
+                style: GoogleFonts.cairo(
+                  fontSize: 12,
+                  color: color,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExampleRow(ThemeConfig theme, String label, String value, {bool isResult = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.cairo(
+              fontSize: isResult ? 14 : 13,
+              fontWeight: isResult ? FontWeight.bold : FontWeight.normal,
+              color: isResult ? const Color(0xFF10b981) : theme.textSecondaryColor,
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.cairo(
+              fontSize: isResult ? 15 : 13,
+              fontWeight: isResult ? FontWeight.bold : FontWeight.w600,
+              color: isResult ? const Color(0xFF10b981) : theme.textPrimaryColor,
+            ),
           ),
         ],
       ),
