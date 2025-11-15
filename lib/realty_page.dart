@@ -12,6 +12,7 @@ import 'realty_details_page.dart';
 import 'rfp_form_page.dart';
 import 'compare_page.dart';
 import 'favorites_page.dart';
+import 'chat_list_page.dart';
 
 class RealtyPage extends StatefulWidget {
   const RealtyPage({super.key});
@@ -1831,14 +1832,10 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    // TODO: فتح صفحة قائمة المحادثات
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'قائمة المحادثات قريباً',
-                          style: GoogleFonts.cairo(),
-                        ),
-                        backgroundColor: theme.primaryColor,
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChatListPage(),
                       ),
                     );
                   },
