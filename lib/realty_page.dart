@@ -2801,7 +2801,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
 
     return GridView.builder(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 80,
+        top: MediaQuery.of(context).padding.top + 140,
         left: 16,
         right: 16,
         bottom: 100,
