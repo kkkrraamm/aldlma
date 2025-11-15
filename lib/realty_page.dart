@@ -494,104 +494,129 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                   double.parse(listing['lat'].toString()),
                   double.parse(listing['lng'].toString()),
                 ),
-                width: 60,
-                height: 70,
+                width: 50,
+                height: 50,
                 child: GestureDetector(
                   onTap: () => _showModernListingPopup(listing, theme),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
                     children: [
-                      // لوجو المكتب في الأعلى
-                      if (officeLogo != null) ...[
-                        Container(
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            border: Border.all(color: color, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
-                                blurRadius: 6,
-                              ),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: Image.network(
-                              officeLogo,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.business,
-                                size: 12,
-                                color: color,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                      ],
-                      // الدائرة الرئيسية
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // ظل
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: color.withOpacity(0.4),
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                          // الدائرة
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [color, color.withOpacity(0.8)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2.5),
-                            ),
-                            child: Icon(icon, color: Colors.white, size: 18),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      // السعر
+                      // ظل
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [color, color.withOpacity(0.9)],
-                          ),
-                          borderRadius: BorderRadius.circular(6),
+                          shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 3,
+                              color: color.withOpacity(0.4),
+                              blurRadius: 12,
+                              spreadRadius: 2,
                             ),
                           ],
                         ),
-                        child: Text(
-                          priceK,
-                          style: GoogleFonts.cairo(
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
+                      ),
+                      // الدائرة الرئيسية
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [color, color.withOpacity(0.8)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                        ),
+                        child: Icon(icon, color: Colors.white, size: 18),
+                      ),
+                      // نوع العقار (فوق)
+                      Positioned(
+                        top: -8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
                             color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: color, width: 1),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            typeLabel,
+                            style: GoogleFonts.cairo(
+                              fontSize: 7,
+                              fontWeight: FontWeight.bold,
+                              color: color,
+                            ),
                           ),
                         ),
                       ),
+                      // السعر (تحت)
+                      Positioned(
+                        bottom: -8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [color, color.withOpacity(0.9)],
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            priceK,
+                            style: GoogleFonts.cairo(
+                              fontSize: 7,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // لوجو المكتب (يمين فوق)
+                      if (officeLogo != null)
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              border: Border.all(color: color, width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: Image.network(
+                                officeLogo,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  Icons.business,
+                                  size: 10,
+                                  color: color,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
