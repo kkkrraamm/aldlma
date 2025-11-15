@@ -297,6 +297,21 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
         itemCount: _approvedOffices.length * 100, // تكرار لا نهائي
         itemBuilder: (context, index) {
           final office = _approvedOffices[index % _approvedOffices.length];
+          final logoUrl = office['logo']?.toString() ?? '';
+          final hasLogo = logoUrl.isNotEmpty;
+          
+          // بناء رابط الصورة الصحيح
+          String fullLogoUrl = '';
+          if (hasLogo) {
+            if (logoUrl.startsWith('http')) {
+              fullLogoUrl = logoUrl;
+            } else if (logoUrl.startsWith('/')) {
+              fullLogoUrl = '${ApiConfig.baseUrl}$logoUrl';
+            } else {
+              fullLogoUrl = '${ApiConfig.baseUrl}/uploads/$logoUrl';
+            }
+          }
+          
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(
@@ -317,9 +332,9 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: office['logo'] != null && office['logo'].toString().isNotEmpty
+                    child: hasLogo
                         ? Image.network(
-                            '${ApiConfig.baseUrl}${office['logo']}',
+                            fullLogoUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
@@ -450,6 +465,21 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
   }
 
   Widget _buildOfficeCard(Map<String, dynamic> office, ThemeConfig theme) {
+    final logoUrl = office['logo']?.toString() ?? '';
+    final hasLogo = logoUrl.isNotEmpty;
+    
+    // بناء رابط الصورة الصحيح
+    String fullLogoUrl = '';
+    if (hasLogo) {
+      if (logoUrl.startsWith('http')) {
+        fullLogoUrl = logoUrl;
+      } else if (logoUrl.startsWith('/')) {
+        fullLogoUrl = '${ApiConfig.baseUrl}$logoUrl';
+      } else {
+        fullLogoUrl = '${ApiConfig.baseUrl}/uploads/$logoUrl';
+      }
+    }
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -493,9 +523,9 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: office['logo'] != null && office['logo'].toString().isNotEmpty
+                    child: hasLogo
                         ? Image.network(
-                            '${ApiConfig.baseUrl}${office['logo']}',
+                            fullLogoUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
