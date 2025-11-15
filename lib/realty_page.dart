@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -5,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'theme_config.dart';
 import 'api_config.dart';
@@ -13,6 +15,7 @@ import 'rfp_form_page.dart';
 import 'compare_page.dart';
 import 'favorites_page.dart';
 import 'chat_list_page.dart';
+import 'chat_page.dart';
 
 class RealtyPage extends StatefulWidget {
   const RealtyPage({super.key});
@@ -28,8 +31,14 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
   bool _showFilters = false;
   bool _showMapView = true; // التبديل بين الخريطة والقائمة
   bool _showOfficeBanner = true; // إظهار بانر تسجيل المكتب
+  int _currentView = 0; // 0: خريطة، 1: قائمة، 2: محادثات
   late AnimationController _filterAnimController;
   late Animation<double> _filterAnimation;
+  
+  // المحادثات
+  List<Map<String, dynamic>> _conversations = [];
+  bool _isLoadingConversations = false;
+  Timer? _conversationsRefreshTimer;
   
   // فلاتر البحث
   String? _selectedCity = 'عرعر';
@@ -270,12 +279,21 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeConfig>(context);
     
+    Widget currentView;
+    if (_currentView == 0) {
+      currentView = _buildModernMapView(theme);
+    } else if (_currentView == 1) {
+      currentView = _buildFullListView(theme);
+    } else {
+      currentView = _buildConversationsView(theme);
+    }
+    
     return Scaffold(
       backgroundColor: theme.isDarkMode ? const Color(0xFF0b0f14) : const Color(0xFFf5f7fa),
       body: Stack(
         children: [
-          // المحتوى الرئيسي (خريطة أو قائمة)
-          _showMapView ? _buildModernMapView(theme) : _buildFullListView(theme),
+          // المحتوى الرئيسي (خريطة، قائمة، أو محادثات)
+          currentView,
           
           // شريط البحث العائم في الأعلى
           Positioned(
@@ -1730,19 +1748,22 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    setState(() => _showMapView = true);
+                    setState(() {
+                      _currentView = 0;
+                      _showMapView = true;
+                    });
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      gradient: _showMapView
+                      gradient: _currentView == 0
                           ? LinearGradient(
                               colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
                             )
                           : null,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: _showMapView
+                      boxShadow: _currentView == 0
                           ? [
                               BoxShadow(
                                 color: theme.primaryColor.withOpacity(0.3),
@@ -1758,7 +1779,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                         children: [
                           Icon(
                             Icons.map_outlined,
-                            color: _showMapView ? Colors.white : theme.textSecondaryColor,
+                            color: _currentView == 0 ? Colors.white : theme.textSecondaryColor,
                             size: 22,
                           ),
                           const SizedBox(width: 6),
@@ -1767,7 +1788,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                             style: GoogleFonts.cairo(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: _showMapView ? Colors.white : theme.textSecondaryColor,
+                              color: _currentView == 0 ? Colors.white : theme.textSecondaryColor,
                             ),
                           ),
                         ],
@@ -1781,19 +1802,22 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    setState(() => _showMapView = false);
+                    setState(() {
+                      _currentView = 1;
+                      _showMapView = false;
+                    });
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      gradient: !_showMapView
+                      gradient: _currentView == 1
                           ? LinearGradient(
                               colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
                             )
                           : null,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: !_showMapView
+                      boxShadow: _currentView == 1
                           ? [
                               BoxShadow(
                                 color: theme.primaryColor.withOpacity(0.3),
@@ -1809,7 +1833,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                         children: [
                           Icon(
                             Icons.view_list_rounded,
-                            color: !_showMapView ? Colors.white : theme.textSecondaryColor,
+                            color: _currentView == 1 ? Colors.white : theme.textSecondaryColor,
                             size: 22,
                           ),
                           const SizedBox(width: 6),
@@ -1818,7 +1842,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                             style: GoogleFonts.cairo(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: !_showMapView ? Colors.white : theme.textSecondaryColor,
+                              color: _currentView == 1 ? Colors.white : theme.textSecondaryColor,
                             ),
                           ),
                         ],
@@ -1832,20 +1856,33 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ChatListPage(),
-                      ),
-                    );
+                    setState(() => _currentView = 2);
+                    _loadConversations();
                   },
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: theme.isDarkMode
-                          ? const Color(0xFF2a2f3e)
-                          : const Color(0xFFf1f5f9),
+                      gradient: _currentView == 2
+                          ? LinearGradient(
+                              colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
+                            )
+                          : null,
+                      color: _currentView == 2
+                          ? null
+                          : (theme.isDarkMode
+                              ? const Color(0xFF2a2f3e)
+                              : const Color(0xFFf1f5f9)),
                       borderRadius: BorderRadius.circular(16),
+                      boxShadow: _currentView == 2
+                          ? [
+                              BoxShadow(
+                                color: theme.primaryColor.withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Center(
                       child: Row(
@@ -1853,7 +1890,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                         children: [
                           Icon(
                             Icons.chat_bubble_outline,
-                            color: theme.textSecondaryColor,
+                            color: _currentView == 2 ? Colors.white : theme.textSecondaryColor,
                             size: 22,
                           ),
                           const SizedBox(width: 6),
@@ -1862,7 +1899,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                             style: GoogleFonts.cairo(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: theme.textSecondaryColor,
+                              color: _currentView == 2 ? Colors.white : theme.textSecondaryColor,
                             ),
                           ),
                         ],
@@ -2356,6 +2393,237 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
           ],
         ),
       ),
+    );
+  }
+  
+  // ═══════════════════════════════════════════════════════════
+  // دوال المحادثات
+  // ═══════════════════════════════════════════════════════════
+  
+  Future<void> _loadConversations() async {
+    setState(() => _isLoadingConversations = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('user_token');
+
+      if (token == null) {
+        setState(() {
+          _conversations = [];
+          _isLoadingConversations = false;
+        });
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/chat/conversations'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _conversations = List<Map<String, dynamic>>.from(data['conversations'] ?? []);
+          _isLoadingConversations = false;
+        });
+        debugPrint('✅ [CONVERSATIONS] تم جلب ${_conversations.length} محادثة');
+      }
+    } catch (e) {
+      debugPrint('❌ [CONVERSATIONS] خطأ: $e');
+      setState(() {
+        _conversations = [];
+        _isLoadingConversations = false;
+      });
+    }
+  }
+  
+  Widget _buildConversationsView(ThemeConfig theme) {
+    if (_isLoadingConversations) {
+      return Center(
+        child: CircularProgressIndicator(color: theme.primaryColor),
+      );
+    }
+    
+    if (_conversations.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.primaryColor.withOpacity(0.1),
+                    theme.primaryColor.withOpacity(0.05),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 60,
+                color: theme.primaryColor.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'لا توجد محادثات',
+              style: GoogleFonts.cairo(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: theme.textPrimaryColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'ابدأ محادثة من صفحة تفاصيل العقار',
+              style: GoogleFonts.cairo(
+                fontSize: 14,
+                color: theme.textSecondaryColor,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return ListView.builder(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 80,
+        left: 16,
+        right: 16,
+        bottom: 100,
+      ),
+      itemCount: _conversations.length,
+      itemBuilder: (context, index) {
+        final conv = _conversations[index];
+        final unreadCount = conv['unread_count'] ?? 0;
+        
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: unreadCount > 0
+                ? BorderSide(color: theme.primaryColor, width: 2)
+                : BorderSide.none,
+          ),
+          elevation: theme.isDarkMode ? 0 : 3,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChatPage(
+                    officeId: conv['office_id'],
+                    officeName: conv['office_name'] ?? 'مكتب',
+                    officeLogo: conv['office_logo'],
+                  ),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: unreadCount > 0
+                                ? theme.primaryColor
+                                : theme.textSecondaryColor.withOpacity(0.3),
+                            width: 2,
+                          ),
+                        ),
+                        child: conv['office_logo'] != null
+                            ? CircleAvatar(
+                                radius: 30,
+                                backgroundImage: NetworkImage(conv['office_logo']),
+                              )
+                            : CircleAvatar(
+                                radius: 30,
+                                backgroundColor: theme.primaryColor.withOpacity(0.1),
+                                child: Icon(
+                                  Icons.business,
+                                  color: theme.primaryColor,
+                                  size: 30,
+                                ),
+                              ),
+                      ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: theme.isDarkMode
+                                    ? const Color(0xFF1a1f2e)
+                                    : Colors.white,
+                                width: 2,
+                              ),
+                            ),
+                            child: Text(
+                              '$unreadCount',
+                              style: GoogleFonts.cairo(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          conv['office_name'] ?? 'مكتب',
+                          style: GoogleFonts.cairo(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textPrimaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          conv['last_message'] ?? '',
+                          style: GoogleFonts.cairo(
+                            fontSize: 14,
+                            color: unreadCount > 0
+                                ? theme.textPrimaryColor
+                                : theme.textSecondaryColor,
+                            fontWeight: unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: theme.textSecondaryColor,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
   
