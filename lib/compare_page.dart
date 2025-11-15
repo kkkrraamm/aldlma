@@ -947,7 +947,8 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
                 barGroups: widget.properties.asMap().entries.map((entry) {
                   final index = entry.key;
                   final property = entry.value;
-                  final price = (property['price'] as num? ?? 0).toDouble();
+                  final priceRaw = property['price'];
+                  final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
                   
                   return BarChartGroupData(
                     x: index,
@@ -1023,8 +1024,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
                 maxY: widget.properties.map((p) {
-                  final price = (p['price'] as num? ?? 0).toDouble();
-                  final area = (p['area'] as num? ?? 1).toDouble();
+                  final priceRaw = p['price'];
+                  final areaRaw = p['area'];
+                  final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+                  final area = areaRaw is String ? double.tryParse(areaRaw) ?? 1 : (areaRaw as num?)?.toDouble() ?? 1;
                   return price / area;
                 }).reduce(math.max) * 1.2,
                 barTouchData: BarTouchData(enabled: false),
@@ -1082,8 +1085,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
                 barGroups: widget.properties.asMap().entries.map((entry) {
                   final index = entry.key;
                   final property = entry.value;
-                  final price = property['price'] ?? 0;
-                  final area = property['area'] ?? 1;
+                  final priceRaw = property['price'];
+                  final areaRaw = property['area'];
+                  final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+                  final area = areaRaw is String ? double.tryParse(areaRaw) ?? 1 : (areaRaw as num?)?.toDouble() ?? 1;
                   final pricePerMeter = price / area;
                   
                   return BarChartGroupData(
@@ -1215,9 +1220,12 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
                 barGroups: widget.properties.asMap().entries.map((entry) {
                   final index = entry.key;
                   final property = entry.value;
-                  final rooms = (property['rooms'] as num? ?? 0).toDouble();
-                  final bathrooms = (property['bathrooms'] as num? ?? 0).toDouble();
-                  final parking = (property['parking'] as num? ?? 0).toDouble();
+                  final roomsRaw = property['rooms'];
+                  final bathroomsRaw = property['bathrooms'];
+                  final parkingRaw = property['parking'];
+                  final rooms = roomsRaw is String ? double.tryParse(roomsRaw) ?? 0 : (roomsRaw as num?)?.toDouble() ?? 0;
+                  final bathrooms = bathroomsRaw is String ? double.tryParse(bathroomsRaw) ?? 0 : (bathroomsRaw as num?)?.toDouble() ?? 0;
+                  final parking = parkingRaw is String ? double.tryParse(parkingRaw) ?? 0 : (parkingRaw as num?)?.toDouble() ?? 0;
                   
                   return BarChartGroupData(
                     x: index,
@@ -1368,7 +1376,8 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
                 barGroups: widget.properties.asMap().entries.map((entry) {
                   final index = entry.key;
                   final property = entry.value;
-                  final area = (property['area'] as num? ?? 0).toDouble();
+                  final areaRaw = property['area'];
+                  final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
                   
                   return BarChartGroupData(
                     x: index,
