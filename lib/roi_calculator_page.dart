@@ -297,6 +297,45 @@ class _ROICalculatorPageState extends State<ROICalculatorPage> {
     );
   }
 
+  Widget _buildResultCard(ThemeConfig theme, String label, double value, Color color, IconData icon, {bool isPercent = false, String isSuffix = ''}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [color.withOpacity(0.15), color.withOpacity(0.08)]),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.4), width: 2),
+        boxShadow: [BoxShadow(color: color.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [color, color.withOpacity(0.8)]),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8)],
+            ),
+            child: Icon(icon, color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: GoogleFonts.cairo(fontSize: 13, color: theme.textSecondaryColor, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 6),
+                Text(
+                  isPercent ? '${value.toStringAsFixed(2)}%' : '${value.toStringAsFixed(0)}$isSuffix${isSuffix.isEmpty ? ' ر.س' : ''}',
+                  style: GoogleFonts.cairo(fontSize: 24, fontWeight: FontWeight.bold, color: color, height: 1.2),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _purchasePriceController.dispose();
