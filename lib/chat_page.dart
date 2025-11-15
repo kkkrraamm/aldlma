@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'theme_config.dart';
 import 'api_config.dart';
+import 'realty_details_page.dart';
 
 class ChatPage extends StatefulWidget {
   final int officeId;
