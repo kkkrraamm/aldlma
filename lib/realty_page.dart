@@ -334,7 +334,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
             ),
           
           // أزرار التحكم بالخريطة (يمين) - فقط في وضع الخريطة
-          if (_showMapView)
+          if (_currentView == 0)
             Positioned(
               right: 16,
               bottom: 100,
@@ -342,7 +342,7 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
             ),
           
           // زر طلب عقار - في وضع الخريطة فقط (يسار أسفل)
-          if (_showMapView)
+          if (_currentView == 0)
             Positioned(
               left: 16,
               bottom: 100,
