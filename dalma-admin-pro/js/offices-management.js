@@ -64,14 +64,24 @@ function createOfficeRow(office) {
     const daysLeft = getDaysLeft(office.subscription_end);
     const lastLogin = office.last_login ? new Date(office.last_login).toLocaleDateString('ar-SA') : '-';
     const isApproved = office.status === 'approved';
+    const hasLogo = office.logo_url && office.logo_url.trim() !== '';
     
     return `
         <tr style="border-bottom: 1px solid var(--border);">
             <td style="padding: 18px 20px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 45px; height: 45px; border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
-                        ${initial}
-                    </div>
+                    ${hasLogo ? `
+                        <div style="width: 45px; height: 45px; border-radius: 10px; overflow: hidden; border: 2px solid var(--border); background: white;">
+                            <img src="${API_URL}${office.logo_url}" 
+                                 alt="${escapeHtml(office.name)}" 
+                                 style="width: 100%; height: 100%; object-fit: cover;"
+                                 onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;\\'>${initial}</div>'">
+                        </div>
+                    ` : `
+                        <div style="width: 45px; height: 45px; border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
+                            ${initial}
+                        </div>
+                    `}
                     <div>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-weight: 700; color: var(--text-primary);">${escapeHtml(office.name)}</span>
