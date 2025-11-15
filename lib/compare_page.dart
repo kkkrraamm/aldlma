@@ -47,6 +47,10 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
       appBar: AppBar(
         backgroundColor: theme.primaryColor,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
