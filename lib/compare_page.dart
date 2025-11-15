@@ -750,7 +750,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
     final tips = <Map<String, dynamic>>[];
     
     // حساب فرق الأسعار
-    final prices = widget.properties.map((p) => p['price'] as num? ?? 0).toList();
+    final prices = widget.properties.map((p) => (p['price'] as num? ?? 0).toDouble()).toList();
     final maxPrice = prices.reduce(math.max);
     final minPrice = prices.reduce(math.min);
     final priceDiff = ((maxPrice - minPrice) / minPrice * 100).toStringAsFixed(0);
@@ -794,7 +794,7 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
     }
     
     // التحقق من المساحات
-    final areas = widget.properties.map((p) => p['area'] as num? ?? 0).toList();
+    final areas = widget.properties.map((p) => (p['area'] as num? ?? 0).toDouble()).toList();
     final maxArea = areas.reduce(math.max);
     final minArea = areas.reduce(math.min);
     if (maxArea > minArea * 1.5) {
@@ -1005,8 +1005,8 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
                 maxY: widget.properties.map((p) {
-                  final price = p['price'] ?? 0;
-                  final area = p['area'] ?? 1;
+                  final price = (p['price'] as num? ?? 0).toDouble();
+                  final area = (p['area'] as num? ?? 1).toDouble();
                   return price / area;
                 }).reduce(math.max) * 1.2,
                 barTouchData: BarTouchData(enabled: false),
