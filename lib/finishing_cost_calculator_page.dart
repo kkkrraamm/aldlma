@@ -121,11 +121,28 @@ class _FinishingCostCalculatorPageState extends State<FinishingCostCalculatorPag
           ],
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(_showHelp ? Icons.close : Icons.help_outline, color: Colors.white, size: 20),
+            ),
+            onPressed: () => setState(() => _showHelp = !_showHelp),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            if (_showHelp) _buildHelpSection(theme),
+            if (_showHelp) const SizedBox(height: 20),
+            
+
             _buildInputCard(theme, 'المساحة', _areaController, 'بالمتر المربع', Icons.square_foot),
             const SizedBox(height: 16),
             _buildDropdownCard(theme, 'نوع الأرضيات', _floorType, _floorCosts, (v) {
@@ -310,6 +327,141 @@ class _FinishingCostCalculatorPageState extends State<FinishingCostCalculatorPag
                 onPressed: () => onChanged(value + 1),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSection(ThemeConfig theme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFa855f7).withOpacity(0.1),
+            const Color(0xFFa855f7).withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFa855f7).withOpacity(0.3), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFa855f7), Color(0xFF9333ea)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.lightbulb, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'كيف تستخدم حاسبة تكلفة التشطيب؟',
+                  style: GoogleFonts.cairo(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFa855f7),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'هذه الحاسبة تساعدك على تقدير تكلفة تشطيب العقار (أرضيات، دهان، حمامات، مطابخ، إلخ).',
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              color: theme.textSecondaryColor,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFa855f7).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFa855f7).withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.calculate, color: Color(0xFFa855f7), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'مثال عملي:',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFa855f7),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'المساحة: 200 متر مربع\n'
+                  'نوع الأرضيات: بورسلان (120 ر.س/م²)\n'
+                  'نوع الدهان: جيد (25 ر.س/م²)\n'
+                  'عدد الحمامات: 2 (20,000 ر.س لكل حمام)\n'
+                  'عدد المطابخ: 1 (15,000 ر.س)',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    color: theme.textSecondaryColor,
+                    height: 1.6,
+                  ),
+                ),
+                const Divider(height: 24),
+                Text(
+                  '✅ التكلفة الإجمالية: ≈ 94,000 ريال\n'
+                  '• الأرضيات: 24,000 ريال\n'
+                  '• الدهان: 5,000 ريال\n'
+                  '• الحمامات: 40,000 ريال\n'
+                  '• المطبخ: 15,000 ريال\n'
+                  '• الكهرباء والسباكة: 10,000 ريال',
+                  style: GoogleFonts.cairo(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFa855f7),
+                    height: 1.8,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFf59e0b).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.tips_and_updates, color: Color(0xFFf59e0b), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'نصيحة: جودة التشطيب تؤثر بشكل كبير على قيمة العقار النهائية',
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      color: const Color(0xFFf59e0b),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
