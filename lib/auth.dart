@@ -30,6 +30,41 @@ class AuthState extends ChangeNotifier {
     await loadFromDisk();
   }
 
+  // التحقق من صلاحية الـ token
+  Future<bool> _verifyToken(String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/auth/verify'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 5));
+      
+      if (response.statusCode == 200) {
+        print('✅ [AUTH] Token صالح');
+        return true;
+      } else {
+        print('❌ [AUTH] Token غير صالح - Status: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('⚠️ [AUTH] خطأ في التحقق من Token: $e');
+      // في حالة عدم الاتصال بالإنترنت، نفترض أن الـ token صالح
+      return true;
+    }
+  }
+  
+  // حذف بيانات المصادقة
+  Future<void> _clearAuthData(SharedPreferences prefs) async {
+    await prefs.remove('token');
+    await prefs.remove('user_token');
+    await prefs.remove('user_name');
+    await prefs.remove('user_phone');
+    await prefs.remove('user_role');
+    print('🗑️ [AUTH] تم حذف بيانات المصادقة');
+  }
+
   // جمع معلومات الجهاز الحقيقية
   Future<Map<String, dynamic>> _getDeviceInfo() async {
     final deviceInfo = DeviceInfoPlugin();
@@ -137,20 +172,32 @@ class AuthState extends ChangeNotifier {
     final tokenUserRole = prefs.getString('user_role');
     
     if (token != null && token.isNotEmpty) {
-      // Token exists - user is logged in
-      _isLoggedIn = true;
-      _userName = tokenUserName;
-      _phone = tokenUserPhone;
-      _userRole = tokenUserRole;
+      // التحقق من صلاحية الـ token
+      final isTokenValid = await _verifyToken(token);
       
-      // التأكد من وجود user_token للمفضلة والدردشة
-      // دائماً نحدثه لضمان التزامن
-      await prefs.setString('user_token', token);
-      print('✅ [AUTH] تم تحديث user_token للمفضلة والدردشة');
-      
-      print('🔐 [AUTH STATE] تحميل من Token - مسجل دخول ✅');
-      print('👤 الاسم: $_userName');
-      print('📱 الجوال: $_phone');
+      if (isTokenValid) {
+        // Token صالح - المستخدم مسجل دخول
+        _isLoggedIn = true;
+        _userName = tokenUserName;
+        _phone = tokenUserPhone;
+        _userRole = tokenUserRole;
+        
+        // التأكد من وجود user_token للمفضلة والدردشة
+        await prefs.setString('user_token', token);
+        print('✅ [AUTH] تم تحديث user_token للمفضلة والدردشة');
+        
+        print('🔐 [AUTH STATE] تحميل من Token - مسجل دخول ✅');
+        print('👤 الاسم: $_userName');
+        print('📱 الجوال: $_phone');
+      } else {
+        // Token منتهي أو غير صالح - تسجيل خروج تلقائي
+        print('⚠️ [AUTH] Token منتهي الصلاحية - تسجيل خروج تلقائي');
+        await _clearAuthData(prefs);
+        _isLoggedIn = false;
+        _userName = null;
+        _phone = null;
+        _userRole = null;
+      }
     } else {
       // Fallback to old system
       _isLoggedIn = prefs.getBool(_kIsLoggedIn) ?? false;
