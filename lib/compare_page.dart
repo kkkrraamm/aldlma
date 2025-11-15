@@ -1,12 +1,16 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart' as intl;
 import 'theme_config.dart';
 import 'realty_details_page.dart';
 
@@ -1617,28 +1621,530 @@ class _ComparePageState extends State<ComparePage> with SingleTickerProviderStat
   }
   
   Future<void> _exportToPDF() async {
-    // TODO: Implement PDF export
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'سيتم إضافة ميزة التصدير قريباً',
-          style: GoogleFonts.cairo(),
+    try {
+      // عرض مؤشر التحميل
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10b981)),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'جاري إنشاء ملف PDF...',
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1e293b),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        backgroundColor: const Color(0xFF10b981),
+      );
+
+      final pdf = pw.Document();
+      
+      // تحميل الشعار
+      pw.MemoryImage? logo;
+      try {
+        final ByteData logoData = await rootBundle.load('assets/img/aldlma.png');
+        final Uint8List logoBytes = logoData.buffer.asUint8List();
+        logo = pw.MemoryImage(logoBytes);
+      } catch (e) {
+        print('تحذير: لم يتم العثور على الشعار');
+      }
+
+      // إنشاء صفحة PDF بسيطة
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return [
+              // الهيدر مع شعار الدلما
+              _buildPDFHeaderSimple(logo),
+              pw.SizedBox(height: 30),
+              
+              // العنوان
+              pw.Container(
+                padding: const pw.EdgeInsets.all(15),
+                decoration: pw.BoxDecoration(
+                  color: PdfColor.fromHex('#10b981'),
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+                ),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  children: [
+                    pw.Text(
+                      'Property Comparison Report - Dalma App',
+                      style: pw.TextStyle(
+                        fontSize: 20,
+                        color: PdfColors.white,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 20),
+              
+              // معلومات التقرير
+              _buildPDFInfoSectionSimple(),
+              pw.SizedBox(height: 25),
+              
+              // جدول المقارنة
+              _buildPDFComparisonTableSimple(),
+              pw.SizedBox(height: 25),
+              
+              // النصائح الذكية
+              _buildPDFSmartTipsSimple(),
+              pw.SizedBox(height: 30),
+              
+              // الفوتر
+              _buildPDFFooterSimple(logo),
+            ];
+          },
+        ),
+      );
+
+      // حفظ الملف
+      final output = await getTemporaryDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File('${output.path}/dalma_comparison_$timestamp.pdf');
+      await file.writeAsBytes(await pdf.save());
+
+      // إغلاق مؤشر التحميل
+      if (mounted) Navigator.pop(context);
+
+      // عرض رسالة نجاح مع خيار المشاركة
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10b981).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.check_circle, color: Color(0xFF10b981), size: 24),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'تم إنشاء التقرير',
+                  style: GoogleFonts.cairo(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1e293b),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'تم إنشاء تقرير المقارنة بنجاح',
+              style: GoogleFonts.cairo(fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'إغلاق',
+                  style: GoogleFonts.cairo(color: const Color(0xFF64748b)),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Share.shareXFiles([XFile(file.path)], text: 'تقرير مقارنة العقارات من تطبيق الدلما');
+                },
+                icon: const Icon(Icons.share, size: 18),
+                label: Text('مشاركة', style: GoogleFonts.cairo()),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10b981),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      // إغلاق مؤشر التحميل في حالة الخطأ
+      if (mounted) Navigator.pop(context);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'حدث خطأ أثناء إنشاء التقرير: $e',
+              style: GoogleFonts.cairo(),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+  
+  Future<void> _shareComparison() async {
+    try {
+      // إنشاء نص المقارنة
+      String shareText = '🏠 مقارنة العقارات - تطبيق الدلما 🏠\n\n';
+      shareText += '━━━━━━━━━━━━━━━━━━━━━━\n\n';
+      
+      for (int i = 0; i < widget.properties.length; i++) {
+        final property = widget.properties[i];
+        final priceRaw = property['price'];
+        final areaRaw = property['area'];
+        final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+        final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
+        final pricePerMeter = area > 0 ? (price / area).toDouble() : 0.0;
+        
+        shareText += '📍 العقار ${i + 1}: ${property['title'] ?? 'بدون عنوان'}\n';
+        shareText += '💰 السعر: ${_formatPrice(price)}\n';
+        shareText += '📐 المساحة: ${area.toStringAsFixed(0)} م²\n';
+        shareText += '💵 السعر/م²: ${_formatPrice(pricePerMeter)}\n';
+        shareText += '📍 الموقع: ${property['city'] ?? '-'}, ${property['neighborhood'] ?? '-'}\n';
+        shareText += '🏷️ النوع: ${_getTypeLabel(property['type'])}\n';
+        
+        if (property['rooms'] != null) {
+          shareText += '🛏️ غرف النوم: ${property['rooms']}\n';
+        }
+        if (property['bathrooms'] != null) {
+          shareText += '🚿 دورات المياه: ${property['bathrooms']}\n';
+        }
+        
+        shareText += '\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
+      }
+      
+      // إضافة أفضل قيمة
+      double bestPricePerMeter = double.infinity;
+      int bestIndex = 0;
+      
+      for (int i = 0; i < widget.properties.length; i++) {
+        final property = widget.properties[i];
+        final priceRaw = property['price'];
+        final areaRaw = property['area'];
+        final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+        final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
+        
+        if (area > 0) {
+          final pricePerMeter = (price / area).toDouble();
+          if (pricePerMeter < bestPricePerMeter) {
+            bestPricePerMeter = pricePerMeter;
+            bestIndex = i;
+          }
+        }
+      }
+      
+      shareText += '⭐ أفضل قيمة: العقار ${bestIndex + 1}\n';
+      shareText += '(أقل سعر للمتر المربع: ${_formatPrice(bestPricePerMeter)})\n\n';
+      
+      shareText += '━━━━━━━━━━━━━━━━━━━━━━\n\n';
+      shareText += '📱 تطبيق الدلما للعقارات\n';
+      shareText += '🌐 dalma.sa\n';
+      shareText += '✨ اكتشف أفضل العقارات في منطقتك';
+      
+      // مشاركة النص
+      await Share.share(
+        shareText,
+        subject: 'مقارنة العقارات - تطبيق الدلما',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'حدث خطأ أثناء المشاركة: $e',
+              style: GoogleFonts.cairo(),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+  
+  // دوال مساعدة لبناء PDF
+  pw.Widget _buildPDFHeaderSimple(pw.MemoryImage? logo) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(20),
+      decoration: pw.BoxDecoration(
+        gradient: const pw.LinearGradient(
+          colors: [PdfColor(0.06, 0.73, 0.51), PdfColor(0.04, 0.52, 0.36)],
+        ),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(15)),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'Dalma App',
+                style: pw.TextStyle(
+                  fontSize: 28,
+                  color: PdfColors.white,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 5),
+              pw.Text(
+                'Leading Real Estate Platform',
+                style: const pw.TextStyle(
+                  fontSize: 14,
+                  color: PdfColors.white,
+                ),
+              ),
+            ],
+          ),
+          if (logo != null)
+            pw.Container(
+              width: 80,
+              height: 80,
+              decoration: pw.BoxDecoration(
+                color: PdfColors.white,
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(15)),
+              ),
+              padding: const pw.EdgeInsets.all(10),
+              child: pw.Image(logo),
+            ),
+        ],
       ),
     );
   }
   
-  Future<void> _shareComparison() async {
-    // TODO: Implement share functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'سيتم إضافة ميزة المشاركة قريباً',
-          style: GoogleFonts.cairo(),
-        ),
-        backgroundColor: const Color(0xFF3b82f6),
+  pw.Widget _buildPDFInfoSectionSimple() {
+    final now = DateTime.now();
+    final formatter = intl.DateFormat('yyyy/MM/dd - hh:mm a');
+    
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(15),
+      decoration: pw.BoxDecoration(
+        color: PdfColor.fromHex('#f1f5f9'),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'Report Date',
+                style: pw.TextStyle(fontSize: 12, color: PdfColor.fromHex('#64748b')),
+              ),
+              pw.SizedBox(height: 5),
+              pw.Text(
+                formatter.format(now),
+                style: pw.TextStyle(fontSize: 14, color: PdfColor.fromHex('#1e293b'), fontWeight: pw.FontWeight.bold),
+              ),
+            ],
+          ),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              pw.Text(
+                'Properties Count',
+                style: pw.TextStyle(fontSize: 12, color: PdfColor.fromHex('#64748b')),
+              ),
+              pw.SizedBox(height: 5),
+              pw.Text(
+                '${widget.properties.length}',
+                style: pw.TextStyle(fontSize: 18, color: PdfColor.fromHex('#10b981'), fontWeight: pw.FontWeight.bold),
+              ),
+            ],
+          ),
+        ],
       ),
     );
+  }
+  
+  pw.Widget _buildPDFComparisonTableSimple() {
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColor.fromHex('#e2e8f0'), width: 1),
+      children: [
+        // Header
+        pw.TableRow(
+          decoration: pw.BoxDecoration(color: PdfColor.fromHex('#10b981')),
+          children: [
+            _buildPDFTableCellSimple('Property', isHeader: true),
+            _buildPDFTableCellSimple('Price', isHeader: true),
+            _buildPDFTableCellSimple('Area', isHeader: true),
+            _buildPDFTableCellSimple('Price/m²', isHeader: true),
+            _buildPDFTableCellSimple('Location', isHeader: true),
+          ],
+        ),
+        // Data
+        ...widget.properties.asMap().entries.map((entry) {
+          final index = entry.key;
+          final property = entry.value;
+          final priceRaw = property['price'];
+          final areaRaw = property['area'];
+          final price = priceRaw is String ? double.tryParse(priceRaw) ?? 0 : (priceRaw as num?)?.toDouble() ?? 0;
+          final area = areaRaw is String ? double.tryParse(areaRaw) ?? 0 : (areaRaw as num?)?.toDouble() ?? 0;
+          final pricePerMeter = area > 0 ? (price / area).toDouble() : 0.0;
+          
+          return pw.TableRow(
+            decoration: pw.BoxDecoration(
+              color: index % 2 == 0 ? PdfColors.white : PdfColor.fromHex('#f8fafc'),
+            ),
+            children: [
+              _buildPDFTableCellSimple(property['title'] ?? 'Property ${index + 1}'),
+              _buildPDFTableCellSimple(_formatPrice(price)),
+              _buildPDFTableCellSimple('${area.toStringAsFixed(0)} m²'),
+              _buildPDFTableCellSimple(_formatPrice(pricePerMeter)),
+              _buildPDFTableCellSimple('${property['city'] ?? '-'}, ${property['neighborhood'] ?? '-'}'),
+            ],
+          );
+        }).toList(),
+      ],
+    );
+  }
+  
+  pw.Widget _buildPDFTableCellSimple(String text, {bool isHeader = false}) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: isHeader ? 12 : 10,
+          color: isHeader ? PdfColors.white : PdfColor.fromHex('#1e293b'),
+          fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
+        ),
+        textAlign: pw.TextAlign.center,
+      ),
+    );
+  }
+  
+  pw.Widget _buildPDFSmartTipsSimple() {
+    final tips = _generateSmartTips();
+    
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Container(
+          padding: const pw.EdgeInsets.all(12),
+          decoration: pw.BoxDecoration(
+            color: PdfColor.fromHex('#3b82f6'),
+            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+          ),
+          child: pw.Text(
+            'Smart Tips',
+            style: pw.TextStyle(
+              fontSize: 16,
+              color: PdfColors.white,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ),
+        pw.SizedBox(height: 15),
+        ...tips.take(5).map((tip) {
+          return pw.Container(
+            margin: const pw.EdgeInsets.only(bottom: 10),
+            padding: const pw.EdgeInsets.all(12),
+            decoration: pw.BoxDecoration(
+              color: PdfColor.fromHex('#f1f5f9'),
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+              border: pw.Border(
+                left: pw.BorderSide(
+                  color: PdfColor.fromHex('#10b981'),
+                  width: 4,
+                ),
+              ),
+            ),
+            child: pw.Text(
+              tip['text'],
+              style: pw.TextStyle(
+                fontSize: 11,
+                color: PdfColor.fromHex('#1e293b'),
+              ),
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+  
+  pw.Widget _buildPDFFooterSimple(pw.MemoryImage? logo) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(20),
+      decoration: pw.BoxDecoration(
+        color: PdfColor.fromHex('#1e293b'),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'Dalma Real Estate App',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  color: PdfColors.white,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 5),
+              pw.Text(
+                'www.dalma.sa',
+                style: pw.TextStyle(
+                  fontSize: 11,
+                  color: PdfColor.fromHex('#94a3b8'),
+                ),
+              ),
+              pw.SizedBox(height: 3),
+              pw.Text(
+                'Discover the best properties in your area',
+                style: pw.TextStyle(
+                  fontSize: 10,
+                  color: PdfColor.fromHex('#94a3b8'),
+                ),
+              ),
+            ],
+          ),
+          if (logo != null)
+            pw.Container(
+              width: 50,
+              height: 50,
+              decoration: pw.BoxDecoration(
+                color: PdfColors.white,
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+              ),
+              padding: const pw.EdgeInsets.all(8),
+              child: pw.Image(logo),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  String _formatPrice(double price) {
+    if (price >= 1000000) {
+      return '${(price / 1000000).toStringAsFixed(2)} مليون ريال';
+    } else if (price >= 1000) {
+      return '${(price / 1000).toStringAsFixed(0)} ألف ريال';
+    } else {
+      return '${price.toStringAsFixed(0)} ريال';
+    }
   }
 }
