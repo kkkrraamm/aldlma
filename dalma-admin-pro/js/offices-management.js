@@ -266,8 +266,16 @@ async function approveOffice(id, name) {
     if (!confirm(`هل تريد اعتماد المكتب: ${name}؟\n\nسيظهر في قائمة المكاتب المعتمدة في التطبيق`)) return;
     
     try {
+        const token = localStorage.getItem('adminToken');
+        const apiKey = localStorage.getItem('adminApiKey');
+        
         const response = await fetch(`${API_URL}/api/admin/offices/${id}/approve`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'x-api-key': apiKey,
+                'Content-Type': 'application/json'
+            }
         });
         
         const data = await response.json();
@@ -288,8 +296,16 @@ async function unapproveOffice(id, name) {
     if (!confirm(`هل تريد إلغاء اعتماد المكتب: ${name}؟\n\nلن يظهر في قائمة المكاتب المعتمدة`)) return;
     
     try {
+        const token = localStorage.getItem('adminToken');
+        const apiKey = localStorage.getItem('adminApiKey');
+        
         const response = await fetch(`${API_URL}/api/admin/offices/${id}/unapprove`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'x-api-key': apiKey,
+                'Content-Type': 'application/json'
+            }
         });
         
         const data = await response.json();
