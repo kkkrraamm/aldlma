@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'theme_config.dart';
 import 'api_config.dart';
+import 'chat_page.dart';
+import 'mortgage_calculator_page.dart';
 
 class RealtyDetailsPage extends StatefulWidget {
   final int listingId;
@@ -20,11 +24,124 @@ class _RealtyDetailsPageState extends State<RealtyDetailsPage> {
   Map<String, dynamic>? _listing;
   bool _isLoading = true;
   int _currentImageIndex = 0;
+  bool _isFavorite = false;
+  bool _isFavoriteLoading = false;
 
   @override
   void initState() {
     super.initState();
     _loadListing();
+    _checkFavoriteStatus();
+  }
+  
+  Future<void> _checkFavoriteStatus() async {
+    try {
+      // التحقق من تسجيل الدخول
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('user_token');
+      
+      if (token == null) {
+        setState(() => _isFavorite = false);
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/favorites/check/${widget.listingId}'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() => _isFavorite = data['is_favorite'] ?? false);
+      }
+    } catch (e) {
+      debugPrint('❌ [FAVORITES] خطأ في التحقق: $e');
+    }
+  }
+  
+  Future<void> _toggleFavorite() async {
+    try {
+      // التحقق من تسجيل الدخول
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('user_token');
+      
+      if (token == null) {
+        // عرض رسالة تسجيل الدخول
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'يجب تسجيل الدخول أولاً',
+              style: GoogleFonts.cairo(),
+            ),
+            action: SnackBarAction(
+              label: 'تسجيل الدخول',
+              onPressed: () {
+                // TODO: الانتقال لصفحة تسجيل الدخول
+              },
+            ),
+          ),
+        );
+        return;
+      }
+
+      setState(() => _isFavoriteLoading = true);
+
+      if (_isFavorite) {
+        // إزالة من المفضلة
+        final response = await http.delete(
+          Uri.parse('${ApiConfig.baseUrl}/api/favorites/remove/${widget.listingId}'),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+
+        if (response.statusCode == 200) {
+          setState(() => _isFavorite = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'تمت الإزالة من المفضلة',
+                style: GoogleFonts.cairo(),
+              ),
+              backgroundColor: Colors.grey[700],
+            ),
+          );
+        }
+      } else {
+        // إضافة للمفضلة
+        final response = await http.post(
+          Uri.parse('${ApiConfig.baseUrl}/api/favorites/add'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'listing_id': widget.listingId}),
+        );
+
+        if (response.statusCode == 200) {
+          setState(() => _isFavorite = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'تمت الإضافة للمفضلة ❤️',
+                style: GoogleFonts.cairo(),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [FAVORITES] خطأ: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حدث خطأ، حاول مرة أخرى',
+            style: GoogleFonts.cairo(),
+          ),
+        ),
+      );
+    } finally {
+      setState(() => _isFavoriteLoading = false);
+    }
   }
 
   Future<void> _loadListing() async {
@@ -34,8 +151,13 @@ class _RealtyDetailsPageState extends State<RealtyDetailsPage> {
       );
 
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final images = data['images'] as List? ?? [];
+        debugPrint('📸 [REALTY] تم جلب ${images.length} صورة للعقار #${widget.listingId}');
+        debugPrint('📸 [REALTY] الصور: $images');
+        
         setState(() {
-          _listing = jsonDecode(response.body);
+          _listing = data;
           _isLoading = false;
         });
         
@@ -98,6 +220,21 @@ class _RealtyDetailsPageState extends State<RealtyDetailsPage> {
             expandedHeight: 300,
             pinned: true,
             backgroundColor: theme.primaryColor,
+            actions: [
+              // زر المفضلة
+              IconButton(
+                icon: Icon(
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: _isFavorite ? Colors.red : Colors.white,
+                ),
+                onPressed: _toggleFavorite,
+              ),
+              // زر المشاركة
+              IconButton(
+                icon: const Icon(Icons.share, color: Colors.white),
+                onPressed: _handleShare,
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: images.isNotEmpty
                   ? Stack(
@@ -221,6 +358,53 @@ class _RealtyDetailsPageState extends State<RealtyDetailsPage> {
                               ),
                             ),
                           ),
+                          if (_listing!['status'] == 'for_sale')
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MortgageCalculatorPage(
+                                      initialPrice: _listing!['price']?.toDouble(),
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: Colors.orange.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.calculate,
+                                      size: 14,
+                                      color: Colors.orange,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'حاسبة التمويل',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 11,
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ],
@@ -545,44 +729,72 @@ class _RealtyDetailsPageState extends State<RealtyDetailsPage> {
         ],
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _handleCall,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _handleCall,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.call),
+                    label: Text(
+                      'اتصال',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-                icon: const Icon(Icons.call),
-                label: Text(
-                  'اتصال',
-                  style: GoogleFonts.cairo(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _handleWhatsApp,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF25D366),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.chat),
+                    label: Text(
+                      'واتساب',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _handleWhatsApp,
+                onPressed: _handleChat,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF25D366),
+                  backgroundColor: const Color(0xFF3b82f6),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                icon: const Icon(Icons.chat),
+                icon: const Icon(Icons.chat_bubble),
                 label: Text(
-                  'واتساب',
+                  'دردشة مباشرة مع المكتب',
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -622,6 +834,200 @@ class _RealtyDetailsPageState extends State<RealtyDetailsPage> {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     }
+  }
+
+  void _handleChat() {
+    // التحقق من تسجيل الدخول
+    SharedPreferences.getInstance().then((prefs) {
+      final token = prefs.getString('user_token');
+      
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'يجب تسجيل الدخول أولاً',
+              style: GoogleFonts.cairo(),
+            ),
+            action: SnackBarAction(
+              label: 'تسجيل الدخول',
+              onPressed: () {
+                // TODO: الانتقال لصفحة تسجيل الدخول
+              },
+            ),
+          ),
+        );
+        return;
+      }
+
+      // فتح صفحة الدردشة
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatPage(
+            officeId: _listing!['office_id'],
+            officeName: _listing!['office_name'] ?? 'المكتب',
+            officeLogo: _listing!['office_logo'],
+          ),
+        ),
+      );
+    });
+  }
+
+  void _handleShare() {
+    final theme = Provider.of<ThemeConfig>(context, listen: false);
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.textSecondaryColor.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'مشاركة العقار',
+              style: GoogleFonts.cairo(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: theme.textPrimaryColor,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildShareButton(
+                  'WhatsApp',
+                  Icons.chat,
+                  const Color(0xFF25D366),
+                  () {
+                    Navigator.pop(context);
+                    _shareViaWhatsApp();
+                  },
+                ),
+                _buildShareButton(
+                  'نسخ الرابط',
+                  Icons.link,
+                  Colors.blue,
+                  () {
+                    Navigator.pop(context);
+                    _copyLink();
+                  },
+                ),
+                _buildShareButton(
+                  'المزيد',
+                  Icons.share,
+                  Colors.grey,
+                  () {
+                    Navigator.pop(context);
+                    _shareGeneral();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShareButton(String label, IconData icon, Color color, VoidCallback onTap) {
+    final theme = Provider.of<ThemeConfig>(context, listen: false);
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.cairo(
+              fontSize: 12,
+              color: theme.textPrimaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _shareViaWhatsApp() {
+    final text = '''
+🏠 ${_listing!['title']}
+
+💰 السعر: ${_formatPrice(_listing!['price'])} ر.س
+📍 الموقع: ${_listing!['city']}${_listing!['district'] != null ? ' - ${_listing!['district']}' : ''}
+${_listing!['area'] != null ? '📐 المساحة: ${_listing!['area']} م²' : ''}
+${_listing!['rooms'] != null ? '🛏️ الغرف: ${_listing!['rooms']}' : ''}
+
+🏢 ${_listing!['office_name']}
+📱 للتواصل: ${_listing!['office_phone']}
+
+شاهد التفاصيل في تطبيق الدلما 📲
+    '''.trim();
+    
+    final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
+    launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void _copyLink() {
+    // TODO: نسخ رابط العقار
+    Clipboard.setData(ClipboardData(
+      text: 'https://dalma.app/realty/${widget.listingId}',
+    ));
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'تم نسخ الرابط',
+          style: GoogleFonts.cairo(),
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _shareGeneral() {
+    final text = '''
+🏠 ${_listing!['title']}
+💰 ${_formatPrice(_listing!['price'])} ر.س
+📍 ${_listing!['city']}
+
+شاهد في تطبيق الدلما
+    '''.trim();
+    
+    // TODO: استخدام share_plus package
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'المشاركة العامة قريباً',
+          style: GoogleFonts.cairo(),
+        ),
+      ),
+    );
   }
 
   Future<void> _postEvent(String eventType) async {

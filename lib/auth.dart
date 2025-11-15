@@ -142,6 +142,14 @@ class AuthState extends ChangeNotifier {
       _userName = tokenUserName;
       _phone = tokenUserPhone;
       _userRole = tokenUserRole;
+      
+      // التأكد من وجود user_token للمفضلة والدردشة
+      final userToken = prefs.getString('user_token');
+      if (userToken == null || userToken.isEmpty) {
+        await prefs.setString('user_token', token);
+        print('✅ [AUTH] تم تحديث user_token للمفضلة والدردشة');
+      }
+      
       print('🔐 [AUTH STATE] تحميل من Token - مسجل دخول ✅');
       print('👤 الاسم: $_userName');
       print('📱 الجوال: $_phone');
@@ -250,6 +258,7 @@ class AuthState extends ChangeNotifier {
         // حفظ في SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
+        await prefs.setString('user_token', token); // للمفضلة والدردشة
         await prefs.setString('user_name', name);
         await prefs.setString('user_phone', phone.trim());
         await prefs.setString('user_role', role);
@@ -338,6 +347,7 @@ class AuthState extends ChangeNotifier {
         // حفظ في SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
+        await prefs.setString('user_token', token); // للمفضلة والدردشة
         await prefs.setString('user_name', userName);
         await prefs.setString('user_phone', phone.trim());
         await prefs.setString('user_role', role);
@@ -379,6 +389,7 @@ class AuthState extends ChangeNotifier {
     // مسح جميع البيانات من SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
+    await prefs.remove('user_token'); // للمفضلة والدردشة
     await prefs.remove('user_name');
     await prefs.remove('user_phone');
     await prefs.remove('user_role');

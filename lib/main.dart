@@ -16,6 +16,7 @@ import 'realty_page.dart';
 import 'my_rfps_page.dart';
 import 'auth.dart';
 import 'login_page.dart';
+import 'favorites_page.dart';
 import 'notifications.dart';
 import 'orders_service.dart';
 import 'my_account_page.dart';
@@ -1023,6 +1024,13 @@ class _QuickGrid extends StatelessWidget {
                         child: child,
                       );
                     },
+                  ),
+                );
+              } else if (item.$1 == 'محفوظاتي') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FavoritesPage(),
                   ),
                 );
               } else if (item.$1 == 'طلباتي') {

@@ -51,6 +51,10 @@ dependencies:
   firebase_messaging: ^16.0.3
   flutter_local_notifications: ^19.5.0
   
+  # PDF
+  pdf: ^3.10.0
+  path_provider: ^2.1.0
+  
   # Firebase (Optional)
   # firebase_core: ^2.24.0
   # firebase_messaging: ^14.7.5

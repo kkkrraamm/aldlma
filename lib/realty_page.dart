@@ -10,6 +10,8 @@ import 'theme_config.dart';
 import 'api_config.dart';
 import 'realty_details_page.dart';
 import 'rfp_form_page.dart';
+import 'compare_page.dart';
+import 'favorites_page.dart';
 
 class RealtyPage extends StatefulWidget {
   const RealtyPage({super.key});
@@ -35,13 +37,17 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
   double? _minPrice;
   double? _maxPrice;
   
+  // نظام المقارنة
+  List<int> _selectedForCompare = [];
+  bool _isCompareMode = false;
+  
   // مركز الخريطة الافتراضي (عرعر)
   LatLng _center = const LatLng(30.9843, 41.0015);
   LatLng? _userLocation; // الموقع الحالي للمستخدم
   double _currentZoom = 13.0;
   
   // أنواع الخرائط
-  int _mapTypeIndex = 0;
+  int _mapTypeIndex = 1; // البدء بالقمر الصناعي
   final List<Map<String, String>> _mapTypes = [
     {
       'name': 'عادي',
@@ -67,17 +73,71 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
   
   // مدن الشمال المدعومة مع إحداثياتها
   final Map<String, Map<String, dynamic>> _cities = {
+    // المدن الرئيسية
     'عرعر': {'lat': 30.9843, 'lng': 41.0015, 'zoom': 13.0},
     'رفحاء': {'lat': 29.6257, 'lng': 43.4945, 'zoom': 13.0},
     'طريف': {'lat': 31.6828, 'lng': 38.6644, 'zoom': 13.0},
+    'العويقيلة': {'lat': 30.5000, 'lng': 42.2500, 'zoom': 14.0},
+    // المراكز التابعة لعرعر
+    'الجديدة': {'lat': 31.358333, 'lng': 41.443056, 'zoom': 14.0},
+    'أم خنصر': {'lat': 30.694784, 'lng': 41.600252, 'zoom': 14.0},
+    'حزم الجلاميد': {'lat': 31.280278, 'lng': 40.104167, 'zoom': 14.0},
+    // المراكز التابعة لرفحاء
+    'لينة': {'lat': 28.765106, 'lng': 43.738198, 'zoom': 14.0},
+    'الشعبة': {'lat': 29.192778, 'lng': 44.715000, 'zoom': 14.0},
+    'سماح': {'lat': 29.7000, 'lng': 43.3000, 'zoom': 14.0},
+    'نصاب': {'lat': 29.4000, 'lng': 43.2000, 'zoom': 14.0},
+    'طلعة التمياط': {'lat': 29.842633, 'lng': 43.144051, 'zoom': 14.0},
+    'بن شريم': {'lat': 29.950195, 'lng': 43.363923, 'zoom': 14.0},
+    'بن هباس': {'lat': 29.145615, 'lng': 44.321616, 'zoom': 14.0},
+    'لوقة': {'lat': 29.873707, 'lng': 44.418682, 'zoom': 14.0},
+    'أم رضمة': {'lat': 28.680180, 'lng': 44.695921, 'zoom': 14.0},
+    'الخشيبي': {'lat': 29.138357, 'lng': 43.932916, 'zoom': 14.0},
+    'زبالا': {'lat': 29.109498, 'lng': 43.965129, 'zoom': 14.0},
+    'العجرمية': {'lat': 29.361242, 'lng': 43.646348, 'zoom': 14.0},
+    'رغوة': {'lat': 29.466666, 'lng': 43.772156, 'zoom': 14.0},
+    'الحدقة': {'lat': 28.465213, 'lng': 44.337846, 'zoom': 14.0},
+    'الحدق': {'lat': 29.234739, 'lng': 43.351992, 'zoom': 14.0},
+    'أعيوج لينة': {'lat': 28.583400, 'lng': 43.596800, 'zoom': 14.0},
+    'الجميمة': {'lat': 29.5500, 'lng': 43.4500, 'zoom': 14.0},
+    // المراكز التابعة لطريف
+    'الجراني': {'lat': 31.933000, 'lng': 38.643000, 'zoom': 14.0},
+    // المراكز التابعة للعويقيلة
+    'صحن': {'lat': 30.214000, 'lng': 42.590000, 'zoom': 14.0},
+    'الأيدية': {'lat': 29.999000, 'lng': 42.750000, 'zoom': 14.0},
+    'الكاسب': {'lat': 30.040000, 'lng': 42.880000, 'zoom': 14.0},
+    'نعيجان': {'lat': 30.018000, 'lng': 42.520000, 'zoom': 14.0},
+    'أبو رواث': {'lat': 29.480000, 'lng': 43.000000, 'zoom': 14.0},
+    'الدويد': {'lat': 30.310000, 'lng': 42.680000, 'zoom': 14.0},
+    'زهوة': {'lat': 30.220000, 'lng': 42.360000, 'zoom': 14.0},
+    // القرى والهجر
+    'أم الضيان': {'lat': 31.1000, 'lng': 41.1000, 'zoom': 14.0},
+    'قليب بن غنيم': {'lat': 31.2000, 'lng': 40.9000, 'zoom': 14.0},
+    'حدق الجندة': {'lat': 29.4500, 'lng': 43.3500, 'zoom': 14.0},
+    'قيصومة فيحان': {'lat': 29.3500, 'lng': 43.2500, 'zoom': 14.0},
+    'ابن سوقي': {'lat': 29.2500, 'lng': 43.1500, 'zoom': 14.0},
+    'ابن عجل': {'lat': 29.1500, 'lng': 43.0500, 'zoom': 14.0},
+    'الشريفات': {'lat': 29.0500, 'lng': 42.9500, 'zoom': 14.0},
+    'الجبهان': {'lat': 31.4000, 'lng': 38.4000, 'zoom': 14.0},
+    'المركوز': {'lat': 30.3500, 'lng': 42.3500, 'zoom': 14.0},
+    'الديدب': {'lat': 30.8000, 'lng': 41.2000, 'zoom': 14.0},
+    'السليمانية': {'lat': 30.9000, 'lng': 41.1000, 'zoom': 14.0},
+    'ابن سعيد': {'lat': 31.0000, 'lng': 41.2000, 'zoom': 14.0},
+    'ابن بكر': {'lat': 31.1500, 'lng': 41.3000, 'zoom': 14.0},
+    'ابن عايش': {'lat': 29.5500, 'lng': 43.3500, 'zoom': 14.0},
+    'السلمانية': {'lat': 30.4500, 'lng': 42.2500, 'zoom': 14.0},
+    'الأدية': {'lat': 30.3500, 'lng': 42.1500, 'zoom': 14.0},
+    'آل علي': {'lat': 30.2500, 'lng': 42.0500, 'zoom': 14.0},
+    'دغيليب الوجعان': {'lat': 30.1500, 'lng': 41.9500, 'zoom': 14.0},
+    'كمب الثنيان': {'lat': 29.6500, 'lng': 43.4000, 'zoom': 14.0},
+    'الركعا': {'lat': 29.7500, 'lng': 43.2000, 'zoom': 14.0},
+    // مدن أخرى (خارج الحدود الشمالية)
     'القريات': {'lat': 31.3314, 'lng': 37.3404, 'zoom': 13.0},
     'سكاكا': {'lat': 29.9697, 'lng': 40.2064, 'zoom': 13.0},
     'حائل': {'lat': 27.5219, 'lng': 41.6901, 'zoom': 12.5},
     'تبوك': {'lat': 28.3838, 'lng': 36.5550, 'zoom': 12.5},
     'الجوف': {'lat': 29.8114, 'lng': 39.9294, 'zoom': 12.0},
     'دومة الجندل': {'lat': 29.8114, 'lng': 39.8714, 'zoom': 13.5},
-    'العويقيلة': {'lat': 30.5000, 'lng': 42.2500, 'zoom': 14.0},
-    'لينة': {'lat': 30.7833, 'lng': 40.9333, 'zoom': 14.0},
     'الحديثة': {'lat': 30.4333, 'lng': 41.6667, 'zoom': 14.0},
   };
   
@@ -523,59 +583,97 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
   // شريط البحث الحديث
   Widget _buildModernSearchBar(ThemeConfig theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: theme.isDarkMode ? Border.all(
+          color: const Color(0xFF2a2f3e),
+          width: 1,
+        ) : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: theme.isDarkMode 
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Row(
         children: [
-          // قائمة المدن
+          // قائمة المدن - محسّنة
           Expanded(
             child: GestureDetector(
               onTap: () => _showCitiesMenu(theme),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          _selectedCity ?? 'اختر المدينة',
-                          style: GoogleFonts.cairo(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF1a1f2e),
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.keyboard_arrow_down,
-                        color: Color(0xFF64748b),
-                        size: 18,
-                      ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.primaryColor.withOpacity(0.1),
+                      theme.primaryColor.withOpacity(0.05),
                     ],
                   ),
-                  if (_selectedType != null || _selectedStatus != null)
-                    Text(
-                      '${_types[_selectedType] ?? ''} ${_selectedStatus == 'for_sale' ? 'للبيع' : _selectedStatus == 'for_rent' ? 'للإيجار' : ''}',
-                      style: GoogleFonts.cairo(
-                        fontSize: 11,
-                        color: const Color(0xFF64748b),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: theme.primaryColor.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // أيقونة الموقع
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: theme.primaryColor,
+                        borderRadius: BorderRadius.circular(7),
                       ),
-                      overflow: TextOverflow.ellipsis,
+                      child: const Icon(
+                        Icons.location_on,
+                        color: Colors.white,
+                        size: 14,
+                      ),
                     ),
-                ],
+                    const SizedBox(width: 8),
+                    // النص
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'المدينة',
+                            style: GoogleFonts.cairo(
+                              fontSize: 9,
+                              color: theme.primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            _selectedCity ?? 'اختر المدينة',
+                            style: GoogleFonts.cairo(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1a1f2e),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    // سهم
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: theme.primaryColor,
+                      size: 20,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -610,6 +708,94 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
             ),
           
           if (!_showMapView) const SizedBox(width: 12),
+          
+          // زر المفضلة
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FavoritesPage(),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withOpacity(0.3)),
+              ),
+              child: const Icon(Icons.favorite, color: Colors.red, size: 20),
+            ),
+          ),
+          
+          const SizedBox(width: 12),
+          
+          // زر المقارنة
+          GestureDetector(
+            onTap: () {
+              if (_selectedForCompare.isEmpty) {
+                setState(() => _isCompareMode = !_isCompareMode);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      _isCompareMode 
+                        ? 'اختر عقارين على الأقل للمقارنة'
+                        : 'تم إلغاء وضع المقارنة',
+                      style: GoogleFonts.cairo(),
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              } else {
+                _openComparePage();
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _isCompareMode 
+                  ? theme.primaryColor 
+                  : theme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.primaryColor.withOpacity(0.3),
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Icon(
+                    Icons.compare_arrows,
+                    color: _isCompareMode ? Colors.white : theme.primaryColor,
+                    size: 20,
+                  ),
+                  if (_selectedForCompare.isNotEmpty)
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${_selectedForCompare.length}',
+                          style: GoogleFonts.cairo(
+                            fontSize: 10,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(width: 12),
           
           // زر الفلترة
           GestureDetector(
@@ -662,120 +848,270 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
 
   // قائمة المدن
   void _showCitiesMenu(ThemeConfig theme) {
+    // تقسيم المدن حسب النوع
+    final mainCities = ['عرعر', 'رفحاء', 'طريف', 'العويقيلة'];
+    final centers = [
+      'الجديدة', 'أم خنصر', 'حزم الجلاميد', 'لينة', 'الشعبة', 'سماح', 'نصاب',
+      'طلعة التمياط', 'بن شريم', 'بن هباس', 'لوقة', 'أم رضمة', 'الخشيبي',
+      'زبالا', 'العجرمية', 'رغوة', 'الحدقة', 'الحدق', 'أعيوج لينة', 'الجميمة',
+      'الجراني', 'صحن', 'الأيدية', 'الكاسب', 'نعيجان', 'أبو رواث', 'الدويد', 'زهوة'
+    ];
+    final villages = [
+      'أم الضيان', 'قليب بن غنيم', 'حدق الجندة', 'قيصومة فيحان', 'ابن سوقي',
+      'ابن عجل', 'الشريفات', 'الجبهان', 'المركوز', 'الديدب', 'السليمانية',
+      'ابن سعيد', 'ابن بكر', 'ابن عايش', 'السلمانية', 'الأدية', 'آل علي',
+      'دغيليب الوجعان', 'كمب الثنيان', 'الركعا'
+    ];
+    final otherCities = ['القريات', 'سكاكا', 'حائل', 'تبوك', 'الجوف', 'دومة الجندل', 'الحديثة'];
+    
+    final allCitiesList = [...mainCities, ...centers, ...villages, ...otherCities];
+    
+    final searchController = TextEditingController();
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 30,
-                offset: const Offset(0, -10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // مؤشر السحب
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            List<String> filteredCities = allCitiesList;
+            
+            if (searchController.text.isNotEmpty) {
+              filteredCities = allCitiesList
+                  .where((city) => city.contains(searchController.text))
+                  .toList();
+            }
+            
+            final filteredMain = filteredCities.where((c) => mainCities.contains(c)).toList();
+            final filteredCenters = filteredCities.where((c) => centers.contains(c)).toList();
+            final filteredVillages = filteredCities.where((c) => villages.contains(c)).toList();
+            final filteredOther = filteredCities.where((c) => otherCities.contains(c)).toList();
+            
+            return DraggableScrollableSheet(
+              initialChildSize: 0.7,
+              minChildSize: 0.5,
+              maxChildSize: 0.9,
+              builder: (context, scrollController) {
+                return Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFe2e8f0),
-                    borderRadius: BorderRadius.circular(2),
+                    color: theme.isDarkMode ? const Color(0xFF1a1f2e) : Colors.white,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    border: theme.isDarkMode ? Border.all(
+                      color: const Color(0xFF2a2f3e),
+                      width: 1,
+                    ) : null,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(theme.isDarkMode ? 0.5 : 0.2),
+                        blurRadius: 30,
+                        offset: const Offset(0, -10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // مؤشر السحب
+                      const SizedBox(height: 12),
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: theme.isDarkMode 
+                                ? const Color(0xFF3a3f4e)
+                                : const Color(0xFFe2e8f0),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // العنوان
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          'اختر المدينة',
+                          style: GoogleFonts.cairo(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textPrimaryColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // حقل البحث
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: TextField(
+                          controller: searchController,
+                          onChanged: (value) {
+                            setModalState(() {});
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'ابحث عن المدينة...',
+                            hintStyle: GoogleFonts.cairo(
+                              color: theme.textSecondaryColor,
+                              fontSize: 14,
+                            ),
+                            prefixIcon: Icon(Icons.search, color: theme.textSecondaryColor),
+                            suffixIcon: searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: Icon(Icons.clear, color: theme.textSecondaryColor),
+                                    onPressed: () {
+                                      searchController.clear();
+                                      setModalState(() {});
+                                    },
+                                  )
+                                : null,
+                            filled: true,
+                            fillColor: theme.isDarkMode 
+                                ? const Color(0xFF0b0f14)
+                                : const Color(0xFFf1f5f9),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: theme.isDarkMode 
+                                  ? const BorderSide(color: Color(0xFF2a2f3e))
+                                  : BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: theme.isDarkMode 
+                                  ? const BorderSide(color: Color(0xFF2a2f3e))
+                                  : BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                          style: GoogleFonts.cairo(
+                            fontSize: 14,
+                            color: theme.textPrimaryColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // المحتوى القابل للتمرير
+                      Expanded(
+                        child: filteredCities.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.search_off,
+                                      size: 64,
+                                      color: theme.textSecondaryColor.withOpacity(0.5),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'لا توجد نتائج',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 16,
+                                        color: theme.textSecondaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView(
+                                controller: scrollController,
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                children: [
+                                  // المدن الرئيسية
+                                  if (filteredMain.isNotEmpty) ...[
+                                    _buildCitySection('🏙️ المدن الرئيسية', filteredMain, theme),
+                                    const SizedBox(height: 20),
+                                  ],
+                                  // المراكز الإدارية
+                                  if (filteredCenters.isNotEmpty) ...[
+                                    _buildCitySection('🏘️ المراكز الإدارية', filteredCenters, theme),
+                                    const SizedBox(height: 20),
+                                  ],
+                                  // القرى والهجر
+                                  if (filteredVillages.isNotEmpty) ...[
+                                    _buildCitySection('🏡 القرى والهجر', filteredVillages, theme),
+                                    const SizedBox(height: 20),
+                                  ],
+                                  // مدن أخرى
+                                  if (filteredOther.isNotEmpty) ...[
+                                    _buildCitySection('📍 مدن أخرى', filteredOther, theme),
+                                    const SizedBox(height: 20),
+                                  ],
+                                ],
+                              ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCitySection(String title, List<String> cities, ThemeConfig theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.cairo(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: theme.textSecondaryColor,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: cities.where((city) => _cities.containsKey(city)).map((city) {
+            final isSelected = _selectedCity == city;
+            return GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+                _changeCity(city);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
+                        )
+                      : null,
+                  color: isSelected 
+                      ? null 
+                      : (theme.isDarkMode 
+                          ? const Color(0xFF0b0f14)
+                          : const Color(0xFFf1f5f9)),
+                  borderRadius: BorderRadius.circular(12),
+                  border: !isSelected && theme.isDarkMode 
+                      ? Border.all(color: const Color(0xFF2a2f3e))
+                      : null,
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: theme.primaryColor.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  city,
+                  style: GoogleFonts.cairo(
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    color: isSelected ? Colors.white : theme.textSecondaryColor,
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              // العنوان
-              Text(
-                'مدن الشمال المدعومة',
-                style: GoogleFonts.cairo(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1a1f2e),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // قائمة المدن
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: _cities.keys.map((city) {
-                  final isSelected = _selectedCity == city;
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      _changeCity(city);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(
-                        gradient: isSelected
-                            ? LinearGradient(
-                                colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
-                              )
-                            : null,
-                        color: isSelected ? null : const Color(0xFFf1f5f9),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: theme.primaryColor.withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Text(
-                        city,
-                        style: GoogleFonts.cairo(
-                          fontSize: 14,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                          color: isSelected ? Colors.white : const Color(0xFF64748b),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
-              // معلومة
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: theme.primaryColor, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'اختر المدينة لعرض العقارات المتاحة فيها',
-                        style: GoogleFonts.cairo(
-                          fontSize: 12,
-                          color: const Color(0xFF1a1f2e),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -867,6 +1203,160 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                         child: _buildStatusChip('for_rent', 'للإيجار', theme),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // نطاق السعر
+                  Text(
+                    'نطاق السعر (ر.س)',
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1a1f2e),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: 'من',
+                            hintStyle: GoogleFonts.cairo(fontSize: 12),
+                            filled: true,
+                            fillColor: const Color(0xFFf8fafc),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          style: GoogleFonts.cairo(fontSize: 13),
+                          onChanged: (value) {
+                            _minPrice = double.tryParse(value);
+                            _loadListings();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text('—', style: GoogleFonts.cairo(color: const Color(0xFF64748b))),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: 'إلى',
+                            hintStyle: GoogleFonts.cairo(fontSize: 12),
+                            filled: true,
+                            fillColor: const Color(0xFFf8fafc),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          style: GoogleFonts.cairo(fontSize: 13),
+                          onChanged: (value) {
+                            _maxPrice = double.tryParse(value);
+                            _loadListings();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // نطاق المساحة
+                  Text(
+                    'نطاق المساحة (م²)',
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1a1f2e),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: 'من',
+                            hintStyle: GoogleFonts.cairo(fontSize: 12),
+                            filled: true,
+                            fillColor: const Color(0xFFf8fafc),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          style: GoogleFonts.cairo(fontSize: 13),
+                          onChanged: (value) {
+                            setState(() {
+                              // سيتم إضافة دعم min_area في API call
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text('—', style: GoogleFonts.cairo(color: const Color(0xFF64748b))),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: 'إلى',
+                            hintStyle: GoogleFonts.cairo(fontSize: 12),
+                            filled: true,
+                            fillColor: const Color(0xFFf8fafc),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          style: GoogleFonts.cairo(fontSize: 13),
+                          onChanged: (value) {
+                            setState(() {
+                              // سيتم إضافة دعم max_area في API call
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // زر إعادة تعيين
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _selectedType = null;
+                          _selectedStatus = null;
+                          _minPrice = null;
+                          _maxPrice = null;
+                        });
+                        _loadListings();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: Text(
+                        'إعادة تعيين الفلاتر',
+                        style: GoogleFonts.cairo(fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.primaryColor,
+                        side: BorderSide(color: theme.primaryColor),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1051,9 +1541,9 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
 
   // Popup حديث للعقار
   void _showModernListingPopup(dynamic listing, ThemeConfig theme) {
-    // جلب الصور
-    final images = listing['images'] as List<dynamic>? ?? [];
-    final hasImages = images.isNotEmpty;
+    // جلب الصورة المصغرة
+    final thumbnail = listing['thumbnail'];
+    final hasImage = thumbnail != null && thumbnail.toString().isNotEmpty;
     
     showModalBottomSheet(
       context: context,
@@ -1091,11 +1581,11 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
               const SizedBox(height: 20),
               
               // الصورة (إذا موجودة)
-              if (hasImages) ...[
+              if (hasImage) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: Image.network(
-                    images[0],
+                    thumbnail,
                     height: 180,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -1403,14 +1893,20 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
     final status = listing['status'];
     final type = listing['type'];
     
+    final isSelected = _selectedForCompare.contains(listing['id']);
+    
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => RealtyDetailsPage(listingId: listing['id']),
-          ),
-        );
+        if (_isCompareMode) {
+          _toggleCompareSelection(listing['id']);
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RealtyDetailsPage(listingId: listing['id']),
+            ),
+          );
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -1481,6 +1977,30 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
                     ),
                   ),
                 ),
+                // Checkbox للمقارنة
+                if (_isCompareMode)
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Checkbox(
+                        value: isSelected,
+                        onChanged: (_) => _toggleCompareSelection(listing['id']),
+                        activeColor: theme.primaryColor,
+                        shape: const CircleBorder(),
+                      ),
+                    ),
+                  ),
                 // نوع العقار
                 Positioned(
                   top: 12,
@@ -1655,58 +2175,120 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
       },
       child: Container(
         margin: const EdgeInsets.only(top: 12),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             colors: [
-              Color(0xFF3b82f6),
-              Color(0xFF2563eb),
+              theme.primaryColor,
+              theme.primaryColor.withOpacity(0.85),
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF3b82f6).withOpacity(0.3),
-              blurRadius: 12,
+              color: theme.primaryColor.withOpacity(0.4),
+              blurRadius: 16,
               offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Row(
           children: [
+            // أيقونة متحركة
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: const Icon(Icons.business_center, color: Colors.white, size: 24),
+              child: Icon(
+                Icons.business_center_rounded,
+                color: theme.primaryColor,
+                size: 24,
+              ),
             ),
             const SizedBox(width: 14),
+            // النص
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'أنت مكتب عقاري؟',
-                    style: GoogleFonts.cairo(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'أنت مكتب عقاري؟',
+                        style: GoogleFonts.cairo(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'مجاناً',
+                          style: GoogleFonts.cairo(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'سجّل الآن واعرض عقاراتك مجاناً',
-                    style: GoogleFonts.cairo(
-                      fontSize: 12,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.white.withOpacity(0.9),
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'سجّل الآن واعرض عقاراتك لآلاف العملاء',
+                          style: GoogleFonts.cairo(
+                            fontSize: 11,
+                            color: Colors.white.withOpacity(0.95),
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
+            // زر السهم
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 4),
             // زر الإغلاق
             GestureDetector(
               onTap: () {
@@ -1714,15 +2296,15 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
               },
               behavior: HitTestBehavior.opaque,
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.close,
                   color: Colors.white,
-                  size: 18,
+                  size: 16,
                 ),
               ),
             ),
@@ -1730,6 +2312,77 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
         ),
       ),
     );
+  }
+  
+  // ═══════════════════════════════════════════════════════════
+  // دوال المقارنة
+  // ═══════════════════════════════════════════════════════════
+  
+  void _openComparePage() {
+    if (_selectedForCompare.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'اختر عقارين على الأقل للمقارنة',
+            style: GoogleFonts.cairo(),
+          ),
+        ),
+      );
+      return;
+    }
+    
+    if (_selectedForCompare.length > 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'يمكنك مقارنة 4 عقارات كحد أقصى',
+            style: GoogleFonts.cairo(),
+          ),
+        ),
+      );
+      return;
+    }
+    
+    // جلب العقارات المحددة
+    final selectedListings = _listings
+        .where((listing) => _selectedForCompare.contains(listing['id']))
+        .toList();
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ComparePage(
+          properties: List<Map<String, dynamic>>.from(selectedListings),
+        ),
+      ),
+    ).then((_) {
+      // إعادة تعيين وضع المقارنة بعد الرجوع
+      setState(() {
+        _isCompareMode = false;
+        _selectedForCompare.clear();
+      });
+    });
+  }
+  
+  void _toggleCompareSelection(int listingId) {
+    setState(() {
+      if (_selectedForCompare.contains(listingId)) {
+        _selectedForCompare.remove(listingId);
+      } else {
+        if (_selectedForCompare.length < 4) {
+          _selectedForCompare.add(listingId);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'يمكنك مقارنة 4 عقارات كحد أقصى',
+                style: GoogleFonts.cairo(),
+              ),
+            ),
+          );
+        }
+      }
+    });
   }
 }
 
@@ -1920,56 +2573,132 @@ class _OfficeRegistrationPageState extends State<OfficeRegistrationPage> {
 
   Widget _buildHeader(ThemeConfig theme) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [const Color(0xFF3b82f6), const Color(0xFF2563eb)],
+          colors: [
+            theme.primaryColor,
+            theme.primaryColor.withOpacity(0.85),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3b82f6).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: theme.primaryColor.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
+          // الصف الأول: زر الرجوع + العنوان
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                ),
               ),
-              child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'انضم كمكتب عقاري',
+                          style: GoogleFonts.cairo(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'مجاناً',
+                            style: GoogleFonts.cairo(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'اعرض عقاراتك وتواصل مع آلاف العملاء',
+                      style: GoogleFonts.cairo(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.95),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'انضم كمكتب عقاري',
-                  style: GoogleFonts.cairo(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  'اعرض عقاراتك وتواصل مع آلاف العملاء',
-                  style: GoogleFonts.cairo(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(height: 20),
+          // الصف الثاني: المميزات السريعة
+          Row(
+            children: [
+              _buildQuickFeature(Icons.flash_on, 'تفعيل فوري', theme),
+              const SizedBox(width: 12),
+              _buildQuickFeature(Icons.verified_user, 'موثوق', theme),
+              const SizedBox(width: 12),
+              _buildQuickFeature(Icons.trending_up, 'زيادة المبيعات', theme),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickFeature(IconData icon, String text, ThemeConfig theme) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 16),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                text,
+                style: GoogleFonts.cairo(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
