@@ -2333,7 +2333,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     final versesCount = quran.getVerseCount(surahNumber);
     final screenHeight = MediaQuery.of(context).size.height;
     
-    // تقسيم الآيات إلى صفحات (كل صفحة تحتوي على عدد معين من الآيات)
+    // تقسيم الآيات إلى صفحات بناءً على عدد الأحرف (أدق من تقدير الأسطر)
     List<String> pages = [];
     String currentPage = '';
     
@@ -2342,24 +2342,19 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
       currentPage = '${quran.basmala}\n\n';
     }
     
-    int linesInCurrentPage = 2; // البسملة تأخذ سطرين
-    const int maxLinesPerPage = 15; // عدد الأسطر في كل صفحة
+    // حد أقصى للأحرف في كل صفحة (تقريباً 15 سطر × 40 حرف = 600 حرف)
+    const int maxCharsPerPage = 600;
     
     for (int i = 1; i <= versesCount; i++) {
       final verseText = quran.getVerse(surahNumber, i);
       final verseWithNumber = '$verseText ﴿$i﴾ ';
       
-      // تقدير عدد الأسطر (تقريبي: كل 80 حرف = سطر)
-      final estimatedLines = (verseWithNumber.length / 80).ceil();
-      
-      if (linesInCurrentPage + estimatedLines > maxLinesPerPage && currentPage.isNotEmpty) {
-        // الصفحة ممتلئة، احفظها وابدأ صفحة جديدة
+      // إذا إضافة الآية ستتجاوز الحد، ابدأ صفحة جديدة
+      if (currentPage.length + verseWithNumber.length > maxCharsPerPage && currentPage.isNotEmpty) {
         pages.add(currentPage.trim());
         currentPage = verseWithNumber;
-        linesInCurrentPage = estimatedLines;
       } else {
         currentPage += verseWithNumber;
-        linesInCurrentPage += estimatedLines;
       }
     }
     
