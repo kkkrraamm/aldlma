@@ -1426,9 +1426,12 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                           // الكورة الحالية (آخر واحدة تم عدها)
                           final isCurrent = index == _tasbihCount - 1;
                           
+                          // حجم الكورة
+                          final beadSize = isCurrent ? 28.0 : 24.0;
+                          
                           return Positioned(
-                            left: 120 + x - 12,
-                            top: 140 + y - 12,
+                            left: 120 + x - (beadSize / 2),
+                            top: 120 + y - (beadSize / 2),
                             child: TweenAnimationBuilder<double>(
                               duration: const Duration(milliseconds: 400),
                               tween: Tween<double>(
@@ -1438,11 +1441,11 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                               curve: Curves.elasticOut,
                               builder: (context, value, child) {
                                 return Transform.scale(
-                                  scale: isCurrent ? 1.0 + (0.5 * value) : 1.0,
+                                  scale: isCurrent ? 1.0 + (0.3 * value) : 1.0,
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 300),
-                                    width: isCurrent ? 28 : 24,
-                                    height: isCurrent ? 28 : 24,
+                                    width: beadSize,
+                                    height: beadSize,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       gradient: isActive 
