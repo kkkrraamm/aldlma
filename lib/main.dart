@@ -24,6 +24,7 @@ import 'my_account_oasis.dart';
 import 'media_dashboard.dart';
 import 'ai_tools_page.dart';
 import 'dalma_ai_page.dart';
+import 'prayer_button.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
 import 'theme_aware_widgets.dart';
@@ -229,6 +230,9 @@ class _HomeScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _SearchField(),
                 ),
+                const SizedBox(height: 16),
+                // زر أوقات الصلاة
+                const PrayerButton(),
                 const SizedBox(height: 16),
                 // زر ذكاء الدلما
                 Padding(
@@ -804,7 +808,7 @@ class _DalmaAIButton extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'خوي من عرعر، راعي سوالف وعلوم رجال',
+                        'من الشمال.. للعالم، بعقلٍ فيه خير',
                         style: GoogleFonts.cairo(
                           fontSize: 14,
                           color: Colors.white.withOpacity(0.95),

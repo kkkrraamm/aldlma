@@ -42,7 +42,7 @@ dependencies:
   
   # Maps
   google_maps_flutter: ^2.5.0
-  geolocator: ^10.1.0
+  geolocator: ^14.0.2
   flutter_map: ^7.0.2
   latlong2: ^0.9.0
   
@@ -55,6 +55,7 @@ dependencies:
   # PDF
   pdf: ^3.10.0
   path_provider: ^2.1.0
+  adhan: ^2.0.0+1
   
   # Firebase (Optional)
   # firebase_core: ^2.24.0
