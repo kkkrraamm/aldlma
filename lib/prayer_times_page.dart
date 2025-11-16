@@ -2331,6 +2331,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   Widget _buildQuranReader(ThemeConfig theme, int surahNumber) {
     final surahName = quran.getSurahNameArabic(surahNumber);
     final versesCount = quran.getVerseCount(surahNumber);
+    final screenHeight = MediaQuery.of(context).size.height;
     
     // تقسيم الآيات إلى صفحات (كل صفحة تحتوي على عدد معين من الآيات)
     List<String> pages = [];
@@ -2437,7 +2438,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
           ),
           
           // الصفحات (PageView)
-          Expanded(
+          SizedBox(
+            height: screenHeight * 0.5, // 50% من ارتفاع الشاشة
             child: PageView.builder(
               controller: _quranPageController,
               reverse: true, // للتمرير من اليمين لليسار (عربي)
