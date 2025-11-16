@@ -267,9 +267,15 @@ class _PrayerButtonState extends State<PrayerButton> with SingleTickerProviderSt
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10b981).withOpacity(0.3),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            color: const Color(0xFF059669).withOpacity(0.4),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: const Color(0xFF10b981).withOpacity(0.2),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
             spreadRadius: 0,
           ),
         ],
@@ -280,9 +286,13 @@ class _PrayerButtonState extends State<PrayerButton> with SingleTickerProviderSt
           children: [
             // الخلفية مع Pattern إسلامي
             Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF10b981), Color(0xFF059669)],
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF059669), // أغمق
+                    Color(0xFF047857), // أغمق
+                    Color(0xFF065f46), // أغمق
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -317,12 +327,19 @@ class _PrayerButtonState extends State<PrayerButton> with SingleTickerProviderSt
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withOpacity(0.25),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withOpacity(0.4),
                                 width: 2,
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: Icon(
                               _isDaytime ? Icons.wb_sunny_rounded : Icons.nightlight_round,
@@ -377,8 +394,15 @@ class _PrayerButtonState extends State<PrayerButton> with SingleTickerProviderSt
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
+                              color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
                             child: const Icon(
                               Icons.arrow_back_ios_new_rounded,
@@ -470,12 +494,19 @@ class _PrayerButtonState extends State<PrayerButton> with SingleTickerProviderSt
                               vertical: 16,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withOpacity(0.25),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
-                                width: 1.5,
+                                color: Colors.white.withOpacity(0.4),
+                                width: 2,
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: Column(
                               children: [
@@ -523,8 +554,15 @@ class _PrayerButtonState extends State<PrayerButton> with SingleTickerProviderSt
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
                         child: SizedBox(
                           height: 28,
