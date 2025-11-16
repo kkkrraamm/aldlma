@@ -6,6 +6,7 @@ import 'package:adhan/adhan.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'prayer_times_page.dart';
 
 class PrayerButton extends StatefulWidget {
   const PrayerButton({super.key});
@@ -297,7 +298,12 @@ class _PrayerButtonState extends State<PrayerButton> with SingleTickerProviderSt
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  // TODO: Navigate to prayer times page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrayerTimesPage(),
+                    ),
+                  );
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(24),
