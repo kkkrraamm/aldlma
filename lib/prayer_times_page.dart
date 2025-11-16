@@ -1580,7 +1580,11 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                           decoration: BoxDecoration(
                             gradient: isUser
                                 ? const LinearGradient(
-                                    colors: [Color(0xFF059669), Color(0xFF047857)],
+                                    colors: [
+                                      Color(0xFF059669),
+                                      Color(0xFF047857),
+                                      Color(0xFF065f46),
+                                    ],
                                   )
                                 : null,
                             color: isUser
@@ -1669,7 +1673,11 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                 Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF059669), Color(0xFF047857)],
+                      colors: [
+                        Color(0xFF059669),
+                        Color(0xFF047857),
+                        Color(0xFF065f46),
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
