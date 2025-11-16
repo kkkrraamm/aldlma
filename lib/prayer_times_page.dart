@@ -33,6 +33,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   final TextEditingController _islamicAIController = TextEditingController();
   final List<Map<String, dynamic>> _islamicAIMessages = [];
   bool _isIslamicAITyping = false;
+  final GlobalKey _islamicAIChatKey = GlobalKey();
   
   final Map<String, bool> _prayedStatus = {
     'الفجر': false,
@@ -1305,9 +1306,25 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
+                  final wasHidden = !_showIslamicAI;
+                  
                   setState(() {
                     _showIslamicAI = !_showIslamicAI;
                   });
+                  
+                  // Scroll to chat section after opening
+                  if (wasHidden) {
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      final context = _islamicAIChatKey.currentContext;
+                      if (context != null) {
+                        Scrollable.ensureVisible(
+                          context,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    });
+                  }
                 },
                 borderRadius: BorderRadius.circular(24),
                 child: Padding(
@@ -1459,6 +1476,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
 
   Widget _buildIslamicAIChatSection(ThemeConfig theme) {
     return Container(
+      key: _islamicAIChatKey,
       margin: const EdgeInsets.symmetric(horizontal: 20),
       constraints: const BoxConstraints(maxHeight: 500),
       decoration: BoxDecoration(
