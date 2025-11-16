@@ -2437,8 +2437,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
           ),
           
           // الصفحات (PageView)
-          SizedBox(
-            height: 500, // ارتفاع ثابت للصفحة
+          Expanded(
             child: PageView.builder(
               controller: _quranPageController,
               reverse: true, // للتمرير من اليمين لليسار (عربي)
@@ -2451,17 +2450,16 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
               itemBuilder: (context, index) {
                 return Container(
                   padding: const EdgeInsets.all(28),
-                  child: SingleChildScrollView(
-                    child: SelectableText(
-                      pages[index],
-                      style: GoogleFonts.amiriQuran(
-                        fontSize: 20,
-                        height: 2.0,
-                        color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.justify,
+                  alignment: Alignment.topRight,
+                  child: SelectableText(
+                    pages[index],
+                    style: GoogleFonts.amiriQuran(
+                      fontSize: 20,
+                      height: 2.0,
+                      color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                      fontWeight: FontWeight.w500,
                     ),
+                    textAlign: TextAlign.justify,
                   ),
                 );
               },
