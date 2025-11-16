@@ -2343,7 +2343,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     }
     
     int linesInCurrentPage = 2; // البسملة تأخذ سطرين
-    const int maxLinesPerPage = 15; // عدد الأسطر في كل صفحة
+    const int maxLinesPerPage = 25; // عدد الأسطر في كل صفحة (زيادة من 15 إلى 25)
     
     for (int i = 1; i <= versesCount; i++) {
       final verseText = quran.getVerse(surahNumber, i);
@@ -2456,8 +2456,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                   child: SelectableText(
                     pages[index],
                     style: GoogleFonts.amiriQuran(
-                      fontSize: 20,
-                      height: 2.0,
+                      fontSize: 18, // تقليل من 20 إلى 18
+                      height: 1.8, // تقليل من 2.0 إلى 1.8
                       color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
                       fontWeight: FontWeight.w500,
                     ),
