@@ -180,7 +180,7 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
     final theme = Provider.of<ThemeConfig>(context);
 
     return Scaffold(
-      backgroundColor: theme.isDarkMode ? const Color(0xFF0f172a) : const Color(0xFFf9fafb),
+      backgroundColor: theme.isDarkMode ? const Color(0xFF0f172a) : const Color(0xFFf0f0f0),
       body: Column(
         children: [
           // الهيدر
@@ -211,140 +211,133 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
   }
 
   Widget _buildHeader(ThemeConfig theme) {
-    return Stack(
-      children: [
-        // الخلفية المنحنية
-        Container(
-          height: 140,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF10b981), Color(0xFF059669)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF10b981).withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10b981), Color(0xFF059669)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10b981).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // الصف الأول: الأزرار
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // زر الرجوع
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  
+                  // زر الحذف
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      onPressed: _clearChat,
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 12),
+              
+              // اللوقو والعنوان
+              Row(
+                children: [
+                  // لوقو
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/logo.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(width: 14),
+                  
+                  // العنوان والوصف
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ذكاء الدلما',
+                          style: GoogleFonts.cairo(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            height: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'من الشمال.. للعالم، بعقلٍ فيه خير',
+                          style: GoogleFonts.cairo(
+                            fontSize: 13,
+                            color: Colors.white.withOpacity(0.95),
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-        
-        // المحتوى
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-            child: Column(
-              children: [
-                // الصف الأول: الأزرار
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // زر الرجوع
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ),
-                    
-                    // زر الحذف
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.delete_outline_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: _clearChat,
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 12),
-                
-                // اللوقو والعنوان
-                Row(
-                  children: [
-                    // لوقو
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(2),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/logo.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(width: 14),
-                    
-                    // العنوان والوصف
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'ذكاء الدلما',
-                            style: GoogleFonts.cairo(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              height: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'من الشمال.. للعالم، بعقلٍ فيه خير',
-                            style: GoogleFonts.cairo(
-                              fontSize: 13,
-                              color: Colors.white.withOpacity(0.95),
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -458,7 +451,7 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
                     ? null 
                     : (theme.isDarkMode 
                         ? const Color(0xFF2d3748) 
-                        : const Color(0xFFf3f4f6)),
+                        : Colors.white),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(isUser ? 20 : 4),
                   topRight: Radius.circular(isUser ? 4 : 20),
