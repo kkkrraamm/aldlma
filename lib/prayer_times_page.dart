@@ -11,6 +11,8 @@ import 'theme_config.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'api_config.dart';
+import 'package:hijri/hijri.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 
 class PrayerTimesPage extends StatefulWidget {
   const PrayerTimesPage({super.key});
@@ -35,6 +37,14 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   bool _isIslamicAITyping = false;
   final GlobalKey _islamicAIChatKey = GlobalKey();
   
+  // للقبلة
+  double? _currentLatitude;
+  double? _currentLongitude;
+  double _qiblaDirection = 0.0;
+  double _compassHeading = 0.0;
+  String _qiblaDistance = '---';
+  StreamSubscription<CompassEvent>? _compassSubscription;
+  
   final Map<String, bool> _prayedStatus = {
     'الفجر': false,
     'الظهر': false,
@@ -55,12 +65,14 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     super.initState();
     _initializePrayerTimes();
     _loadPrayedStatus();
+    _initializeCompass();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _islamicAIController.dispose();
+    _compassSubscription?.cancel();
     super.dispose();
   }
 
@@ -208,6 +220,9 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
       _updateNextPrayer();
     });
 
+    // حساب القبلة
+    _calculateQibla(latitude, longitude);
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _updateNextPrayer();
     });
@@ -287,9 +302,64 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   }
 
   String _getHijriDate() {
-    // تقريبي - يمكن استخدام مكتبة hijri للدقة
-    final now = DateTime.now();
-    return 'الأحد 15 جمادى الأولى 1446';
+    final hijriDate = HijriCalendar.now();
+    final weekDays = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    final weekDay = weekDays[DateTime.now().weekday % 7];
+    return '$weekDay ${hijriDate.hDay} ${hijriDate.longMonthName} ${hijriDate.hYear}';
+  }
+
+  void _initializeCompass() {
+    _compassSubscription = FlutterCompass.events?.listen((CompassEvent event) {
+      setState(() {
+        _compassHeading = event.heading ?? 0.0;
+      });
+    });
+  }
+
+  void _calculateQibla(double latitude, double longitude) {
+    // إحداثيات الكعبة المشرفة
+    const double meccaLat = 21.4225;
+    const double meccaLon = 39.8262;
+
+    setState(() {
+      _currentLatitude = latitude;
+      _currentLongitude = longitude;
+    });
+
+    // حساب الاتجاه
+    final double dLon = _toRadians(meccaLon - longitude);
+    final double lat1 = _toRadians(latitude);
+    final double lat2 = _toRadians(meccaLat);
+
+    final double y = math.sin(dLon) * math.cos(lat2);
+    final double x = math.cos(lat1) * math.sin(lat2) -
+        math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+
+    double bearing = math.atan2(y, x);
+    bearing = (bearing * 180 / math.pi + 360) % 360;
+
+    // حساب المسافة
+    final double distance = _calculateDistance(latitude, longitude, meccaLat, meccaLon);
+
+    setState(() {
+      _qiblaDirection = bearing;
+      _qiblaDistance = '${distance.toStringAsFixed(0)} كم';
+    });
+  }
+
+  String _getQiblaDirectionText() {
+    if (_currentLatitude == null) return 'جاري التحميل...';
+    
+    final double angle = (_qiblaDirection - _compassHeading + 360) % 360;
+    
+    if (angle >= 337.5 || angle < 22.5) return 'شمال';
+    if (angle >= 22.5 && angle < 67.5) return 'شمال شرق';
+    if (angle >= 67.5 && angle < 112.5) return 'شرق';
+    if (angle >= 112.5 && angle < 157.5) return 'جنوب شرق';
+    if (angle >= 157.5 && angle < 202.5) return 'جنوب';
+    if (angle >= 202.5 && angle < 247.5) return 'جنوب غرب';
+    if (angle >= 247.5 && angle < 292.5) return 'غرب';
+    return 'شمال غرب';
   }
 
   Future<void> _sendIslamicAIMessage(String message) async {
@@ -968,6 +1038,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   }
 
   Widget _buildQiblaSection(ThemeConfig theme) {
+    final double qiblaAngle = (_qiblaDirection - _compassHeading + 360) % 360;
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
@@ -1011,44 +1083,47 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
               ],
             ),
             const SizedBox(height: 24),
-            Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF059669),
-                    Color(0xFF047857),
-                    Color(0xFF065f46),
+            Transform.rotate(
+              angle: qiblaAngle * (math.pi / 180),
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF059669),
+                      Color(0xFF047857),
+                      Color(0xFF065f46),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF059669).withOpacity(0.4),
+                      blurRadius: 28,
+                      offset: const Offset(0, 14),
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF10b981).withOpacity(0.2),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
                   ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF059669).withOpacity(0.4),
-                    blurRadius: 28,
-                    offset: const Offset(0, 14),
+                child: const Center(
+                  child: Icon(
+                    Icons.navigation_rounded,
+                    color: Colors.white,
+                    size: 80,
                   ),
-                  BoxShadow(
-                    color: const Color(0xFF10b981).withOpacity(0.2),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.navigation_rounded,
-                  color: Colors.white,
-                  size: 80,
                 ),
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              'شمال شرق',
+              _getQiblaDirectionText(),
               style: GoogleFonts.cairo(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -1057,12 +1132,23 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              'المسافة إلى مكة: 1,234 كم',
+              'المسافة إلى مكة: $_qiblaDistance',
               style: GoogleFonts.cairo(
                 fontSize: 14,
                 color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
               ),
             ),
+            if (_currentLatitude != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                '${qiblaAngle.toStringAsFixed(1)}°',
+                style: GoogleFonts.cairo(
+                  fontSize: 16,
+                  color: const Color(0xFF059669),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ],
         ),
       ),
