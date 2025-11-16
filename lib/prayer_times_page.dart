@@ -1383,36 +1383,88 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.25),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 3,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
+                  
+                  // السبحة الحقيقية
+                  SizedBox(
+                    height: 280,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // الخيط (الدائرة)
+                        CustomPaint(
+                          size: const Size(240, 240),
+                          painter: _TasbihStringPainter(),
+                        ),
+                        
+                        // الكور (33 كورة)
+                        ...List.generate(33, (index) {
+                          final angle = (index * 360 / 33) * (math.pi / 180);
+                          final radius = 110.0;
+                          final x = radius * math.cos(angle - math.pi / 2);
+                          final y = radius * math.sin(angle - math.pi / 2);
+                          
+                          // تحديد إذا كانت الكورة مضاءة (تم العد لها)
+                          final isActive = index < _tasbihCount;
+                          
+                          return Positioned(
+                            left: 120 + x - 10,
+                            top: 140 + y - 10,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isActive 
+                                    ? Colors.amber[300]
+                                    : Colors.white.withOpacity(0.3),
+                                boxShadow: isActive ? [
+                                  BoxShadow(
+                                    color: Colors.amber.withOpacity(0.6),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ] : [],
+                              ),
+                            ),
+                          );
+                        }),
+                        
+                        // الكورة الكبيرة في الوسط (العداد)
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.25),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.4),
+                              width: 3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$_tasbihCount',
+                              style: GoogleFonts.cairo(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: Center(
-                      child: Text(
-                        '$_tasbihCount',
-                        style: GoogleFonts.cairo(
-                          fontSize: 56,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
                   ),
-                  const SizedBox(height: 24),
+                  
+                  const SizedBox(height: 16),
                   Text(
                     _currentTasbih,
                     style: GoogleFonts.cairo(
@@ -2049,6 +2101,26 @@ class _IslamicPatternPainter extends CustomPainter {
     
     path.close();
     canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// رسام خيط السبحة
+class _TasbihStringPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = 110.0;
+
+    // رسم الدائرة (الخيط)
+    canvas.drawCircle(center, radius, paint);
   }
 
   @override
