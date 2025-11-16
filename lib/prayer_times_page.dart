@@ -43,6 +43,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   final GlobalKey _quranSectionKey = GlobalKey();
   int _currentQuranPage = 0;
   late PageController _quranPageController;
+  double _quranFontSize = 18.0; // حجم الخط الافتراضي
   
   // للقبلة
   double? _currentLatitude;
@@ -2408,6 +2409,18 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                     setState(() {
                       _selectedSurah = null;
                       _currentQuranPage = 0;
+                      _quranFontSize = 18.0; // إعادة تعيين حجم الخط
+                    });
+                  },
+                ),
+                // زر التصغير
+                IconButton(
+                  icon: const Icon(Icons.remove_rounded, color: Colors.white, size: 20),
+                  onPressed: () {
+                    setState(() {
+                      if (_quranFontSize > 14) {
+                        _quranFontSize -= 2;
+                      }
                     });
                   },
                 ),
@@ -2415,12 +2428,23 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                   child: Text(
                     surahName,
                     style: GoogleFonts.amiriQuran(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                     textAlign: TextAlign.center,
                   ),
+                ),
+                // زر التكبير
+                IconButton(
+                  icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                  onPressed: () {
+                    setState(() {
+                      if (_quranFontSize < 26) {
+                        _quranFontSize += 2;
+                      }
+                    });
+                  },
                 ),
                 IconButton(
                   icon: const Icon(Icons.list_rounded, color: Colors.white),
@@ -2451,7 +2475,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                   child: Text(
                     pages[index],
                     style: GoogleFonts.amiriQuran(
-                      fontSize: 18,
+                      fontSize: _quranFontSize, // حجم الخط المتغير!
                       height: 1.8,
                       color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
                       fontWeight: FontWeight.w500,
