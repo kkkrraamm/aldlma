@@ -29,6 +29,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   bool _isDaytime = true;
   double _progressValue = 0.0;
   int _tasbihCount = 0;
+  int _totalTasbihCount = 0; // العداد الإجمالي
   String _currentTasbih = 'سبحان الله';
   bool _showIslamicAI = false;
   final TextEditingController _islamicAIController = TextEditingController();
@@ -1387,27 +1388,31 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                   // السبحة الحقيقية
                   SizedBox(
                     height: 280,
-                    child: TweenAnimationBuilder<double>(
-                      duration: const Duration(milliseconds: 500),
-                      tween: Tween<double>(
-                        begin: 0.0,
-                        end: _tasbihCount.toDouble(),
-                      ),
-                      curve: Curves.easeInOut,
-                      builder: (context, value, child) {
-                        return Transform.rotate(
-                          angle: (value * 360 / 33) * (math.pi / 180),
-                          child: child,
-                        );
-                      },
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // الخيط (الدائرة)
-                          CustomPaint(
-                            size: const Size(240, 240),
-                            painter: _TasbihStringPainter(),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // الجزء الدوار (الخيط والكور)
+                        TweenAnimationBuilder<double>(
+                          duration: const Duration(milliseconds: 500),
+                          tween: Tween<double>(
+                            begin: 0.0,
+                            end: _tasbihCount.toDouble(),
                           ),
+                          curve: Curves.easeInOut,
+                          builder: (context, value, child) {
+                            return Transform.rotate(
+                              angle: (value * 360 / 33) * (math.pi / 180),
+                              child: child,
+                            );
+                          },
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // الخيط (الدائرة)
+                              CustomPaint(
+                                size: const Size(240, 240),
+                                painter: _TasbihStringPainter(),
+                              ),
                         
                         // الكور (33 كورة)
                         ...List.generate(33, (index) {
@@ -1491,8 +1496,11 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                             ),
                           );
                         }),
+                            ],
+                          ),
+                        ),
                         
-                        // الكورة الكبيرة في الوسط (العداد)
+                        // الكورة الكبيرة في الوسط (العداد) - ثابتة لا تدور
                         Container(
                           width: 100,
                           height: 100,
@@ -1522,8 +1530,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                             ),
                           ),
                         ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
                   
@@ -1536,6 +1543,49 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                       color: Colors.white,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  
+                  // العداد الإجمالي
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.all_inclusive_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'الإجمالي: ',
+                          style: GoogleFonts.cairo(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.9),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '$_totalTasbihCount',
+                          style: GoogleFonts.cairo(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontFeatures: [const FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1554,6 +1604,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                         onTap: () {
                           setState(() {
                             _tasbihCount++;
+                            _totalTasbihCount++; // زيادة العداد الإجمالي
                             if (_tasbihCount == 33) {
                               // تغيير التسبيح تلقائياً
                               final currentIndex = _tasbihOptions.indexOf(_currentTasbih);
