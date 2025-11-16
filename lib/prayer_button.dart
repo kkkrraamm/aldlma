@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:adhan/adhan.dart';
@@ -151,17 +152,17 @@ class _PrayerButtonState extends State<PrayerButton> with SingleTickerProviderSt
     double dLat = _toRadians(lat2 - lat1);
     double dLon = _toRadians(lon2 - lon1);
     
-    double a = (dLat / 2).sin() * (dLat / 2).sin() +
-        _toRadians(lat1).cos() * _toRadians(lat2).cos() *
-        (dLon / 2).sin() * (dLon / 2).sin();
+    double a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_toRadians(lat1)) * math.cos(_toRadians(lat2)) *
+        math.sin(dLon / 2) * math.sin(dLon / 2);
     
-    double c = 2 * (a.sqrt()).asin();
+    double c = 2 * math.asin(math.sqrt(a));
     
     return earthRadius * c;
   }
 
   double _toRadians(double degrees) {
-    return degrees * (3.14159265359 / 180);
+    return degrees * (math.pi / 180);
   }
 
   void _calculatePrayerTimes(double latitude, double longitude) {
@@ -612,10 +613,10 @@ class _IslamicPatternPainter extends CustomPainter {
     const points = 8;
     
     for (int i = 0; i < points * 2; i++) {
-      final angle = (i * 3.14159) / points;
+      final angle = (i * math.pi) / points;
       final r = i.isEven ? radius : radius / 2;
-      final x = center.dx + r * (angle.cos());
-      final y = center.dy + r * (angle.sin());
+      final x = center.dx + r * math.cos(angle);
+      final y = center.dy + r * math.sin(angle);
       
       if (i == 0) {
         path.moveTo(x, y);
@@ -630,6 +631,5 @@ class _IslamicPatternPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 }
 
