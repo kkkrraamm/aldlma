@@ -8,6 +8,9 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'api_config.dart';
 
 class PrayerTimesPage extends StatefulWidget {
   const PrayerTimesPage({super.key});
@@ -26,6 +29,10 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   double _progressValue = 0.0;
   int _tasbihCount = 0;
   String _currentTasbih = 'سبحان الله';
+  bool _showIslamicAI = false;
+  final TextEditingController _islamicAIController = TextEditingController();
+  final List<Map<String, dynamic>> _islamicAIMessages = [];
+  bool _isIslamicAITyping = false;
   
   final Map<String, bool> _prayedStatus = {
     'الفجر': false,
@@ -42,19 +49,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     'لا إله إلا الله',
   ];
 
-  final List<Map<String, String>> _allahNames = [
-    {'name': 'الرَّحْمَنُ', 'meaning': 'الرحمة الواسعة'},
-    {'name': 'الرَّحِيمُ', 'meaning': 'الرحمة الدائمة'},
-    {'name': 'الْمَلِكُ', 'meaning': 'المالك لكل شيء'},
-    {'name': 'الْقُدُّوسُ', 'meaning': 'المنزه عن النقص'},
-    {'name': 'السَّلاَمُ', 'meaning': 'السالم من العيوب'},
-    {'name': 'الْمُؤْمِنُ', 'meaning': 'المصدق لعباده'},
-    {'name': 'الْمُهَيْمِنُ', 'meaning': 'المسيطر على خلقه'},
-    {'name': 'الْعَزِيزُ', 'meaning': 'القوي الغالب'},
-    {'name': 'الْجَبَّارُ', 'meaning': 'القاهر لخلقه'},
-    {'name': 'الْمُتَكَبِّرُ', 'meaning': 'المتعالي عن صفات الخلق'},
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -65,6 +59,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _islamicAIController.dispose();
     super.dispose();
   }
 
@@ -296,6 +291,53 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     return 'الأحد 15 جمادى الأولى 1446';
   }
 
+  Future<void> _sendIslamicAIMessage(String message) async {
+    if (message.trim().isEmpty) return;
+
+    setState(() {
+      _islamicAIMessages.add({
+        'role': 'user',
+        'content': message,
+      });
+      _isIslamicAITyping = true;
+    });
+
+    _islamicAIController.clear();
+
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/islamic-ai/chat'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'message': message,
+          'history': _islamicAIMessages.take(_islamicAIMessages.length - 1).toList(),
+          'prompt_id': 'islamic_ai',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _islamicAIMessages.add({
+            'role': 'assistant',
+            'content': data['reply'],
+          });
+          _isIslamicAITyping = false;
+        });
+      } else {
+        throw Exception('فشل الاتصال');
+      }
+    } catch (e) {
+      setState(() {
+        _islamicAIMessages.add({
+          'role': 'assistant',
+          'content': 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.',
+        });
+        _isIslamicAITyping = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeConfig>(context);
@@ -337,8 +379,14 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                 
                 const SizedBox(height: 20),
                 
-                // أسماء الله الحسنى
-                _buildAllahNamesSection(theme),
+                // ذكاء الدلما الإسلامي
+                _buildIslamicAISection(theme),
+                
+                // قسم الدردشة (يظهر عند الضغط)
+                if (_showIslamicAI) ...[
+                  const SizedBox(height: 20),
+                  _buildIslamicAIChatSection(theme),
+                ],
                 
                 const SizedBox(height: 40),
               ],
@@ -1214,117 +1262,475 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     );
   }
 
-  Widget _buildAllahNamesSection(ThemeConfig theme) {
+  Widget _buildIslamicAISection(ThemeConfig theme) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF059669).withOpacity(0.4),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
+          ),
+          BoxShadow(
+            color: const Color(0xFF10b981).withOpacity(0.2),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF059669),
+                    Color(0xFF047857),
+                    Color(0xFF065f46),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: CustomPaint(
+                painter: _IslamicPatternPainter(),
+                child: Container(),
+              ),
+            ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _showIslamicAI = !_showIslamicAI;
+                  });
+                },
+                borderRadius: BorderRadius.circular(24),
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.mosque_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'ذكاء الدلما الإسلامي',
+                            style: GoogleFonts.cairo(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'مساعدك في التفسير والأحكام الشرعية',
+                        style: GoogleFonts.cairo(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.95),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildIslamicAIFeature(
+                              icon: Icons.menu_book_rounded,
+                              title: 'تفسير القرآن',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildIslamicAIFeature(
+                              icon: Icons.gavel_rounded,
+                              title: 'الأحكام الشرعية',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildIslamicAIFeature(
+                              icon: Icons.verified_rounded,
+                              title: 'مصادر موثوقة',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildIslamicAIFeature(
+                              icon: Icons.source_rounded,
+                              title: 'ذكر المصدر',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.4),
+                            width: 2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'ابدأ المحادثة',
+                              style: GoogleFonts.cairo(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.arrow_back_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIslamicAIFeature({
+    required IconData icon,
+    required String title,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: Colors.white,
+            size: 24,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: GoogleFonts.cairo(
+              fontSize: 11,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIslamicAIChatSection(ThemeConfig theme) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      constraints: const BoxConstraints(maxHeight: 500),
       decoration: BoxDecoration(
         color: theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         children: [
-          Padding(
+          // Header
+          Container(
             padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: theme.isDarkMode 
+                  ? const Color(0xFF0f172a) 
+                  : const Color(0xFFf9fafb),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+            ),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10b981).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                const Icon(
+                  Icons.mosque_rounded,
+                  color: Color(0xFF059669),
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'ذكاء الدلما الإسلامي',
+                    style: GoogleFonts.cairo(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Color(0xFF10b981),
-                    size: 24,
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _showIslamicAI = false;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Messages
+          Expanded(
+            child: _islamicAIMessages.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.mosque_rounded,
+                            size: 64,
+                            color: Color(0xFF059669),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'بسم الله الرحمن الرحيم',
+                            style: GoogleFonts.cairo(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'اسأل عن التفسير والأحكام الشرعية',
+                            style: GoogleFonts.cairo(
+                              fontSize: 14,
+                              color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _islamicAIMessages.length + (_isIslamicAITyping ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _islamicAIMessages.length && _isIslamicAITyping) {
+                        return _buildTypingIndicator(theme);
+                      }
+                      
+                      final message = _islamicAIMessages[index];
+                      final isUser = message['role'] == 'user';
+                      
+                      return Align(
+                        alignment: isUser ? Alignment.centerLeft : Alignment.centerRight,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.75,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: isUser
+                                ? const LinearGradient(
+                                    colors: [Color(0xFF059669), Color(0xFF047857)],
+                                  )
+                                : null,
+                            color: isUser
+                                ? null
+                                : (theme.isDarkMode 
+                                    ? const Color(0xFF2d3748) 
+                                    : Colors.white),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(isUser ? 20 : 4),
+                              topRight: Radius.circular(isUser ? 4 : 20),
+                              bottomLeft: const Radius.circular(20),
+                              bottomRight: const Radius.circular(20),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            message['content'],
+                            style: GoogleFonts.cairo(
+                              fontSize: 14,
+                              color: isUser 
+                                  ? Colors.white 
+                                  : (theme.isDarkMode ? Colors.white : const Color(0xFF1e293b)),
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+
+          // Input
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.isDarkMode 
+                  ? const Color(0xFF0f172a) 
+                  : const Color(0xFFf9fafb),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _islamicAIController,
+                    decoration: InputDecoration(
+                      hintText: 'اكتب سؤالك...',
+                      hintStyle: GoogleFonts.cairo(
+                        color: theme.isDarkMode ? Colors.white38 : Colors.grey[400],
+                      ),
+                      filled: true,
+                      fillColor: theme.isDarkMode 
+                          ? const Color(0xFF1e293b) 
+                          : Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    style: GoogleFonts.cairo(
+                      color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                    ),
+                    maxLines: null,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (value) {
+                      if (value.trim().isNotEmpty) {
+                        _sendIslamicAIMessage(value);
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  'أسماء الله الحسنى',
-                  style: GoogleFonts.cairo(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF059669), Color(0xFF047857)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.send_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      if (_islamicAIController.text.trim().isNotEmpty) {
+                        _sendIslamicAIMessage(_islamicAIController.text);
+                      }
+                    },
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(
-            height: 120,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              itemCount: _allahNames.length,
-              itemBuilder: (context, index) {
-                final name = _allahNames[index];
-                return Container(
-                  width: 140,
-                  margin: const EdgeInsets.only(left: 12),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF059669),
-                        Color(0xFF047857),
-                        Color(0xFF065f46),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF059669).withOpacity(0.4),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                      BoxShadow(
-                        color: const Color(0xFF10b981).withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          name['name']!,
-                          style: GoogleFonts.amiriQuran(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          name['meaning']!,
-                          style: GoogleFonts.cairo(
-                            fontSize: 11,
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTypingIndicator(ThemeConfig theme) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.isDarkMode ? const Color(0xFF2d3748) : Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(4),
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'جاري الكتابة',
+              style: GoogleFonts.cairo(
+                fontSize: 14,
+                color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.isDarkMode ? Colors.white70 : Colors.grey[600]!,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
