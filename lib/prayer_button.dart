@@ -537,40 +537,19 @@ class _PrayerButtonState extends State<PrayerButton> with SingleTickerProviderSt
                                   ),
                                 );
                               },
-                              child: Row(
+                              child: Center(
                                 key: ValueKey<int>(_currentDuaaIndex),
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '﷽',
-                                    style: GoogleFonts.amiriQuran(
-                                      fontSize: 16,
-                                      color: Colors.white.withOpacity(0.8),
-                                    ),
+                                child: Text(
+                                  _duaas[_currentDuaaIndex],
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 13,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  const SizedBox(width: 12),
-                                  Flexible(
-                                    child: Text(
-                                      _duaas[_currentDuaaIndex],
-                                      style: GoogleFonts.cairo(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    '﷽',
-                                    style: GoogleFonts.amiriQuran(
-                                      fontSize: 16,
-                                      color: Colors.white.withOpacity(0.8),
-                                    ),
-                                  ),
-                                ],
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ),
