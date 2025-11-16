@@ -2418,10 +2418,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                     
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: RichText(
-                        textAlign: TextAlign.justify,
-                        textDirection: TextDirection.rtl,
-                        text: TextSpan(
+                      child: Text.rich(
+                        TextSpan(
                           style: GoogleFonts.amiriQuran(
                             fontSize: 20,
                             height: 2.0,
@@ -2439,6 +2437,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                             ),
                           ],
                         ),
+                        textAlign: TextAlign.justify,
                       ),
                     );
                   }),
