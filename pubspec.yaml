@@ -56,7 +56,6 @@ dependencies:
   pdf: ^3.10.0
   path_provider: ^2.1.0
   adhan: ^2.0.0+1
-  hijri: ^3.0.0
   flutter_compass: ^0.8.1
   
   # Firebase (Optional)

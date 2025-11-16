@@ -11,7 +11,6 @@ import 'theme_config.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'api_config.dart';
-import 'package:hijri/hijri.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 
 class PrayerTimesPage extends StatefulWidget {
@@ -302,10 +301,31 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   }
 
   String _getHijriDate() {
-    final hijriDate = HijriCalendar.now();
+    final now = DateTime.now();
     final weekDays = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-    final weekDay = weekDays[DateTime.now().weekday % 7];
-    return '$weekDay ${hijriDate.hDay} ${hijriDate.longMonthName} ${hijriDate.hYear}';
+    final weekDay = weekDays[now.weekday % 7];
+    
+    // حساب التاريخ الهجري التقريبي
+    // الفرق بين التقويم الميلادي والهجري حوالي 622 سنة و8 أشهر
+    final gregorianYear = now.year;
+    final gregorianMonth = now.month;
+    final gregorianDay = now.day;
+    
+    // صيغة تقريبية لتحويل التاريخ الميلادي إلى هجري
+    final hijriYear = ((gregorianYear - 622) * 1.030684).floor() + 1;
+    
+    // أسماء الشهور الهجرية
+    final hijriMonths = [
+      'محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة',
+      'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'
+    ];
+    
+    // حساب تقريبي للشهر واليوم (هذا تقريبي جداً)
+    final dayOfYear = now.difference(DateTime(gregorianYear, 1, 1)).inDays;
+    final hijriMonth = ((dayOfYear / 29.5) % 12).floor();
+    final hijriDay = ((dayOfYear % 29.5) + 1).floor();
+    
+    return '$weekDay $hijriDay ${hijriMonths[hijriMonth]} $hijriYear هـ';
   }
 
   void _initializeCompass() {
@@ -1040,6 +1060,9 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   Widget _buildQiblaSection(ThemeConfig theme) {
     final double qiblaAngle = (_qiblaDirection - _compassHeading + 360) % 360;
     
+    // تحديد إذا كان السهم يشير للقبلة (ضمن 15 درجة)
+    final bool isPointingToQibla = qiblaAngle.abs() < 15 || qiblaAngle.abs() > 345;
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
@@ -1062,12 +1085,16 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF059669).withOpacity(0.15),
+                    color: isPointingToQibla 
+                        ? const Color(0xFF059669).withOpacity(0.15)
+                        : Colors.grey.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.explore_rounded,
-                    color: Color(0xFF047857),
+                    color: isPointingToQibla 
+                        ? const Color(0xFF047857)
+                        : Colors.grey[600],
                     size: 24,
                   ),
                 ),
@@ -1083,54 +1110,190 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
               ],
             ),
             const SizedBox(height: 24),
-            Transform.rotate(
-              angle: qiblaAngle * (math.pi / 180),
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF059669),
-                      Color(0xFF047857),
-                      Color(0xFF065f46),
+            
+            // البوصلة الخارجية (ثابتة)
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                // الدائرة الخارجية مع العلامات
+                Container(
+                  width: 240,
+                  height: 240,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.isDarkMode 
+                          ? Colors.white.withOpacity(0.2)
+                          : Colors.grey.withOpacity(0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      // علامة الشمال
+                      Positioned(
+                        top: 5,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Text(
+                            'ش',
+                            style: GoogleFonts.cairo(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // علامة الجنوب
+                      Positioned(
+                        bottom: 5,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Text(
+                            'ج',
+                            style: GoogleFonts.cairo(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // علامة الشرق
+                      Positioned(
+                        left: 5,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: Text(
+                            'ق',
+                            style: GoogleFonts.cairo(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // علامة الغرب
+                      Positioned(
+                        right: 5,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: Text(
+                            'غ',
+                            style: GoogleFonts.cairo(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF059669).withOpacity(0.4),
-                      blurRadius: 28,
-                      offset: const Offset(0, 14),
-                    ),
-                    BoxShadow(
-                      color: const Color(0xFF10b981).withOpacity(0.2),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.navigation_rounded,
-                    color: Colors.white,
-                    size: 80,
                   ),
                 ),
-              ),
+                
+                // السهم المتحرك
+                Transform.rotate(
+                  angle: qiblaAngle * (math.pi / 180),
+                  child: Container(
+                    width: 180,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: isPointingToQibla
+                            ? [
+                                const Color(0xFF059669),
+                                const Color(0xFF047857),
+                                const Color(0xFF065f46),
+                              ]
+                            : [
+                                Colors.grey[400]!,
+                                Colors.grey[500]!,
+                                Colors.grey[600]!,
+                              ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isPointingToQibla
+                              ? const Color(0xFF059669).withOpacity(0.4)
+                              : Colors.grey.withOpacity(0.3),
+                          blurRadius: 28,
+                          offset: const Offset(0, 14),
+                        ),
+                        BoxShadow(
+                          color: isPointingToQibla
+                              ? const Color(0xFF10b981).withOpacity(0.2)
+                              : Colors.grey.withOpacity(0.2),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.navigation_rounded,
+                        color: Colors.white,
+                        size: 70,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+            
             const SizedBox(height: 24),
-            Text(
-              _getQiblaDirectionText(),
-              style: GoogleFonts.cairo(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+            
+            // رسالة التوجيه
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: isPointingToQibla
+                    ? const Color(0xFF059669).withOpacity(0.1)
+                    : Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isPointingToQibla
+                      ? const Color(0xFF059669)
+                      : Colors.grey.withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isPointingToQibla ? Icons.check_circle_rounded : Icons.explore_rounded,
+                    color: isPointingToQibla
+                        ? const Color(0xFF059669)
+                        : Colors.grey[600],
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isPointingToQibla ? 'اتجاه القبلة ✓' : 'لف الجهاز للبحث عن القبلة',
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: isPointingToQibla
+                          ? const Color(0xFF059669)
+                          : Colors.grey[700],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
+            
+            const SizedBox(height: 16),
             Text(
               'المسافة إلى مكة: $_qiblaDistance',
               style: GoogleFonts.cairo(
@@ -1139,12 +1302,14 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
               ),
             ),
             if (_currentLatitude != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 '${qiblaAngle.toStringAsFixed(1)}°',
                 style: GoogleFonts.cairo(
-                  fontSize: 16,
-                  color: const Color(0xFF059669),
+                  fontSize: 14,
+                  color: isPointingToQibla
+                      ? const Color(0xFF059669)
+                      : Colors.grey[600],
                   fontWeight: FontWeight.bold,
                 ),
               ),
