@@ -26,6 +26,10 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
     super.initState();
     _loadMessages();
     _addWelcomeMessage();
+    // التمرير لآخر رسالة بعد بناء الواجهة
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
   }
 
   @override
@@ -231,119 +235,87 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
   Widget _buildHeader(ThemeConfig theme) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF10b981),
-            const Color(0xFF059669),
-            const Color(0xFF047857),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10b981).withOpacity(0.4),
-            blurRadius: 30,
-            offset: const Offset(0, 15),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 20),
-          child: Column(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
             children: [
-              // الصف الأول: زر الرجوع واللوقو والحذف
-              Row(
-                children: [
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  
-                  const Spacer(),
-                  
-                  // لوقو الدلما مع تأثير
-                  Hero(
-                    tag: 'dalma_logo',
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.5),
-                          width: 3,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/logo.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                  
-                  const Spacer(),
-                  
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
-                    ),
-                    onPressed: _clearChat,
-                  ),
-                ],
+              // زر الرجوع
+              IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: theme.textPrimaryColor,
+                  size: 20,
+                ),
+                onPressed: () => Navigator.pop(context),
               ),
               
-              const SizedBox(height: 12),
+              // لوقو صغير
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF10b981).withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/logo.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              
+              const SizedBox(width: 12),
               
               // العنوان والوصف
-              Text(
-                'ذكاء الدلما',
-                style: GoogleFonts.cairo(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'ذكاء الدلما',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                    Text(
+                      'من الشمال.. للعالم، بعقلٍ فيه خير',
+                      style: GoogleFonts.cairo(
+                        fontSize: 11,
+                        color: theme.textSecondaryColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
+              
+              // زر الحذف
+              IconButton(
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  color: theme.textSecondaryColor,
+                  size: 22,
                 ),
-                child: Text(
-                  'من الشمال.. للعالم، بعقلٍ فيه خير',
-                  style: GoogleFonts.cairo(
-                    fontSize: 13,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                onPressed: _clearChat,
               ),
             ],
           ),
