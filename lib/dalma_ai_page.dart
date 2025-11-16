@@ -55,7 +55,7 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
       setState(() {
         _messages.add({
           'role': 'assistant',
-          'content': 'يا هلا بالقرابة 🤝 النور نورك يا وجه الخير! وش علومك اليوم؟ 😎🔥',
+          'content': 'من الشمال.. للعالم، بعقلٍ فيه خير 🌟 يا هلا بالقرابة! وش علومك اليوم؟ 😎🔥',
           'timestamp': DateTime.now().toIso8601String(),
         });
       });
@@ -82,13 +82,14 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
     _saveMessages();
 
     try {
-      // إرسال للباك إند
+      // إرسال للباك إند مع Prompt ID
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/api/dalma-ai/chat'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'message': message,
           'history': _messages.take(_messages.length - 1).toList(),
+          'prompt_id': 'pmpt_68d9e5897e508193a8362567a7e2b1b30556320da57d2e9c',
         }),
       );
 
@@ -229,86 +230,124 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
 
   Widget _buildHeader(ThemeConfig theme) {
     return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        bottom: 16,
-        left: 16,
-        right: 16,
-      ),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF10b981), Color(0xFF059669)],
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF10b981),
+            const Color(0xFF059669),
+            const Color(0xFF047857),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10b981).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: const Color(0xFF10b981).withOpacity(0.4),
+            blurRadius: 30,
+            offset: const Offset(0, 15),
           ),
         ],
       ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const SizedBox(width: 8),
-          
-          // لوقو الدلما
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/logo.png',
-                fit: BoxFit.cover,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 20),
+          child: Column(
+            children: [
+              // الصف الأول: زر الرجوع واللوقو والحذف
+              Row(
+                children: [
+                  IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  
+                  const Spacer(),
+                  
+                  // لوقو الدلما مع تأثير
+                  Hero(
+                    tag: 'dalma_logo',
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.5),
+                          width: 3,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/logo.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const Spacer(),
+                  
+                  IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
+                    ),
+                    onPressed: _clearChat,
+                  ),
+                ],
               ),
-            ),
-          ),
-          
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'ذكاء الدلما',
+              
+              const SizedBox(height: 12),
+              
+              // العنوان والوصف
+              Text(
+                'ذكاء الدلما',
+                style: GoogleFonts.cairo(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'من الشمال.. للعالم، بعقلٍ فيه خير',
                   style: GoogleFonts.cairo(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
                     color: Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                Text(
-                  'خوي من عرعر، راعي سوالف وعلوم رجال',
-                  style: GoogleFonts.cairo(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.white),
-            onPressed: _clearChat,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -352,7 +391,7 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'خوي من عرعر، راعي سوالف وعلوم رجال\nابدأ المحادثة الآن!',
+              'من الشمال.. للعالم، بعقلٍ فيه خير\nابدأ المحادثة الآن!',
               style: GoogleFonts.cairo(
                 fontSize: 16,
                 color: theme.textSecondaryColor,
@@ -372,50 +411,66 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isUser) ...[
             Container(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: Colors.white,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF10b981), Color(0xFF059669)],
+                ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
+                    color: const Color(0xFF10b981).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/logo.png',
-                  fit: BoxFit.cover,
+              padding: const EdgeInsets.all(2),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/logo.png',
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
           ],
           
           Flexible(
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               decoration: BoxDecoration(
                 gradient: isUser
                     ? const LinearGradient(
                         colors: [Color(0xFF10b981), Color(0xFF059669)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       )
                     : null,
                 color: isUser ? null : (theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(isUser ? 20 : 4),
+                  topRight: Radius.circular(isUser ? 4 : 20),
+                  bottomLeft: const Radius.circular(20),
+                  bottomRight: const Radius.circular(20),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: isUser
                         ? const Color(0xFF10b981).withOpacity(0.3)
-                        : Colors.black.withOpacity(theme.isDarkMode ? 0.3 : 0.1),
-                    blurRadius: 10,
+                        : Colors.black.withOpacity(theme.isDarkMode ? 0.2 : 0.08),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -423,27 +478,33 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
               child: Text(
                 message['content'],
                 style: GoogleFonts.cairo(
-                  fontSize: 16,
+                  fontSize: 15.5,
                   color: isUser ? Colors.white : theme.textPrimaryColor,
-                  height: 1.5,
+                  height: 1.6,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
           ),
           
           if (isUser) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Container(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: theme.primaryColor.withOpacity(0.2),
+                gradient: LinearGradient(
+                  colors: [
+                    theme.primaryColor.withOpacity(0.3),
+                    theme.primaryColor.withOpacity(0.2),
+                  ],
+                ),
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.person,
+                Icons.person_rounded,
                 color: theme.primaryColor,
-                size: 24,
+                size: 20,
               ),
             ),
           ],
@@ -531,8 +592,8 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
   Widget _buildInputField(ThemeConfig theme) {
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).padding.bottom + 8,
-        top: 8,
+        bottom: MediaQuery.of(context).padding.bottom + 12,
+        top: 12,
         left: 16,
         right: 16,
       ),
@@ -540,33 +601,44 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
         color: theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -8),
           ),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              constraints: const BoxConstraints(maxHeight: 120),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
               decoration: BoxDecoration(
                 color: theme.isDarkMode ? const Color(0xFF0f172a) : const Color(0xFFf5f7fa),
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: theme.isDarkMode 
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.05),
+                  width: 1,
+                ),
               ),
               child: TextField(
                 controller: _messageController,
                 style: GoogleFonts.cairo(
                   color: theme.textPrimaryColor,
-                  fontSize: 16,
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w500,
                 ),
                 decoration: InputDecoration(
                   hintText: 'اكتب رسالتك...',
                   hintStyle: GoogleFonts.cairo(
-                    color: theme.textSecondaryColor,
+                    color: theme.textSecondaryColor.withOpacity(0.7),
+                    fontSize: 15,
                   ),
                   border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 maxLines: null,
                 textInputAction: TextInputAction.send,
@@ -574,24 +646,36 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Container(
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFF10b981), Color(0xFF059669)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF10b981).withOpacity(0.4),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: const Color(0xFF10b981).withOpacity(0.5),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
                 ),
               ],
             ),
-            child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
-              onPressed: _sendMessage,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(25),
+                onTap: _sendMessage,
+                child: const Icon(
+                  Icons.send_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
             ),
           ),
         ],
