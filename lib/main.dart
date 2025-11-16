@@ -25,7 +25,6 @@ import 'media_dashboard.dart';
 import 'ai_tools_page.dart';
 import 'dalma_ai_page.dart';
 import 'prayer_button.dart';
-import 'quran_page.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
 import 'theme_aware_widgets.dart';
@@ -234,12 +233,6 @@ class _HomeScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 // زر أوقات الصلاة
                 const PrayerButton(),
-                const SizedBox(height: 16),
-                // زر القرآن الكريم
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _QuranButton(),
-                ),
                 const SizedBox(height: 16),
                 // زر ذكاء الدلما
                 Padding(
@@ -831,130 +824,6 @@ class _DalmaAIButton extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.arrow_forward,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// زر القرآن الكريم
-class _QuranButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF059669),
-            Color(0xFF047857),
-            Color(0xFF065f46),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF059669).withOpacity(0.4),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-          BoxShadow(
-            color: const Color(0xFF10b981).withOpacity(0.2),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const QuranPage(),
-              ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Row(
-              children: [
-                // أيقونة القرآن
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.4),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.menu_book_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                
-                // النص
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'القرآن الكريم',
-                        style: GoogleFonts.amiriQuran(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'اقرأ وتدبر كلام الله',
-                        style: GoogleFonts.cairo(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.95),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // سهم
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.4),
-                      width: 2,
-                    ),
                   ),
                   child: const Icon(
                     Icons.arrow_forward,

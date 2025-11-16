@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'api_config.dart';
 import 'package:flutter_compass/flutter_compass.dart';
+import 'package:quran/quran.dart' as quran;
 
 class PrayerTimesPage extends StatefulWidget {
   const PrayerTimesPage({super.key});
@@ -36,6 +37,10 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   final List<Map<String, dynamic>> _islamicAIMessages = [];
   bool _isIslamicAITyping = false;
   final GlobalKey _islamicAIChatKey = GlobalKey();
+  
+  // للقرآن
+  int? _selectedSurah;
+  final GlobalKey _quranSectionKey = GlobalKey();
   
   // للقبلة
   double? _currentLatitude;
@@ -468,6 +473,11 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                 
                 // السبحة الإلكترونية
                 _buildTasbihSection(theme),
+                
+                const SizedBox(height: 20),
+                
+                // القرآن الكريم
+                _buildQuranSection(theme),
                 
                 const SizedBox(height: 20),
                 
@@ -2181,6 +2191,396 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
       ),
     );
   }
+
+  // قسم القرآن الكريم
+  Widget _buildQuranSection(ThemeConfig theme) {
+    if (_selectedSurah == null) {
+      // عرض زر القرآن
+      return Container(
+        key: _quranSectionKey,
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF059669).withOpacity(0.4),
+              blurRadius: 28,
+              offset: const Offset(0, 14),
+            ),
+            BoxShadow(
+              color: const Color(0xFF10b981).withOpacity(0.2),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF059669),
+                      Color(0xFF047857),
+                      Color(0xFF065f46),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: CustomPaint(
+                  painter: _IslamicPatternPainter(),
+                  child: Container(),
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    _showSurahPicker(theme);
+                  },
+                  borderRadius: BorderRadius.circular(24),
+                  child: Padding(
+                    padding: const EdgeInsets.all(28),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.menu_book_rounded,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'القرآن الكريم',
+                              style: GoogleFonts.amiriQuran(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'اقرأ وتدبر كلام الله',
+                          style: GoogleFonts.cairo(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.95),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.4),
+                              width: 2,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'اختر سورة للقراءة',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.arrow_back_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // عرض السورة المختارة بتصميم الكتاب
+      return _buildQuranReader(theme, _selectedSurah!);
+    }
+  }
+
+  // عارض القرآن بتصميم الكتاب
+  Widget _buildQuranReader(ThemeConfig theme, int surahNumber) {
+    final surahName = quran.getSurahNameArabic(surahNumber);
+    final versesCount = quran.getVerseCount(surahNumber);
+    
+    // بناء النص الكامل للسورة (متدفق مثل الكتاب)
+    String fullSurahText = '';
+    
+    // إضافة البسملة (ما عدا التوبة والفاتحة)
+    if (surahNumber != 1 && surahNumber != 9) {
+      fullSurahText = '${quran.basmala}\n\n';
+    }
+    
+    // إضافة كل الآيات متصلة
+    for (int i = 1; i <= versesCount; i++) {
+      final verseText = quran.getVerse(surahNumber, i);
+      fullSurahText += '$verseText ﴿$i﴾ ';
+    }
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: theme.isDarkMode ? const Color(0xFF1e293b) : const Color(0xFFf5f3e8),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header السورة
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF059669),
+                  Color(0xFF047857),
+                  Color(0xFF065f46),
+                ],
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  onPressed: () {
+                    setState(() {
+                      _selectedSurah = null;
+                    });
+                  },
+                ),
+                Expanded(
+                  child: Text(
+                    surahName,
+                    style: GoogleFonts.amiriQuran(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.list_rounded, color: Colors.white),
+                  onPressed: () {
+                    _showSurahPicker(theme);
+                  },
+                ),
+              ],
+            ),
+          ),
+          
+          // النص المتدفق (مثل الكتاب)
+          Container(
+            padding: const EdgeInsets.all(28),
+            child: SelectableText(
+              fullSurahText,
+              style: GoogleFonts.amiriQuran(
+                fontSize: 22,
+                height: 2.0,
+                color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.justify,
+              textDirection: TextDirection.rtl,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // عرض قائمة السور
+  void _showSurahPicker(ThemeConfig theme) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
+          color: theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: theme.isDarkMode ? const Color(0xFF0f172a) : const Color(0xFFf9fafb),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.menu_book_rounded, color: Color(0xFF059669)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'اختر سورة',
+                      style: GoogleFonts.cairo(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            
+            // قائمة السور
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: 114,
+                itemBuilder: (context, index) {
+                  final surahNumber = index + 1;
+                  final surahName = quran.getSurahNameArabic(surahNumber);
+                  final versesCount = quran.getVerseCount(surahNumber);
+                  final revelationType = quran.getPlaceOfRevelation(surahNumber);
+                  
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: theme.isDarkMode ? const Color(0xFF0f172a) : const Color(0xFFf9fafb),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _selectedSurah = surahNumber;
+                          });
+                          Navigator.pop(context);
+                          
+                          // Scroll to Quran section
+                          Future.delayed(const Duration(milliseconds: 300), () {
+                            final context = _quranSectionKey.currentContext;
+                            if (context != null) {
+                              Scrollable.ensureVisible(
+                                context,
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF059669), Color(0xFF047857)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '$surahNumber',
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      surahName,
+                                      style: GoogleFonts.amiriQuran(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                                      ),
+                                    ),
+                                    Text(
+                                      '$revelationType • $versesCount آية',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 12,
+                                        color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                size: 16,
+                                color: theme.isDarkMode ? Colors.white38 : Colors.grey[400],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _IslamicPatternPainter extends CustomPainter {
@@ -2244,4 +2644,3 @@ class _TasbihStringPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
