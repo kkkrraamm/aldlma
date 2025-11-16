@@ -14,7 +14,7 @@ dependencies:
   
   # UI & Design
   cupertino_icons: ^1.0.2
-  google_fonts: ^6.1.0
+  google_fonts: ^6.3.2
   fl_chart: ^0.68.0
   
   # State Management
