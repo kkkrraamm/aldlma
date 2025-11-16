@@ -2407,16 +2407,18 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
           // النص المتدفق (مثل الكتاب)
           Container(
             padding: const EdgeInsets.all(28),
-            child: SelectableText(
-              fullSurahText,
-              style: GoogleFonts.amiriQuran(
-                fontSize: 22,
-                height: 2.0,
-                color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.justify,
+            child: Directionality(
               textDirection: TextDirection.rtl,
+              child: SelectableText(
+                fullSurahText,
+                style: GoogleFonts.amiriQuran(
+                  fontSize: 22,
+                  height: 2.0,
+                  color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.justify,
+              ),
             ),
           ),
         ],
