@@ -2327,47 +2327,10 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     }
   }
 
-  // عارض القرآن بتصميم الكتاب
+  // عارض القرآن بتصميم احترافي
   Widget _buildQuranReader(ThemeConfig theme, int surahNumber) {
     final surahName = quran.getSurahNameArabic(surahNumber);
     final versesCount = quran.getVerseCount(surahNumber);
-    final screenHeight = MediaQuery.of(context).size.height;
-    
-    // تقسيم الآيات إلى صفحات بناءً على عدد الأحرف (أدق من تقدير الأسطر)
-    List<String> pages = [];
-    String currentPage = '';
-    
-    // إضافة البسملة في الصفحة الأولى (ما عدا التوبة والفاتحة)
-    if (surahNumber != 1 && surahNumber != 9) {
-      currentPage = '${quran.basmala}\n\n';
-    }
-    
-    // حد أقصى للأحرف في كل صفحة (تقريباً 13 سطر × 40 حرف = 520 حرف)
-    const int maxCharsPerPage = 520;
-    
-    for (int i = 1; i <= versesCount; i++) {
-      final verseText = quran.getVerse(surahNumber, i);
-      final verseWithNumber = '$verseText ﴿$i﴾ ';
-      
-      // إذا إضافة الآية ستتجاوز الحد، ابدأ صفحة جديدة
-      if (currentPage.length + verseWithNumber.length > maxCharsPerPage && currentPage.isNotEmpty) {
-        pages.add(currentPage.trim());
-        currentPage = verseWithNumber;
-      } else {
-        currentPage += verseWithNumber;
-      }
-    }
-    
-    // إضافة آخر صفحة
-    if (currentPage.isNotEmpty) {
-      pages.add(currentPage.trim());
-    }
-    
-    // إعادة تهيئة PageController عند تغيير السورة
-    if (_currentQuranPage >= pages.length) {
-      _currentQuranPage = 0;
-      _quranPageController = PageController(initialPage: 0);
-    }
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -2384,16 +2347,12 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
       ),
       child: Column(
         children: [
-          // Header السورة
+          // Header
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFF059669),
-                  Color(0xFF047857),
-                  Color(0xFF065f46),
-                ],
+                colors: [Color(0xFF059669), Color(0xFF047857), Color(0xFF065f46)],
               ),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(24),
@@ -2403,7 +2362,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white, size: 22),
                   onPressed: () {
                     setState(() {
                       _selectedSurah = null;
@@ -2415,7 +2374,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                   child: Text(
                     surahName,
                     style: GoogleFonts.amiriQuran(
-                      fontSize: 24,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -2423,107 +2382,68 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.list_rounded, color: Colors.white),
-                  onPressed: () {
-                    _showSurahPicker(theme);
-                  },
+                  icon: const Icon(Icons.list_rounded, color: Colors.white, size: 22),
+                  onPressed: () => _showSurahPicker(theme),
                 ),
               ],
             ),
           ),
           
-          // الصفحات (PageView)
-          SizedBox(
-            height: 350, // ارتفاع ثابت بدون فراغ
-            child: PageView.builder(
-              controller: _quranPageController,
-              reverse: true, // للتمرير من اليمين لليسار (عربي)
-              onPageChanged: (index) {
-                setState(() {
-                  _currentQuranPage = index;
-                });
-              },
-              itemCount: pages.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                  alignment: Alignment.topRight,
-                  child: Text(
-                    pages[index],
-                    style: GoogleFonts.amiriQuran(
-                      fontSize: 19, // حجم الخط ثابت!
-                      height: 1.8,
-                      color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
-                      fontWeight: FontWeight.w500,
+          // القراءة بـ scroll عادي
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // البسملة
+                  if (surahNumber != 1 && surahNumber != 9) ...[
+                    Text(
+                      quran.basmala,
+                      style: GoogleFonts.amiriQuran(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF047857),
+                        height: 2.0,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.justify,
-                    maxLines: 13, // حد أقصى 13 سطر!
-                    overflow: TextOverflow.clip, // قطع النص الزائد
-                  ),
-                );
-              },
-            ),
-          ),
-          
-          // مؤشر رقم الصفحة
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // زر الصفحة السابقة
-                IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios_rounded),
-                  onPressed: _currentQuranPage < pages.length - 1
-                      ? () {
-                          _quranPageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        }
-                      : null,
-                  color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
-                ),
-                
-                const SizedBox(width: 16),
-                
-                // رقم الصفحة
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF059669).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFF059669).withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    '${_currentQuranPage + 1} / ${pages.length}',
-                    style: GoogleFonts.cairo(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF047857),
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(width: 16),
-                
-                // زر الصفحة التالية
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_rounded),
-                  onPressed: _currentQuranPage > 0
-                      ? () {
-                          _quranPageController.previousPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        }
-                      : null,
-                  color: theme.isDarkMode ? Colors.white70 : Colors.grey[600],
-                ),
-              ],
+                    const SizedBox(height: 24),
+                  ],
+                  
+                  // الآيات
+                  ...List.generate(versesCount, (index) {
+                    final verseNumber = index + 1;
+                    final verseText = quran.getVerse(surahNumber, verseNumber);
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: RichText(
+                        textAlign: TextAlign.justify,
+                        textDirection: TextDirection.rtl,
+                        text: TextSpan(
+                          style: GoogleFonts.amiriQuran(
+                            fontSize: 20,
+                            height: 2.0,
+                            color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          children: [
+                            TextSpan(text: verseText),
+                            TextSpan(
+                              text: ' ﴿$verseNumber﴾ ',
+                              style: GoogleFonts.amiriQuran(
+                                color: const Color(0xFF047857),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
             ),
           ),
         ],
