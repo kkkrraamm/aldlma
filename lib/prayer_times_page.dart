@@ -2342,8 +2342,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
       currentPage = '${quran.basmala}\n\n';
     }
     
-    // حد أقصى للأحرف في كل صفحة (تقريباً 15 سطر × 40 حرف = 600 حرف)
-    const int maxCharsPerPage = 600;
+    // حد أقصى للأحرف في كل صفحة (تقريباً 10 سطر × 40 حرف = 400 حرف)
+    const int maxCharsPerPage = 400;
     
     for (int i = 1; i <= versesCount; i++) {
       final verseText = quran.getVerse(surahNumber, i);
@@ -2434,7 +2434,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
           
           // الصفحات (PageView)
           SizedBox(
-            height: screenHeight * 0.5, // 50% من ارتفاع الشاشة
+            height: screenHeight * 0.4, // 40% من ارتفاع الشاشة (أصغر من قبل)
             child: PageView.builder(
               controller: _quranPageController,
               reverse: true, // للتمرير من اليمين لليسار (عربي)
@@ -2457,7 +2457,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                       fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.justify,
-                    maxLines: 15, // حد أقصى 15 سطر فقط!
+                    maxLines: 10, // حد أقصى 10 أسطر فقط!
                     overflow: TextOverflow.clip, // قطع النص الزائد
                   ),
                 );
