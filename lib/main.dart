@@ -166,7 +166,12 @@ class _MyHomePageState extends State<MyHomePage> {
             case 3:
               return TrendsPage();
             case 4:
-              return ServicesPage(showAppBar: false);
+              return ServicesPage(
+                showAppBar: false,
+                onNavigate: (index) {
+                  setState(() => _currentIndex = index);
+                },
+              );
             default:
               return _HomeScreen(
                 onNavigate: (index) {

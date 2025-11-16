@@ -15,8 +15,9 @@ import 'theme_config.dart';
 
 class ServicesPage extends StatefulWidget {
   final bool showAppBar;
+  final Function(int)? onNavigate;
   
-  const ServicesPage({Key? key, this.showAppBar = true}) : super(key: key);
+  const ServicesPage({Key? key, this.showAppBar = true, this.onNavigate}) : super(key: key);
   
   @override
   _ServicesPageState createState() => _ServicesPageState();
@@ -457,10 +458,10 @@ class _ServicesPageState extends State<ServicesPage> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const OrdersPage(showAppBar: true, showBottomNav: true)),
-                      );
+                      // الانتقال إلى تبويب "طلباتي" في شريط التنقل السفلي (index 1)
+                      if (widget.onNavigate != null) {
+                        widget.onNavigate!(1);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isDark ? ThemeConfig.kGoldNight : Color(0xFF10B981),

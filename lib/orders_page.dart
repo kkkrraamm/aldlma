@@ -6,6 +6,8 @@ import 'trends_page.dart';
 import 'auth.dart';
 import 'orders_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'login_page.dart';
+import 'notifications.dart';
 
 class OrdersPage extends StatefulWidget {
   final bool showAppBar;
@@ -344,13 +346,6 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
           ),
         ],
       ),
-      floatingActionButton: widget.showBottomNav ? null : FloatingActionButton.extended(
-        onPressed: () => Navigator.pop(context),
-        backgroundColor: themeConfig.primaryColor,
-        label: Text('طلب جديد', style: GoogleFonts.cairo(fontWeight: FontWeight.w700)),
-        icon: const Icon(Icons.add_rounded),
-        elevation: 8,
-      ),
     );
   }
 
@@ -577,7 +572,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   }
 }
 
-// Modern Header Widget
+// Modern Header Widget - مطابق تماماً للصفحة الرئيسية
 class _ModernHeader extends StatelessWidget {
   final ThemeConfig themeConfig;
   
@@ -588,98 +583,113 @@ class _ModernHeader extends StatelessWidget {
     final glowColor = themeConfig.primaryColor;
     
     return Container(
-      padding: const EdgeInsets.only(top: 12, bottom: 32),
+      padding: const EdgeInsets.only(top: 12, bottom: 20),
       decoration: BoxDecoration(
         gradient: themeConfig.headerGradient,
       ),
-      child: SafeArea(
-        child: Column(
-          children: [
-            // Top Actions
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios_rounded,
-                      color: themeConfig.isDarkMode ? Colors.white : const Color(0xFF059669),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.search_rounded,
-                      color: themeConfig.isDarkMode ? Colors.white : const Color(0xFF059669),
-                    ),
-                    onPressed: () {
-                      // Toggle search
-                    },
-                  ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Logo with Glow
-            Stack(
-              alignment: Alignment.center,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Soft radial glow
-                Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        glowColor.withOpacity(0.25),
-                        glowColor.withOpacity(0.15),
-                        glowColor.withOpacity(0.08),
-                        Colors.transparent,
+                const SizedBox(height: 48),
+                // Top row with login button and icons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const _LoginButton(),
+                    Row(
+                      children: const [
+                        _ThemeToggleButton(),
+                        SizedBox(width: 8),
+                        NotificationsBell(),
                       ],
-                      stops: const [0.0, 0.4, 0.7, 1.0],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                // Logo with glow effect
+                Center(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Soft radial glow exactly like in the image
+                      Container(
+                        width: 350,
+                        height: 350,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              glowColor.withOpacity(0.25),
+                              glowColor.withOpacity(0.15),
+                              glowColor.withOpacity(0.08),
+                              glowColor.withOpacity(0.03),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
+                          ),
+                        ),
+                      ),
+                      // Logo
+                      Image.asset('assets/img/aldlma.png', width: 176, height: 176),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Dynamic greeting
+                AnimatedBuilder(
+                  animation: AuthState.instance,
+                  builder: (context, _) {
+                    final logged = AuthState.instance.isLoggedIn;
+                    final name = AuthState.instance.userName ?? '';
+                    if (!logged) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        'الله حيّه $name',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF059669),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                // Title
+                Text(
+                  'طلباتي',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: Theme.of(context).colorScheme.secondary,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Description
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    'تتبع وإدارة جميع طلباتك بسهولة',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 18,
+                      height: 1.6,
                     ),
                   ),
                 ),
-                // Logo
-                Image.asset('assets/logo.png', width: 100, height: 100),
               ],
             ),
-            
-            const SizedBox(height: 20),
-            
-            // Title
-            Text(
-              'طلباتي',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.cairo(
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
-                color: themeConfig.isDarkMode ? Colors.white : const Color(0xFF059669),
-                height: 1.2,
-              ),
-            ),
-            
-            const SizedBox(height: 12),
-            
-            // Subtitle
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                'تتبع وإدارة جميع طلباتك بسهولة',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.cairo(
-                  color: themeConfig.isDarkMode ? Colors.white70 : const Color(0xFF059669).withOpacity(0.8),
-                  fontSize: 16,
-                  height: 1.6,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1455,6 +1465,99 @@ class _EmptyState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Login Button Widget - مطابق للصفحة الرئيسية
+class _LoginButton extends StatelessWidget {
+  const _LoginButton({super.key});
+  
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: AuthState.instance,
+      builder: (context, child) {
+        final isLoggedIn = AuthState.instance.isLoggedIn;
+        return InkWell(
+          borderRadius: const BorderRadius.all(Radius.circular(6)),
+          onTap: () async {
+            if (isLoggedIn) {
+              await AuthState.instance.logout();
+              NotificationsService.instance.toast('تم تسجيل الخروج', icon: Icons.logout, color: const Color(0xFFEF4444));
+            } else {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));
+            }
+          },
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(colors: [Color(0xFFD97706), Color(0xFF059669)]),
+              borderRadius: BorderRadius.all(Radius.circular(6)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(isLoggedIn ? Icons.logout : Icons.person_outline, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Text(isLoggedIn ? 'تسجيل الخروج' : 'تسجيل الدخول', 
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Theme Toggle Button Widget - مطابق للصفحة الرئيسية
+class _ThemeToggleButton extends StatelessWidget {
+  const _ThemeToggleButton();
+  
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: ThemeConfig.instance,
+      builder: (context, child) {
+        final themeConfig = ThemeConfig.instance;
+        final isDark = themeConfig.isDarkMode;
+        
+        return InkWell(
+          onTap: () {
+            themeConfig.toggleTheme();
+            NotificationsService.instance.toast(
+              isDark ? 'تم التبديل للوضع النهاري' : 'تم التبديل للوضع الليلي',
+              icon: isDark ? Icons.wb_sunny : Icons.nightlight_round,
+              color: themeConfig.primaryColor,
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDark ? ThemeConfig.kNightAccent : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: themeConfig.cardShadow,
+            ),
+            child: Center(
+              child: Icon(
+                isDark ? Icons.wb_sunny : Icons.nightlight_round,
+                color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                size: 20,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
