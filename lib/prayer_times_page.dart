@@ -2424,15 +2424,20 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                     });
                   },
                 ),
-                Expanded(
+                // عرض حجم الخط
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: Text(
-                    surahName,
-                    style: GoogleFonts.amiriQuran(
-                      fontSize: 20,
+                    '${_quranFontSize.toInt()}',
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ),
                 // زر التكبير
@@ -2445,6 +2450,18 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                       }
                     });
                   },
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    surahName,
+                    style: GoogleFonts.amiriQuran(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.list_rounded, color: Colors.white),
