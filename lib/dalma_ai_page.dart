@@ -235,26 +235,30 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
   Widget _buildHeader(ThemeConfig theme) {
     return Container(
       decoration: BoxDecoration(
-        color: theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10b981), Color(0xFF059669)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF10b981).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           child: Row(
             children: [
               // زر الرجوع
               IconButton(
-                icon: Icon(
+                icon: const Icon(
                   Icons.arrow_back_ios_new_rounded,
-                  color: theme.textPrimaryColor,
+                  color: Colors.white,
                   size: 20,
                 ),
                 onPressed: () => Navigator.pop(context),
@@ -265,11 +269,15 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
+                  color: Colors.white,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFF10b981).withOpacity(0.3),
-                    width: 2,
-                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: ClipOval(
                   child: Image.asset(
@@ -292,14 +300,14 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
                       style: GoogleFonts.cairo(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: theme.textPrimaryColor,
+                        color: Colors.white,
                       ),
                     ),
                     Text(
                       'من الشمال.. للعالم، بعقلٍ فيه خير',
                       style: GoogleFonts.cairo(
                         fontSize: 11,
-                        color: theme.textSecondaryColor,
+                        color: Colors.white.withOpacity(0.9),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -310,9 +318,9 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
               
               // زر الحذف
               IconButton(
-                icon: Icon(
+                icon: const Icon(
                   Icons.delete_outline_rounded,
-                  color: theme.textSecondaryColor,
+                  color: Colors.white,
                   size: 22,
                 ),
                 onPressed: _clearChat,
@@ -430,7 +438,11 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
                         end: Alignment.bottomRight,
                       )
                     : null,
-                color: isUser ? null : (theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white),
+                color: isUser 
+                    ? null 
+                    : (theme.isDarkMode 
+                        ? const Color(0xFF2d3748) 
+                        : const Color(0xFFf3f4f6)),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(isUser ? 20 : 4),
                   topRight: Radius.circular(isUser ? 4 : 20),
@@ -515,7 +527,7 @@ class _DalmaAIPageState extends State<DalmaAIPage> with TickerProviderStateMixin
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: theme.isDarkMode ? const Color(0xFF1e293b) : Colors.white,
+              color: theme.isDarkMode ? const Color(0xFF2d3748) : const Color(0xFFf3f4f6),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
