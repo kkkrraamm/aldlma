@@ -43,7 +43,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   final GlobalKey _quranSectionKey = GlobalKey();
   int _currentQuranPage = 0;
   late PageController _quranPageController;
-  double _quranFontSize = 18.0; // حجم الخط الافتراضي
   
   // للقبلة
   double? _currentLatitude;
@@ -2409,54 +2408,14 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                     setState(() {
                       _selectedSurah = null;
                       _currentQuranPage = 0;
-                      _quranFontSize = 18.0; // إعادة تعيين حجم الخط
                     });
                   },
                 ),
-                // زر التصغير
-                IconButton(
-                  icon: const Icon(Icons.remove_rounded, color: Colors.white, size: 20),
-                  onPressed: () {
-                    setState(() {
-                      if (_quranFontSize > 14) {
-                        _quranFontSize -= 2;
-                      }
-                    });
-                  },
-                ),
-                // عرض حجم الخط
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${_quranFontSize.toInt()}',
-                    style: GoogleFonts.cairo(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                // زر التكبير
-                IconButton(
-                  icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
-                  onPressed: () {
-                    setState(() {
-                      if (_quranFontSize < 26) {
-                        _quranFontSize += 2;
-                      }
-                    });
-                  },
-                ),
-                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     surahName,
                     style: GoogleFonts.amiriQuran(
-                      fontSize: 20,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -2492,7 +2451,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                   child: Text(
                     pages[index],
                     style: GoogleFonts.amiriQuran(
-                      fontSize: _quranFontSize, // حجم الخط المتغير!
+                      fontSize: 19, // حجم الخط ثابت!
                       height: 1.8,
                       color: theme.isDarkMode ? Colors.white : const Color(0xFF1e293b),
                       fontWeight: FontWeight.w500,
