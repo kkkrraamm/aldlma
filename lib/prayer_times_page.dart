@@ -1608,12 +1608,13 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                           setState(() {
                             _tasbihCount++;
                             _totalTasbihCount++; // زيادة العداد الإجمالي
-                            if (_tasbihCount == 33) {
+                            if (_tasbihCount >= 33) {
+                              // إعادة تعيين الكور والعداد
+                              _tasbihCount = 0;
                               // تغيير التسبيح تلقائياً
                               final currentIndex = _tasbihOptions.indexOf(_currentTasbih);
                               if (currentIndex < _tasbihOptions.length - 1) {
                                 _currentTasbih = _tasbihOptions[currentIndex + 1];
-                                _tasbihCount = 0;
                               }
                             }
                           });
