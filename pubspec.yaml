@@ -57,6 +57,7 @@ dependencies:
   path_provider: ^2.1.0
   adhan: ^2.0.0+1
   flutter_compass: ^0.8.1
+  quran: ^1.2.9
   
   # Firebase (Optional)
   # firebase_core: ^2.24.0
