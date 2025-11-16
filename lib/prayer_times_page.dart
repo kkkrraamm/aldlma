@@ -1387,14 +1387,27 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                   // السبحة الحقيقية
                   SizedBox(
                     height: 280,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // الخيط (الدائرة)
-                        CustomPaint(
-                          size: const Size(240, 240),
-                          painter: _TasbihStringPainter(),
-                        ),
+                    child: TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 500),
+                      tween: Tween<double>(
+                        begin: 0.0,
+                        end: _tasbihCount.toDouble(),
+                      ),
+                      curve: Curves.easeInOut,
+                      builder: (context, value, child) {
+                        return Transform.rotate(
+                          angle: (value * 360 / 33) * (math.pi / 180),
+                          child: child,
+                        );
+                      },
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // الخيط (الدائرة)
+                          CustomPaint(
+                            size: const Size(240, 240),
+                            painter: _TasbihStringPainter(),
+                          ),
                         
                         // الكور (33 كورة)
                         ...List.generate(33, (index) {
@@ -1405,27 +1418,76 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                           
                           // تحديد إذا كانت الكورة مضاءة (تم العد لها)
                           final isActive = index < _tasbihCount;
+                          // الكورة الحالية (آخر واحدة تم عدها)
+                          final isCurrent = index == _tasbihCount - 1;
                           
                           return Positioned(
-                            left: 120 + x - 10,
-                            top: 140 + y - 10,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isActive 
-                                    ? Colors.amber[300]
-                                    : Colors.white.withOpacity(0.3),
-                                boxShadow: isActive ? [
-                                  BoxShadow(
-                                    color: Colors.amber.withOpacity(0.6),
-                                    blurRadius: 8,
-                                    spreadRadius: 2,
-                                  ),
-                                ] : [],
+                            left: 120 + x - 12,
+                            top: 140 + y - 12,
+                            child: TweenAnimationBuilder<double>(
+                              duration: const Duration(milliseconds: 400),
+                              tween: Tween<double>(
+                                begin: 0.0,
+                                end: isActive ? 1.0 : 0.0,
                               ),
+                              curve: Curves.elasticOut,
+                              builder: (context, value, child) {
+                                return Transform.scale(
+                                  scale: isCurrent ? 1.0 + (0.5 * value) : 1.0,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    width: isCurrent ? 28 : 24,
+                                    height: isCurrent ? 28 : 24,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: isActive 
+                                          ? LinearGradient(
+                                              colors: [
+                                                Colors.amber[200]!,
+                                                Colors.amber[400]!,
+                                                Colors.orange[600]!,
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            )
+                                          : null,
+                                      color: isActive 
+                                          ? null
+                                          : Colors.white.withOpacity(0.25),
+                                      border: Border.all(
+                                        color: isActive 
+                                            ? Colors.amber[100]!
+                                            : Colors.white.withOpacity(0.3),
+                                        width: isCurrent ? 3 : 2,
+                                      ),
+                                      boxShadow: isActive ? [
+                                        BoxShadow(
+                                          color: Colors.amber.withOpacity(0.8),
+                                          blurRadius: isCurrent ? 20 : 12,
+                                          spreadRadius: isCurrent ? 4 : 2,
+                                        ),
+                                        BoxShadow(
+                                          color: Colors.orange.withOpacity(0.6),
+                                          blurRadius: isCurrent ? 15 : 8,
+                                          spreadRadius: isCurrent ? 2 : 1,
+                                        ),
+                                      ] : [],
+                                    ),
+                                    child: Center(
+                                      child: Container(
+                                        width: isCurrent ? 12 : 10,
+                                        height: isCurrent ? 12 : 10,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: isActive 
+                                              ? Colors.white.withOpacity(0.9)
+                                              : Colors.transparent,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           );
                         }),
@@ -1460,7 +1522,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                             ),
                           ),
                         ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   
