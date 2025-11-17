@@ -97,6 +97,10 @@ function createUnifiedSidebar() {
             <!-- Content & Marketing -->
             <div class="nav-section">
                 <span class="nav-section-title">المحتوى والتسويق</span>
+                <a href="ads-management.html" class="nav-item" data-page="ads-management">
+                    <i class="fas fa-ad"></i>
+                    <span>إدارة الإعلانات</span>
+                </a>
                 <a href="content-management.html" class="nav-item" data-page="content-management">
                     <i class="fas fa-bullhorn"></i>
                     <span>إدارة المحتوى</span>
