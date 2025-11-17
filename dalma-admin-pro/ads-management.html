@@ -734,6 +734,54 @@
             box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
         }
         
+        /* Inline Form Container */
+        .add-ad-container {
+            margin-bottom: 30px;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .add-ad-form {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] .add-ad-form {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Override modal styles for inline form */
+        .add-ad-container .modern-modal {
+            max-width: 100%;
+            max-height: none;
+            overflow: visible;
+        }
+        
+        .add-ad-container .modern-header {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .add-ad-container .modern-body {
+            background: var(--card-bg);
+        }
+        
+        .add-ad-container .form-section {
+            background: var(--bg-color);
+            border-color: var(--border-color);
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .modern-modal {
@@ -850,21 +898,15 @@
                     قائمة الإعلانات
                     <span class="badge badge-primary" id="adsCount">0</span>
                 </h2>
-                <button class="btn btn-primary" onclick="openAddAdModal()">
+                <button class="btn btn-primary" onclick="toggleAddAdForm()">
                     <i class="fas fa-plus"></i>
-                    إضافة إعلان جديد
+                    <span id="addAdBtnText">إضافة إعلان جديد</span>
                 </button>
             </div>
 
-            <!-- Ads Grid -->
-            <div class="ads-grid" id="adsGrid">
-                <!-- Will be populated by JS -->
-            </div>
-        </div>
-    </main>
-
-    <!-- Add/Edit Ad Modal - Modern Design -->
-    <div class="modal" id="adModal">
+            <!-- Add/Edit Ad Form - Inline Design -->
+            <div class="add-ad-container" id="addAdContainer" style="display: none;">
+                <div class="add-ad-form">
         <div class="modal-content modern-modal">
             <div class="modal-header modern-header">
                 <div class="header-content">
@@ -1085,6 +1127,15 @@
             </form>
         </div>
     </div>
+            </div>
+            </div>
+
+            <!-- Ads Grid -->
+            <div class="ads-grid" id="adsGrid">
+                <!-- Will be populated by JS -->
+            </div>
+        </div>
+    </main>
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">

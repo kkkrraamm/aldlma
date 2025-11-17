@@ -220,17 +220,43 @@ function renderStats(stats) {
 
 // ==================== ADD/EDIT AD ====================
 
+// Toggle Add Ad Form (Inline)
+function toggleAddAdForm() {
+    const container = document.getElementById('addAdContainer');
+    const btnText = document.getElementById('addAdBtnText');
+    const adsGrid = document.getElementById('adsGrid');
+    
+    if (container.style.display === 'none') {
+        // Show form
+        editingAdId = null;
+        uploadedImageUrl = null;
+        
+        document.getElementById('modalTitle').textContent = 'إضافة إعلان جديد';
+        document.getElementById('adForm').reset();
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('uploadPlaceholder').style.display = 'block';
+        document.getElementById('linkTypeExternal').checked = true;
+        toggleLinkFields('external');
+        
+        container.style.display = 'block';
+        btnText.textContent = 'إلغاء';
+        adsGrid.style.display = 'none';
+        
+        // Scroll to form
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        // Hide form
+        container.style.display = 'none';
+        btnText.textContent = 'إضافة إعلان جديد';
+        adsGrid.style.display = 'grid';
+        editingAdId = null;
+        uploadedImageUrl = null;
+    }
+}
+
+// Keep old function for compatibility
 function openAddAdModal() {
-    editingAdId = null;
-    uploadedImageUrl = null;
-    
-    document.getElementById('modalTitle').textContent = 'إضافة إعلان جديد';
-    document.getElementById('adForm').reset();
-    document.getElementById('imagePreview').style.display = 'none';
-    document.getElementById('linkTypeExternal').checked = true;
-    toggleLinkFields('external');
-    
-    document.getElementById('adModal').style.display = 'flex';
+    toggleAddAdForm();
 }
 
 async function editAd(id) {
@@ -241,6 +267,10 @@ async function editAd(id) {
         showToast('الإعلان غير موجود', 'error');
         return;
     }
+    
+    const container = document.getElementById('addAdContainer');
+    const btnText = document.getElementById('addAdBtnText');
+    const adsGrid = document.getElementById('adsGrid');
     
     document.getElementById('modalTitle').textContent = 'تعديل الإعلان';
     document.getElementById('adTitle').value = ad.title || '';
@@ -273,15 +303,21 @@ async function editAd(id) {
     if (ad.image_url) {
         document.getElementById('imagePreview').src = ad.image_url;
         document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('uploadPlaceholder').style.display = 'none';
     }
     
-    document.getElementById('adModal').style.display = 'flex';
+    // Show form
+    container.style.display = 'block';
+    btnText.textContent = 'إلغاء';
+    adsGrid.style.display = 'none';
+    
+    // Scroll to form
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function closeAdModal() {
-    document.getElementById('adModal').style.display = 'none';
-    editingAdId = null;
-    uploadedImageUrl = null;
+    // Hide inline form
+    toggleAddAdForm();
 }
 
 function toggleLinkFields(type) {
