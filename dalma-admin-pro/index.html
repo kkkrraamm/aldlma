@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/unified-sidebar.css">
+    <link rel="stylesheet" href="css/topbar.css">
 </head>
 <body>
     <!-- Unified Sidebar (loaded dynamically by sidebar.js) -->
@@ -17,32 +18,6 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Top Bar -->
-        <div class="topbar">
-            <div class="topbar-left">
-                <button class="btn-icon" id="menuToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="بحث...">
-                </div>
-            </div>
-
-            <div class="topbar-right">
-                <button class="btn-icon" id="themeToggle">
-                    <i class="fas fa-moon"></i>
-                </button>
-                <button class="btn-icon" id="notificationBtn">
-                    <i class="fas fa-bell"></i>
-                    <span class="notification-badge">4</span>
-                </button>
-                <button class="btn-icon">
-                    <i class="fas fa-cog"></i>
-                </button>
-            </div>
-        </div>
-
         <!-- Page Content -->
         <div class="page-content" id="pageContent">
             <!-- Content will be loaded here by JavaScript -->
@@ -89,7 +64,8 @@
     <!-- ApexCharts for Interactive Charts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
     
-    <!-- Unified Sidebar (load first) -->
+    <!-- Unified Sidebar & Top Bar -->
+    <script src="js/topbar.js"></script>
     <script src="js/sidebar.js"></script>
     
     <script src="js/main.js"></script>
@@ -97,7 +73,7 @@
     <script src="js/requests.js"></script>
     
     <script>
-        // Check authentication on load
+        // Check authentication and initialize
         window.addEventListener('DOMContentLoaded', () => {
             console.log('🔍 [INDEX] فحص حالة تسجيل الدخول...');
             
@@ -115,10 +91,8 @@
                 return;
             }
             
-            // Display admin name
-            if (username) {
-                document.getElementById('adminName').textContent = username;
-            }
+            // Initialize Top Bar
+            renderTopBar('لوحة التحكم');
             
             console.log('✅ Admin مسجل دخول:', username);
         });

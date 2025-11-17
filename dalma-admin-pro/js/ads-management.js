@@ -7,24 +7,32 @@ let uploadedImageUrl = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
-    loadAds();
+    if (checkAuth()) {
+        loadAds();
+    }
 });
 
 // Check authentication
 function checkAuth() {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
+    const token = localStorage.getItem('admin_token');
+    const apiKey = localStorage.getItem('admin_apiKey');
+    
+    if (!token || !apiKey) {
+        console.log('❌ [AUTH] No credentials found, redirecting to login...');
         window.location.href = 'login.html';
-        return;
+        return false;
     }
+    
+    console.log('✅ [AUTH] Credentials found');
+    return true;
 }
 
 // Get auth headers
 function getAuthHeaders() {
     return {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+        'x-api-key': localStorage.getItem('admin_apiKey')
     };
 }
 
@@ -39,6 +47,14 @@ async function loadAds() {
             headers: getAuthHeaders()
         });
         
+        if (response.status === 401 || response.status === 403) {
+            console.error('❌ [AUTH] Unauthorized - redirecting to login...');
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_apiKey');
+            window.location.href = 'login.html';
+            return;
+        }
+        
         if (!response.ok) {
             throw new Error('Failed to load ads');
         }
@@ -49,7 +65,10 @@ async function loadAds() {
         renderAds();
         renderStats(data.stats);
         
-        document.getElementById('adsCount').textContent = adsData.length;
+        const adsCountEl = document.getElementById('adsCount');
+        if (adsCountEl) {
+            adsCountEl.textContent = adsData.length;
+        }
         
         console.log('✅ Ads loaded successfully');
         hideLoading();
@@ -315,8 +334,12 @@ async function handleImageUpload(event) {
         uploadedImageUrl = data.secure_url;
         
         // Show preview
-        document.getElementById('imagePreview').src = uploadedImageUrl;
-        document.getElementById('imagePreview').style.display = 'block';
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        
+        imagePreview.src = uploadedImageUrl;
+        imagePreview.style.display = 'block';
+        uploadPlaceholder.style.display = 'none';
         
         showToast('تم رفع الصورة بنجاح', 'success');
     } catch (error) {

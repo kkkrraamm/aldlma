@@ -16,6 +16,7 @@
     <!-- Main CSS -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/unified-sidebar.css">
+    <link rel="stylesheet" href="css/topbar.css">
     
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
@@ -255,12 +256,13 @@
     </div>
 
     <!-- Scripts -->
+    <script src="js/topbar.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/main.js"></script>
     <script src="js/finance-monitoring.js"></script>
     
     <script>
-        // Check authentication
+        // Check authentication and initialize
         window.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('admin_token');
             if (!token) {
@@ -268,10 +270,7 @@
                 return;
             }
             
-            const username = localStorage.getItem('admin_username');
-            if (username) {
-                document.getElementById('adminName').textContent = username;
-            }
+            renderTopBar('المالية');
         });
     </script>
 </body>

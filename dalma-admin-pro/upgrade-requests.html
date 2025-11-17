@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/unified-sidebar.css">
+    <link rel="stylesheet" href="css/topbar.css">
     <style>
         .upgrade-requests-page {
             padding: 30px;
@@ -281,9 +282,13 @@
         </div>
     </div>
 
-    <script src="js/main.js"></script>
+    <script src="js/topbar.js"></script>
     <script src="js/sidebar.js"></script>
+    <script src="js/main.js"></script>
     <script src="js/upgrade-requests.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { renderTopBar('طلبات الترقية'); });
+    </script>
 </body>
 </html>
 

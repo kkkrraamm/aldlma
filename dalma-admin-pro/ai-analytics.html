@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/unified-sidebar.css">
+    <link rel="stylesheet" href="css/topbar.css">
 </head>
 <body>
     <!-- Unified Sidebar -->
@@ -120,6 +121,7 @@
         </div>
     </main>
 
+    <script src="js/topbar.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/main.js"></script>
     <script src="js/ai-analytics.js"></script>
@@ -131,10 +133,7 @@
                 window.location.href = 'login.html';
                 return;
             }
-            const username = localStorage.getItem('admin_username');
-            if (username) {
-                document.getElementById('adminName').textContent = username;
-            }
+            renderTopBar('التحليلات الذكية');
         });
     </script>
 </body>

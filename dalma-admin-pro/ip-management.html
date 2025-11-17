@@ -6,6 +6,7 @@
     <title>إدارة IPs المسموحة - Dalma Admin Pro</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/unified-sidebar.css">
+    <link rel="stylesheet" href="css/topbar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         .ip-header {
@@ -482,9 +483,15 @@
         </div>
     </main>
 
+    <script src="js/topbar.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/main.js"></script>
     <script>
+        // Initialize Top Bar
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTopBar('إدارة IPs');
+        });
+        
         // API_URL is already defined in main.js
         let currentIP = '';
 

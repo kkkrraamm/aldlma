@@ -16,6 +16,7 @@
     <!-- Main CSS -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/unified-sidebar.css">
+    <link rel="stylesheet" href="css/topbar.css">
     
     <!-- SortableJS for Drag & Drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -323,12 +324,13 @@
     </div>
 
     <!-- Scripts -->
+    <script src="js/topbar.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/main.js"></script>
     <script src="js/content-management.js"></script>
     
     <script>
-        // Check authentication
+        // Check authentication and initialize
         window.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('admin_token');
             if (!token) {
@@ -336,10 +338,8 @@
                 return;
             }
             
-            const username = localStorage.getItem('admin_username');
-            if (username) {
-                document.getElementById('adminName').textContent = username;
-            }
+            // Initialize Top Bar
+            renderTopBar('إدارة المحتوى');
         });
 
         // Color picker live preview
