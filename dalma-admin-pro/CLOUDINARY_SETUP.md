@@ -2,64 +2,71 @@
 
 ## 📋 نظرة عامة
 
-تستخدم إدارة الإعلانات **Cloudinary** لرفع وتخزين صور الإعلانات.
+تستخدم إدارة الإعلانات **Cloudinary** لرفع وتخزين صور الإعلانات **عبر Backend API** (أكثر أماناً).
 
 ---
 
 ## ⚙️ الإعداد الحالي
 
-### المعلومات المُستخدمة:
-```javascript
-CLOUDINARY_CLOUD_NAME = 'dxvmlvqda'
-CLOUDINARY_UPLOAD_PRESET = 'dalma_ads'
+### طريقة الرفع:
 ```
+Frontend → Backend API → Cloudinary
+```
+
+### المزايا:
+- ✅ **أكثر أماناً**: API Keys محمية في Backend
+- ✅ **تحكم أفضل**: Backend يتحقق من الصلاحيات
+- ✅ **معالجة محسّنة**: تحسين تلقائي للصور
+- ✅ **تتبع أفضل**: سجلات في Backend
 
 ---
 
-## 🔧 خطوات الإعداد في Cloudinary
+## 🔧 إعداد Backend (Environment Variables)
 
-### 1. إنشاء Upload Preset
+### المتغيرات المطلوبة في `.env`:
+
+```bash
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+### كيفية الحصول عليها:
 
 1. سجل الدخول إلى [Cloudinary Dashboard](https://cloudinary.com/console)
-2. اذهب إلى **Settings** → **Upload**
-3. انزل إلى **Upload presets**
-4. اضغط على **Add upload preset**
-5. املأ المعلومات:
-   ```
-   Preset name: dalma_ads
-   Signing Mode: Unsigned
-   Folder: dalma/ads
-   ```
-6. في **Media Analysis and AI**:
-   - ✅ Enable: Image analysis
-   - ✅ Enable: Quality analysis
-7. في **Upload manipulations**:
-   - Max image width: 1920
-   - Max image height: 1080
-   - Image format: Auto
-8. احفظ التغييرات
+2. ستجد المعلومات في الصفحة الرئيسية:
+   - **Cloud Name**
+   - **API Key**
+   - **API Secret** (اضغط على "Reveal" لإظهاره)
+3. انسخها وضعها في ملف `.env` في Backend
 
 ---
 
 ## 🔐 الأمان
 
-### Unsigned Upload Preset:
-- ✅ **مناسب للاستخدام**: يسمح بالرفع من المتصفح مباشرة
-- ⚠️ **تحذير**: يمكن لأي شخص الرفع إذا عرف الـ preset name
-- 🛡️ **الحماية**: استخدم Cloudinary's Upload Restrictions
+### Backend API Authentication:
+- ✅ **محمي بـ JWT**: يجب تسجيل الدخول كـ Admin
+- ✅ **API Key**: تحقق إضافي من الصلاحيات
+- ✅ **File Validation**: التحقق من النوع والحجم
+- ✅ **Cloudinary Keys**: محفوظة في Backend فقط
 
-### إعدادات الأمان الموصى بها:
-1. في **Upload preset settings**:
-   - Enable: **Unique filename**
-   - Enable: **Overwrite**
-   - Max file size: **5 MB**
-   - Allowed formats: `jpg,jpeg,png,gif,webp`
+### التحقق من الصلاحيات:
+```javascript
+app.post('/api/admin/upload-ad-image', 
+  authenticateAdmin,  // ✅ JWT Token
+  upload.single('image'),  // ✅ Multer validation
+  async (req, res) => {
+    // ✅ File type & size validation
+    // ✅ Upload to Cloudinary
+  }
+);
+```
 
 ---
 
 ## 🚀 كيف يعمل
 
-### 1. المستخدم يختار صورة:
+### 1. المستخدم يختار صورة (Frontend):
 ```javascript
 <input type="file" id="adImage" accept="image/*" onchange="handleImageUpload(event)">
 ```
@@ -73,19 +80,43 @@ reader.onload = (e) => {
 reader.readAsDataURL(file);
 ```
 
-### 3. رفع إلى Cloudinary:
+### 3. رفع عبر Backend API:
 ```javascript
+// Frontend
 const formData = new FormData();
-formData.append('file', file);
-formData.append('upload_preset', 'dalma_ads');
+formData.append('image', file);
 
 const response = await fetch(
-    'https://api.cloudinary.com/v1_1/dxvmlvqda/image/upload',
-    { method: 'POST', body: formData }
+    `${API_BASE}/api/admin/upload-ad-image`,
+    {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-api-key': apiKey
+        },
+        body: formData
+    }
 );
 
 const data = await response.json();
-uploadedImageUrl = data.secure_url; // الرابط النهائي
+uploadedImageUrl = data.url; // الرابط من Cloudinary
+```
+
+### 4. Backend يرفع إلى Cloudinary:
+```javascript
+// Backend
+cloudinary.uploader.upload_stream(
+    {
+        folder: 'dalma/ads',
+        transformation: [
+            { width: 1920, height: 1080, crop: 'limit' },
+            { quality: 'auto:good' }
+        ]
+    },
+    (error, result) => {
+        res.json({ success: true, url: result.secure_url });
+    }
+);
 ```
 
 ---
@@ -95,25 +126,44 @@ uploadedImageUrl = data.secure_url; // الرابط النهائي
 ### ❌ Error 401 (Unauthorized)
 
 **السبب:**
-- Upload preset غير موجود
-- Upload preset من نوع "Signed" بدلاً من "Unsigned"
+- لم يتم تسجيل الدخول
+- Token منتهي الصلاحية
+- API Key غير صحيح
 
 **الحل:**
-1. تأكد من وجود preset باسم `dalma_ads`
-2. تأكد أن Signing Mode = **Unsigned**
-3. احفظ التغييرات
+1. تحقق من `localStorage.getItem('admin_token')`
+2. تحقق من `localStorage.getItem('admin_apiKey')`
+3. سجل الدخول مرة أخرى
+
+---
+
+### ❌ Error 500 (Server Error)
+
+**السبب:**
+- Cloudinary credentials غير صحيحة في Backend
+- مشكلة في الاتصال بـ Cloudinary
+
+**الحل:**
+1. تحقق من `.env` في Backend:
+   ```bash
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   ```
+2. أعد تشغيل Backend
+3. تحقق من Backend logs
 
 ---
 
 ### ❌ الصورة تظهر "undefined"
 
 **السبب:**
-- `data.secure_url` غير موجود في الاستجابة
+- Backend لم يرجع URL
 
 **الحل:**
 ```javascript
-if (!data.secure_url) {
-    throw new Error('No URL returned from Cloudinary');
+if (!data.success || !data.url) {
+    throw new Error('No URL returned from server');
 }
 ```
 
@@ -127,8 +177,9 @@ if (!data.secure_url) {
 
 **الحل:**
 1. تحقق من Console للأخطاء
-2. تحقق من `uploadedImageUrl` في Console
-3. جرب فتح الرابط في المتصفح
+2. تحقق من Backend logs
+3. تحقق من `uploadedImageUrl` في Console
+4. جرب فتح الرابط في المتصفح
 
 ---
 
@@ -170,27 +221,53 @@ const optimizedUrl = uploadedImageUrl.replace(
 
 ---
 
-## 🔄 البدائل
+## 🔄 مقارنة مع الطريقة القديمة
 
-### إذا لم يعمل Cloudinary:
-
-#### **1. استخدام Backend لرفع الصور:**
+### ❌ الطريقة القديمة (Frontend → Cloudinary مباشرة):
 ```javascript
-// Upload to your own server
+// ❌ غير آمن: Cloudinary credentials في Frontend
+const formData = new FormData();
+formData.append('file', file);
+formData.append('upload_preset', 'dalma_ads'); // ⚠️ عام
+
+const response = await fetch(
+    'https://api.cloudinary.com/v1_1/dxvmlvqda/image/upload',
+    { method: 'POST', body: formData }
+);
+```
+
+**المشاكل:**
+- ⚠️ أي شخص يمكنه رفع صور
+- ⚠️ لا توجد صلاحيات
+- ⚠️ صعوبة في التتبع
+- ⚠️ لا يمكن التحكم في الجودة
+
+---
+
+### ✅ الطريقة الجديدة (Frontend → Backend → Cloudinary):
+```javascript
+// ✅ آمن: عبر Backend API
 const formData = new FormData();
 formData.append('image', file);
 
-const response = await fetch(`${API_BASE}/api/admin/upload-image`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: formData
-});
+const response = await fetch(
+    `${API_BASE}/api/admin/upload-ad-image`,
+    {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`, // ✅ مصادقة
+            'x-api-key': apiKey // ✅ صلاحيات
+        },
+        body: formData
+    }
+);
 ```
 
-#### **2. استخدام خدمات أخرى:**
-- **ImgBB**: مجاني، سهل
-- **Imgur**: مجاني، شهير
-- **AWS S3**: احترافي، مدفوع
+**المزايا:**
+- ✅ آمن: فقط Admins يمكنهم الرفع
+- ✅ تحكم كامل: Backend يتحقق من كل شيء
+- ✅ تتبع: سجلات في Backend
+- ✅ تحسين: Backend يحسن الصور تلقائياً
 
 ---
 

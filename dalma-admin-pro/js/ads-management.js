@@ -366,35 +366,41 @@ async function handleImageUpload(event) {
         };
         reader.readAsDataURL(file);
         
-        // Upload to Cloudinary
+        console.log('☁️ [CLOUDINARY] رفع صورة إعلان:', file.name);
+        
+        // Upload via Backend API (more secure)
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        formData.append('image', file);
         
         const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+            `${API_BASE}/api/admin/upload-ad-image`,
             {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+                    'x-api-key': localStorage.getItem('admin_apiKey')
+                },
                 body: formData
             }
         );
         
         if (!response.ok) {
-            throw new Error(`Cloudinary error: ${response.status}`);
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Server error: ${response.status}`);
         }
         
         const data = await response.json();
         
-        if (!data.secure_url) {
-            throw new Error('No URL returned from Cloudinary');
+        if (!data.success || !data.url) {
+            throw new Error('No URL returned from server');
         }
         
-        uploadedImageUrl = data.secure_url;
+        uploadedImageUrl = data.url;
         
         // Update preview with Cloudinary URL
         imagePreview.src = uploadedImageUrl;
         
-        console.log('✅ Image uploaded:', uploadedImageUrl);
+        console.log('✅ [CLOUDINARY] تم رفع الصورة:', uploadedImageUrl);
         showToast('تم رفع الصورة بنجاح', 'success');
     } catch (error) {
         console.error('❌ Error uploading image:', error);
@@ -601,8 +607,6 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// Cloudinary config (set your cloud name)
-// Cloudinary Configuration
-const CLOUDINARY_CLOUD_NAME = 'dxvmlvqda'; // Dalma Cloudinary
-const CLOUDINARY_UPLOAD_PRESET = 'dalma_ads'; // Upload preset
+// Image upload is now handled via Backend API
+// No need for Cloudinary credentials in frontend (more secure)
 
