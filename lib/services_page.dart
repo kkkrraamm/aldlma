@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'unified_provider_profile.dart';
 import 'desert_transition.dart';
 import 'login_page.dart';
@@ -32,16 +30,23 @@ class _ServicesPageState extends State<ServicesPage> {
   Timer? _adsTimer;
   int _adsIndex = 0;
 
-  // الفئات المتاحة
-  List<Map<String, dynamic>> categories = [
-    {"id": "all", "name": "الكل", "icon": "📋"},
+  // الفئات المتاحة (ثابتة في التطبيق)
+  final List<Map<String, dynamic>> categories = [
+    {"id": "all", "name": "الكل", "icon": "📋", "code": "all"},
+    {"id": "electricity", "name": "الكهرباء", "icon": "⚡", "code": "electricity"},
+    {"id": "plumbing", "name": "السباكة", "icon": "🔧", "code": "plumbing"},
+    {"id": "cleaning", "name": "التنظيف", "icon": "🧹", "code": "cleaning"},
+    {"id": "painting", "name": "الدهان", "icon": "🎨", "code": "painting"},
+    {"id": "carpentry", "name": "النجارة", "icon": "🪚", "code": "carpentry"},
+    {"id": "air_conditioning", "name": "التكييف", "icon": "❄️", "code": "air_conditioning"},
+    {"id": "gardening", "name": "البستنة", "icon": "🌳", "code": "gardening"},
+    {"id": "security", "name": "الأمن", "icon": "🔒", "code": "security"},
+    {"id": "other", "name": "أخرى", "icon": "📦", "code": "other"},
   ];
-  bool _loadingCategories = true;
 
   @override
   void initState() {
     super.initState();
-    _loadCategories();
     _adsController = PageController(viewportFraction: 0.95);
     _adsTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted || _adsController == null) return;
@@ -53,36 +58,6 @@ class _ServicesPageState extends State<ServicesPage> {
       );
       setState(() => _adsIndex = next);
     });
-  }
-  
-  Future<void> _loadCategories() async {
-    try {
-      print('🗂️ [CATEGORIES] Loading from API...');
-      final response = await http.get(
-        Uri.parse('https://dalma-api.onrender.com/api/categories'),
-      );
-      
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        setState(() {
-          categories = [
-            {"id": "all", "name": "الكل", "icon": "📋"},
-            ...data.map((cat) => {
-              "id": cat['name'],
-              "name": cat['name'],
-              "icon": cat['icon_emoji'] ?? '📋',
-            }).toList(),
-          ];
-          _loadingCategories = false;
-        });
-        print('✅ [CATEGORIES] Loaded ${categories.length} categories');
-      } else {
-        setState(() => _loadingCategories = false);
-      }
-    } catch (e) {
-      print('❌ [CATEGORIES] Error: $e');
-      setState(() => _loadingCategories = false);
-    }
   }
 
   @override
