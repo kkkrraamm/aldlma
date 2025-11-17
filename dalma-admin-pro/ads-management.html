@@ -1091,13 +1091,71 @@
                             <div class="form-group">
                                 <label for="adPosition">
                                     <i class="fas fa-arrows-alt-v"></i>
-                                    الموضع
+                                    الموضع *
                                 </label>
-                                <select id="adPosition">
+                                <select id="adPosition" required>
                                     <option value="top">⬆️ أعلى</option>
                                     <option value="middle">➡️ وسط</option>
                                     <option value="bottom">⬇️ أسفل</option>
+                                    <option value="offers">🎁 قسم العروض (الصفحة الرئيسية فقط)</option>
                                 </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Service Category (only for services page) -->
+                        <div class="form-row" id="serviceCategoryRow" style="display: none;">
+                            <div class="form-group full-width">
+                                <label for="adServiceCategory">
+                                    <i class="fas fa-tags"></i>
+                                    فئة الخدمة *
+                                </label>
+                                <select id="adServiceCategory">
+                                    <option value="">الكل (إعلان عام لجميع الفئات)</option>
+                                    <option value="electricity">⚡ الكهرباء</option>
+                                    <option value="plumbing">🔧 السباكة</option>
+                                    <option value="cleaning">🧹 التنظيف</option>
+                                    <option value="painting">🎨 الدهان</option>
+                                    <option value="carpentry">🪚 النجارة</option>
+                                    <option value="air_conditioning">❄️ التكييف</option>
+                                    <option value="gardening">🌳 البستنة</option>
+                                    <option value="security">🔒 الأمن</option>
+                                    <option value="other">📦 أخرى</option>
+                                </select>
+                                <small>اختر "الكل" لإعلان عام، أو فئة محددة لإعلان خاص</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Location Description (Dynamic) -->
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <div id="locationDescription" class="location-description-box" style="padding: 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1)); border-radius: 12px; border-right: 4px solid #10b981; margin-top: 8px;">
+                                    <div style="display: flex; align-items: start; gap: 12px;">
+                                        <i class="fas fa-info-circle" style="color: #10b981; font-size: 20px; margin-top: 2px;"></i>
+                                        <div style="flex: 1;">
+                                            <strong style="color: #10b981; display: block; margin-bottom: 8px; font-size: 14px;">📍 موقع الإعلان في التطبيق:</strong>
+                                            <p id="locationDescriptionText" style="margin: 0; color: #374151; font-size: 13px; line-height: 1.6;">
+                                                اختر الصفحة والموضع لعرض تفاصيل الموقع
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Duplicate Warning -->
+                        <div class="form-row" id="duplicateWarningRow" style="display: none;">
+                            <div class="form-group full-width">
+                                <div id="duplicateWarning" class="duplicate-warning-box" style="padding: 16px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1)); border-radius: 12px; border-right: 4px solid #ef4444; margin-top: 8px;">
+                                    <div style="display: flex; align-items: start; gap: 12px;">
+                                        <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 20px; margin-top: 2px;"></i>
+                                        <div style="flex: 1;">
+                                            <strong style="color: #ef4444; display: block; margin-bottom: 8px; font-size: 14px;">⚠️ تحذير: موقع مأخوذ</strong>
+                                            <p id="duplicateWarningText" style="margin: 0; color: #374151; font-size: 13px; line-height: 1.6;">
+                                                يوجد إعلان آخر في نفس الموقع والترتيب
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -1105,10 +1163,10 @@
                             <div class="form-group">
                                 <label for="adDisplayOrder">
                                     <i class="fas fa-sort-numeric-down"></i>
-                                    ترتيب العرض
+                                    ترتيب العرض *
                                 </label>
-                                <input type="number" id="adDisplayOrder" value="0" min="0" placeholder="0">
-                                <small>الأرقام الأصغر تظهر أولاً</small>
+                                <input type="number" id="adDisplayOrder" value="0" min="0" placeholder="0" required>
+                                <small>الأرقام الأصغر تظهر أولاً. سيتم التحقق من التكرار تلقائياً</small>
                             </div>
                         </div>
                     </div>

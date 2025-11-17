@@ -239,6 +239,16 @@ function toggleAddAdForm() {
         document.getElementById('linkTypeExternal').checked = true;
         toggleLinkFields('external');
         
+        // Reset service category
+        document.getElementById('serviceCategoryRow').style.display = 'none';
+        document.getElementById('adServiceCategory').value = '';
+        
+        // Update location description
+        setTimeout(() => {
+            updateLocationDescription();
+            checkDuplicateAd();
+        }, 100);
+        
         container.style.display = 'block';
         btnText.textContent = 'إلغاء';
         adsGrid.style.display = 'none';
@@ -276,9 +286,27 @@ async function editAd(id) {
     document.getElementById('modalTitle').textContent = 'تعديل الإعلان';
     document.getElementById('adTitle').value = ad.title || '';
     document.getElementById('adDescription').value = ad.description || '';
-    document.getElementById('adPageLocation').value = ad.page_location || 'home';
+    
+    // Parse page_location for services (extract category if exists)
+    let pageLocation = ad.page_location || 'home';
+    let serviceCategory = '';
+    if (pageLocation.startsWith('services_')) {
+        serviceCategory = pageLocation.replace('services_', '');
+        pageLocation = 'services';
+    }
+    
+    document.getElementById('adPageLocation').value = pageLocation;
     document.getElementById('adPosition').value = ad.position || 'top';
     document.getElementById('adDisplayOrder').value = ad.display_order || 0;
+    
+    // Set service category if services page
+    if (pageLocation === 'services') {
+        document.getElementById('serviceCategoryRow').style.display = 'block';
+        document.getElementById('adServiceCategory').value = serviceCategory;
+    } else {
+        document.getElementById('serviceCategoryRow').style.display = 'none';
+        document.getElementById('adServiceCategory').value = '';
+    }
     
     // Link type
     if (ad.link_type === 'internal') {
@@ -312,6 +340,12 @@ async function editAd(id) {
     container.style.display = 'block';
     btnText.textContent = 'إلغاء';
     adsGrid.style.display = 'none';
+    
+    // Update location description and check duplicates
+    setTimeout(() => {
+        updateLocationDescription();
+        checkDuplicateAd();
+    }, 100);
     
     // Scroll to form
     container.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -423,18 +457,36 @@ async function saveAd(event) {
     
     const title = document.getElementById('adTitle').value.trim();
     const description = document.getElementById('adDescription').value.trim();
-    const pageLocation = document.getElementById('adPageLocation').value;
+    let pageLocation = document.getElementById('adPageLocation').value;
     const position = document.getElementById('adPosition').value;
     const displayOrder = parseInt(document.getElementById('adDisplayOrder').value) || 0;
+    const serviceCategory = document.getElementById('adServiceCategory').value;
     const linkType = document.querySelector('input[name="linkType"]:checked').value;
     const linkUrl = document.getElementById('adLinkUrl').value.trim();
     const internalRoute = document.getElementById('adInternalRoute').value.trim();
     const startDate = document.getElementById('adStartDate').value;
     const endDate = document.getElementById('adEndDate').value;
     
+    // Build actual page_location for services (include category if selected)
+    if (pageLocation === 'services' && serviceCategory) {
+        pageLocation = `services_${serviceCategory}`;
+    }
+    
+    // Check for duplicates before saving
+    if (checkDuplicateAd()) {
+        showToast('يوجد إعلان آخر في نفس الموقع والترتيب. يرجى تغيير الترتيب أو الموضع', 'error');
+        return;
+    }
+    
     // Validation
     if (!title) {
         showToast('يرجى إدخال عنوان الإعلان', 'error');
+        return;
+    }
+    
+    // Validate position for offers (only for home page)
+    if (position === 'offers' && pageLocation !== 'home') {
+        showToast('موضع "قسم العروض" متاح فقط للصفحة الرئيسية', 'error');
         return;
     }
     
@@ -643,4 +695,217 @@ document.addEventListener('keydown', (e) => {
 });
 
 console.log('⌨️ [SHORTCUT] Tab + R: Show/Hide Ad Locations Guide');
+
+// ==================== DYNAMIC LOCATION DESCRIPTION ====================
+
+// Location descriptions based on page and position
+const locationDescriptions = {
+    home: {
+        top: '📍 يظهر في <strong>الصفحة الرئيسية</strong> في <strong>أعلى الصفحة</strong>، بعد حقل البحث مباشرة وقبل زر أوقات الصلاة. هذا هو أول ما يراه المستخدم عند فتح التطبيق.',
+        middle: '📍 يظهر في <strong>الصفحة الرئيسية</strong> في <strong>وسط المحتوى</strong>، بين الأقسام المختلفة.',
+        bottom: '📍 يظهر في <strong>الصفحة الرئيسية</strong> في <strong>أسفل الصفحة</strong>، قبل التذييل.',
+        offers: '📍 يظهر في <strong>الصفحة الرئيسية</strong> داخل قسم <strong>"العروض والإعلانات"</strong>، بعد عنوان القسم مباشرة وقبل العروض الحالية. هذا الموقع مخصص للصفحة الرئيسية فقط.'
+    },
+    services: {
+        top: '📍 يظهر في <strong>صفحة الخدمات</strong> في <strong>أعلى الصفحة</strong>، بعد زر "الكل" مباشرة وقبل قائمة الخدمات. يمكن أن يكون إعلان عام (لجميع الفئات) أو خاص بفئة محددة.',
+        middle: '📍 يظهر في <strong>صفحة الخدمات</strong> في <strong>وسط المحتوى</strong>، بين قائمة الخدمات.',
+        bottom: '📍 يظهر في <strong>صفحة الخدمات</strong> في <strong>أسفل الصفحة</strong>، بعد قائمة الخدمات.'
+    },
+    realty: {
+        top: '📍 يظهر في <strong>صفحة العقارات</strong> في <strong>أعلى الصفحة</strong>، قبل قائمة العقارات.',
+        middle: '📍 يظهر في <strong>صفحة العقارات</strong> في <strong>وسط القائمة</strong>، بعد أول 3 عقارات مباشرة. هذا الموقع مخصص لعرض الإعلانات بين العقارات.',
+        bottom: '📍 يظهر في <strong>صفحة العقارات</strong> في <strong>أسفل القائمة</strong>، بعد جميع العقارات.'
+    },
+    trends: {
+        top: '📍 يظهر في <strong>صفحة الترندات</strong> في <strong>أعلى الصفحة</strong>، بعد قائمة الصحفيين وقبل قسم "كيف أسجل كإعلامي؟".',
+        middle: '📍 يظهر في <strong>صفحة الترندات</strong> في <strong>وسط المحتوى</strong>، بين المنشورات.',
+        bottom: '📍 يظهر في <strong>صفحة الترندات</strong> في <strong>أسفل الصفحة</strong>، بعد جميع المنشورات.'
+    },
+    add_property: {
+        top: '📍 يظهر في <strong>صفحة إضافة عقار</strong> في <strong>أعلى الصفحة</strong>، بعد العنوان الرئيسي مباشرة وقبل حقول النموذج.',
+        middle: '📍 يظهر في <strong>صفحة إضافة عقار</strong> في <strong>وسط النموذج</strong>، بين حقول الإدخال.',
+        bottom: '📍 يظهر في <strong>صفحة إضافة عقار</strong> في <strong>أسفل النموذج</strong>، قبل زر "نشر العقار".'
+    },
+    orders: {
+        top: '📍 يظهر في <strong>صفحة الطلبات</strong> في <strong>أعلى الصفحة</strong>، قبل قائمة الطلبات.',
+        middle: '📍 يظهر في <strong>صفحة الطلبات</strong> في <strong>وسط القائمة</strong>، بين الطلبات.',
+        bottom: '📍 يظهر في <strong>صفحة الطلبات</strong> في <strong>أسفل القائمة</strong>، بعد جميع الطلبات.'
+    }
+};
+
+// Update location description
+function updateLocationDescription() {
+    const pageLocation = document.getElementById('adPageLocation').value;
+    const position = document.getElementById('adPosition').value;
+    const serviceCategory = document.getElementById('adServiceCategory').value;
+    const descriptionText = document.getElementById('locationDescriptionText');
+    
+    let description = '';
+    
+    if (pageLocation && position) {
+        // Check if position is valid for this page
+        if (position === 'offers' && pageLocation !== 'home') {
+            description = '⚠️ <strong>تحذير:</strong> موضع "قسم العروض" متاح فقط للصفحة الرئيسية. يرجى اختيار موضع آخر.';
+            descriptionText.style.color = '#ef4444';
+        } else {
+            let baseDescription = locationDescriptions[pageLocation]?.[position] || '📍 موقع الإعلان في التطبيق';
+            
+            // Add service category info if services page
+            if (pageLocation === 'services') {
+                if (serviceCategory) {
+                    const categoryNames = {
+                        electricity: 'الكهرباء',
+                        plumbing: 'السباكة',
+                        cleaning: 'التنظيف',
+                        painting: 'الدهان',
+                        carpentry: 'النجارة',
+                        air_conditioning: 'التكييف',
+                        gardening: 'البستنة',
+                        security: 'الأمن',
+                        other: 'أخرى'
+                    };
+                    baseDescription += ` <br><br>🎯 <strong>الفئة المحددة:</strong> ${categoryNames[serviceCategory] || serviceCategory}. سيظهر هذا الإعلان فقط عند اختيار هذه الفئة في صفحة الخدمات.`;
+                } else {
+                    baseDescription += ` <br><br>🎯 <strong>الفئة:</strong> الكل (إعلان عام). سيظهر هذا الإعلان لجميع الفئات في صفحة الخدمات.`;
+                }
+            }
+            
+            description = baseDescription;
+            descriptionText.style.color = '#374151';
+        }
+    } else {
+        description = 'اختر الصفحة والموضع لعرض تفاصيل الموقع';
+        descriptionText.style.color = '#374151';
+    }
+    
+    descriptionText.innerHTML = description;
+}
+
+// Show/hide service category field
+function toggleServiceCategory() {
+    const pageLocation = document.getElementById('adPageLocation').value;
+    const serviceCategoryRow = document.getElementById('serviceCategoryRow');
+    
+    if (pageLocation === 'services') {
+        serviceCategoryRow.style.display = 'block';
+    } else {
+        serviceCategoryRow.style.display = 'none';
+        document.getElementById('adServiceCategory').value = '';
+    }
+    
+    updateLocationDescription();
+}
+
+// Check for duplicate ads (same page, position, and display_order)
+function checkDuplicateAd() {
+    const pageLocation = document.getElementById('adPageLocation').value;
+    const position = document.getElementById('adPosition').value;
+    const displayOrder = parseInt(document.getElementById('adDisplayOrder').value) || 0;
+    const serviceCategory = document.getElementById('adServiceCategory').value;
+    const duplicateWarningRow = document.getElementById('duplicateWarningRow');
+    const duplicateWarningText = document.getElementById('duplicateWarningText');
+    
+    // Build the actual page_location (for services, include category)
+    let actualPageLocation = pageLocation;
+    if (pageLocation === 'services' && serviceCategory) {
+        actualPageLocation = `services_${serviceCategory}`;
+    }
+    
+    // Find duplicate ads (exclude current editing ad)
+    const duplicates = adsData.filter(ad => {
+        // Skip if editing this ad
+        if (editingAdId && ad.id === editingAdId) return false;
+        
+        // Check if ad is active
+        if (!ad.is_active) return false;
+        
+        // Check page_location match
+        let adPageLocation = ad.page_location;
+        if (adPageLocation === actualPageLocation && 
+            ad.position === position && 
+            ad.display_order === displayOrder) {
+            return true;
+        }
+        
+        return false;
+    });
+    
+    if (duplicates.length > 0) {
+        const duplicate = duplicates[0];
+        duplicateWarningText.innerHTML = `⚠️ يوجد إعلان آخر نشط في نفس الموقع والترتيب:<br>
+            <strong>الإعلان:</strong> "${duplicate.title}"<br>
+            <strong>الصفحة:</strong> ${getPageLabel(duplicate.page_location)}<br>
+            <strong>الموضع:</strong> ${getPositionLabel(duplicate.position)}<br>
+            <strong>الترتيب:</strong> ${duplicate.display_order}<br><br>
+            يرجى تغيير الترتيب أو الموضع لتجنب التكرار.`;
+        duplicateWarningRow.style.display = 'block';
+        return true;
+    } else {
+        duplicateWarningRow.style.display = 'none';
+        return false;
+    }
+}
+
+// Get page label
+function getPageLabel(pageLocation) {
+    const labels = {
+        'home': '🏠 الصفحة الرئيسية',
+        'services': '🛠️ الخدمات (الكل)',
+        'services_electricity': '🛠️ الخدمات - الكهرباء',
+        'services_plumbing': '🛠️ الخدمات - السباكة',
+        'services_cleaning': '🛠️ الخدمات - التنظيف',
+        'services_painting': '🛠️ الخدمات - الدهان',
+        'services_carpentry': '🛠️ الخدمات - النجارة',
+        'services_air_conditioning': '🛠️ الخدمات - التكييف',
+        'services_gardening': '🛠️ الخدمات - البستنة',
+        'services_security': '🛠️ الخدمات - الأمن',
+        'services_other': '🛠️ الخدمات - أخرى',
+        'realty': '🏘️ العقارات',
+        'trends': '📈 الترندات',
+        'orders': '📦 الطلبات',
+        'add_property': '➕ إضافة عقار'
+    };
+    return labels[pageLocation] || pageLocation;
+}
+
+// Initialize event listeners for location description
+document.addEventListener('DOMContentLoaded', () => {
+    // Wait for form elements to be available
+    setTimeout(() => {
+        const pageLocationSelect = document.getElementById('adPageLocation');
+        const positionSelect = document.getElementById('adPosition');
+        const serviceCategorySelect = document.getElementById('adServiceCategory');
+        const displayOrderInput = document.getElementById('adDisplayOrder');
+        
+        if (pageLocationSelect) {
+            pageLocationSelect.addEventListener('change', () => {
+                toggleServiceCategory();
+                checkDuplicateAd();
+            });
+        }
+        
+        if (positionSelect) {
+            positionSelect.addEventListener('change', () => {
+                updateLocationDescription();
+                checkDuplicateAd();
+            });
+        }
+        
+        if (serviceCategorySelect) {
+            serviceCategorySelect.addEventListener('change', () => {
+                updateLocationDescription();
+                checkDuplicateAd();
+            });
+        }
+        
+        if (displayOrderInput) {
+            displayOrderInput.addEventListener('input', () => {
+                checkDuplicateAd();
+            });
+        }
+        
+        // Initial update
+        updateLocationDescription();
+    }, 500);
+});
 
