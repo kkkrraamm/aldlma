@@ -909,46 +909,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ==================== SERVICE CATEGORIES MANAGEMENT ====================
 
-// Default categories
-const defaultCategories = [
-    { code: 'electricity', name: 'الكهرباء', icon: '⚡' },
-    { code: 'plumbing', name: 'السباكة', icon: '🔧' },
-    { code: 'cleaning', name: 'التنظيف', icon: '🧹' },
-    { code: 'painting', name: 'الدهان', icon: '🎨' },
-    { code: 'carpentry', name: 'النجارة', icon: '🪚' },
-    { code: 'air_conditioning', name: 'التكييف', icon: '❄️' },
-    { code: 'gardening', name: 'البستنة', icon: '🌳' },
-    { code: 'security', name: 'الأمن', icon: '🔒' },
-    { code: 'other', name: 'أخرى', icon: '📦' }
-];
+let categoriesData = [];
 
-// Get categories from localStorage
-function getCategories() {
-    const stored = localStorage.getItem('service_categories');
-    if (stored) {
-        try {
-            return JSON.parse(stored);
-        } catch (e) {
-            console.error('Error parsing categories:', e);
-            return defaultCategories;
+// Load categories from API
+async function loadCategories() {
+    try {
+        console.log('📋 Loading service categories...');
+        const response = await fetch(`${API_BASE}/api/admin/service-categories`, {
+            headers: getAuthHeaders()
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+            console.error('❌ [AUTH] Unauthorized - redirecting to login...');
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_apiKey');
+            window.location.href = 'login.html';
+            return;
         }
+        
+        if (!response.ok) {
+            throw new Error('Failed to load categories');
+        }
+        
+        categoriesData = await response.json();
+        renderCategories(categoriesData);
+        updateCategoriesDropdown(categoriesData);
+        updateCategoriesCount(categoriesData.length);
+        console.log('✅ Categories loaded successfully');
+    } catch (error) {
+        console.error('❌ Error loading categories:', error);
+        showToast('فشل تحميل الفئات', 'error');
     }
-    // Initialize with default categories
-    saveCategories(defaultCategories);
-    return defaultCategories;
 }
 
-// Save categories to localStorage
-function saveCategories(categories) {
-    localStorage.setItem('service_categories', JSON.stringify(categories));
-}
-
-// Load and render categories
-function loadCategories() {
-    const categories = getCategories();
-    renderCategories(categories);
-    updateCategoriesDropdown(categories);
-    updateCategoriesCount(categories.length);
+// Get categories (for use in other functions)
+function getCategories() {
+    return categoriesData;
 }
 
 // Render categories list
@@ -1059,7 +1055,7 @@ function toggleBatchAddCategories() {
 }
 
 // Add single category
-function addSingleCategory() {
+async function addSingleCategory() {
     const code = document.getElementById('newCategoryCode').value.trim();
     const name = document.getElementById('newCategoryName').value.trim();
     
@@ -1074,35 +1070,42 @@ function addSingleCategory() {
         return;
     }
     
-    const categories = getCategories();
-    
-    // Check if code already exists
-    if (categories.find(c => c.code === code)) {
-        showToast('رمز الفئة موجود بالفعل', 'error');
-        return;
+    try {
+        showToast('جاري إضافة الفئة...', 'info');
+        
+        const response = await fetch(`${API_BASE}/api/admin/service-categories`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                code: code,
+                name: name,
+                icon: '🏷️'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'فشل إضافة الفئة');
+        }
+        
+        showToast(data.message || `تم إضافة فئة "${name}" بنجاح`, 'success');
+        
+        // Clear inputs and close form
+        document.getElementById('newCategoryCode').value = '';
+        document.getElementById('newCategoryName').value = '';
+        toggleAddCategoryForm();
+        
+        // Reload categories
+        loadCategories();
+    } catch (error) {
+        console.error('❌ Error adding category:', error);
+        showToast(error.message || 'فشل إضافة الفئة', 'error');
     }
-    
-    // Add new category
-    const newCategory = {
-        code: code,
-        name: name,
-        icon: '🏷️' // Default icon
-    };
-    
-    categories.push(newCategory);
-    saveCategories(categories);
-    loadCategories();
-    
-    // Clear inputs and close form
-    document.getElementById('newCategoryCode').value = '';
-    document.getElementById('newCategoryName').value = '';
-    toggleAddCategoryForm();
-    
-    showToast(`تم إضافة فئة "${name}" بنجاح`, 'success');
 }
 
 // Add batch categories
-function addBatchCategories() {
+async function addBatchCategories() {
     const input = document.getElementById('batchCategoriesInput').value.trim();
     
     if (!input) {
@@ -1111,7 +1114,6 @@ function addBatchCategories() {
     }
     
     const lines = input.split('\n').filter(line => line.trim());
-    const categories = getCategories();
     const newCategories = [];
     const errors = [];
     
@@ -1138,9 +1140,9 @@ function addBatchCategories() {
             return;
         }
         
-        // Check if code already exists
-        if (categories.find(c => c.code === code) || newCategories.find(c => c.code === code)) {
-            errors.push(`السطر ${index + 1}: رمز الفئة "${code}" موجود بالفعل`);
+        // Check if code already exists in new categories
+        if (newCategories.find(c => c.code === code)) {
+            errors.push(`السطر ${index + 1}: رمز الفئة "${code}" مكرر في الدفعة`);
             return;
         }
         
@@ -1161,35 +1163,75 @@ function addBatchCategories() {
         return;
     }
     
-    // Add all new categories
-    categories.push(...newCategories);
-    saveCategories(categories);
-    loadCategories();
-    
-    // Clear input and close form
-    document.getElementById('batchCategoriesInput').value = '';
-    toggleBatchAddCategories();
-    
-    showToast(`تم إضافة ${newCategories.length} فئة بنجاح`, 'success');
+    try {
+        showToast(`جاري إضافة ${newCategories.length} فئة...`, 'info');
+        
+        const response = await fetch(`${API_BASE}/api/admin/service-categories/batch`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                categories: newCategories
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'فشل إضافة الفئات');
+        }
+        
+        let message = data.message || `تم إضافة ${data.added?.length || newCategories.length} فئة بنجاح`;
+        if (data.errors && data.errors.length > 0) {
+            message += `\n${data.errors.length} فئة فشلت`;
+        }
+        
+        showToast(message, data.errors && data.errors.length > 0 ? 'warning' : 'success');
+        
+        // Clear input and close form
+        document.getElementById('batchCategoriesInput').value = '';
+        toggleBatchAddCategories();
+        
+        // Reload categories
+        loadCategories();
+    } catch (error) {
+        console.error('❌ Error adding batch categories:', error);
+        showToast(error.message || 'فشل إضافة الفئات', 'error');
+    }
 }
 
 // Delete category
-function deleteCategory(code) {
-    if (!confirm('هل أنت متأكد من حذف هذه الفئة؟\n\nملاحظة: الإعلانات المرتبطة بهذه الفئة لن تتأثر، لكن لن تظهر في القائمة.')) {
-        return;
-    }
-    
-    const categories = getCategories();
-    const filtered = categories.filter(c => c.code !== code);
-    
-    if (filtered.length === categories.length) {
+async function deleteCategory(code) {
+    const category = getCategories().find(c => c.code === code);
+    if (!category) {
         showToast('الفئة غير موجودة', 'error');
         return;
     }
     
-    saveCategories(filtered);
-    loadCategories();
+    if (!confirm('هل أنت متأكد من حذف هذه الفئة؟\n\nملاحظة: الإعلانات المرتبطة بهذه الفئة لن تتأثر، لكن لن تظهر في القائمة.')) {
+        return;
+    }
     
-    showToast('تم حذف الفئة بنجاح', 'success');
+    try {
+        showToast('جاري حذف الفئة...', 'info');
+        
+        const response = await fetch(`${API_BASE}/api/admin/service-categories/${category.id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'فشل حذف الفئة');
+        }
+        
+        showToast(data.message || 'تم حذف الفئة بنجاح', 'success');
+        
+        // Reload categories
+        loadCategories();
+    } catch (error) {
+        console.error('❌ Error deleting category:', error);
+        showToast(error.message || 'فشل حذف الفئة', 'error');
+    }
 }
 
