@@ -25,6 +25,7 @@ import 'media_dashboard.dart';
 import 'ai_tools_page.dart';
 import 'dalma_ai_page.dart';
 import 'prayer_button.dart';
+import 'flights_button.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
 import 'theme_aware_widgets.dart';
@@ -238,6 +239,9 @@ class _HomeScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 // زر أوقات الصلاة
                 const PrayerButton(),
+                const SizedBox(height: 16),
+                // زر رحلات الطيران
+                const FlightsButton(),
                 const SizedBox(height: 16),
                 // زر ذكاء الدلما
                 Padding(
