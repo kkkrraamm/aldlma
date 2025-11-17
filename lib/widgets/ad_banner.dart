@@ -195,14 +195,9 @@ class _AdBannerState extends State<AdBanner> {
   
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const SizedBox(
-        height: 50,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    
-    if (_ads.isEmpty) {
+    // Show nothing while loading (professional apps don't show loading indicators for ads)
+    // Ads will appear smoothly when loaded
+    if (_loading || _ads.isEmpty) {
       return const SizedBox.shrink();
     }
     
@@ -251,9 +246,10 @@ class _AdBannerState extends State<AdBanner> {
                       fit: BoxFit.cover,
                       width: double.infinity,
                       height: double.infinity,
+                      // No loading animation - professional apps show images directly
                       placeholder: (context, url) => Container(
                         color: Colors.grey[200],
-                        child: const Center(child: CircularProgressIndicator()),
+                        // Empty placeholder - image will appear when loaded
                       ),
                       errorWidget: (context, url, error) => Container(
                         color: Colors.grey[300],
