@@ -753,18 +753,10 @@ function updateLocationDescription() {
             // Add service category info if services page
             if (pageLocation === 'services') {
                 if (serviceCategory) {
-                    const categoryNames = {
-                        electricity: 'الكهرباء',
-                        plumbing: 'السباكة',
-                        cleaning: 'التنظيف',
-                        painting: 'الدهان',
-                        carpentry: 'النجارة',
-                        air_conditioning: 'التكييف',
-                        gardening: 'البستنة',
-                        security: 'الأمن',
-                        other: 'أخرى'
-                    };
-                    baseDescription += ` <br><br>🎯 <strong>الفئة المحددة:</strong> ${categoryNames[serviceCategory] || serviceCategory}. سيظهر هذا الإعلان فقط عند اختيار هذه الفئة في صفحة الخدمات.`;
+                    const categories = getCategories();
+                    const category = categories.find(c => c.code === serviceCategory);
+                    const categoryName = category ? category.name : serviceCategory;
+                    baseDescription += ` <br><br>🎯 <strong>الفئة المحددة:</strong> ${categoryName}. سيظهر هذا الإعلان فقط عند اختيار هذه الفئة في صفحة الخدمات.`;
                 } else {
                     baseDescription += ` <br><br>🎯 <strong>الفئة:</strong> الكل (إعلان عام). سيظهر هذا الإعلان لجميع الفئات في صفحة الخدمات.`;
                 }
@@ -851,20 +843,23 @@ function getPageLabel(pageLocation) {
     const labels = {
         'home': '🏠 الصفحة الرئيسية',
         'services': '🛠️ الخدمات (الكل)',
-        'services_electricity': '🛠️ الخدمات - الكهرباء',
-        'services_plumbing': '🛠️ الخدمات - السباكة',
-        'services_cleaning': '🛠️ الخدمات - التنظيف',
-        'services_painting': '🛠️ الخدمات - الدهان',
-        'services_carpentry': '🛠️ الخدمات - النجارة',
-        'services_air_conditioning': '🛠️ الخدمات - التكييف',
-        'services_gardening': '🛠️ الخدمات - البستنة',
-        'services_security': '🛠️ الخدمات - الأمن',
-        'services_other': '🛠️ الخدمات - أخرى',
         'realty': '🏘️ العقارات',
         'trends': '📈 الترندات',
         'orders': '📦 الطلبات',
         'add_property': '➕ إضافة عقار'
     };
+    
+    // Check if it's a service category
+    if (pageLocation.startsWith('services_')) {
+        const categoryCode = pageLocation.replace('services_', '');
+        const categories = getCategories();
+        const category = categories.find(c => c.code === categoryCode);
+        if (category) {
+            return `🛠️ الخدمات - ${category.name}`;
+        }
+        return `🛠️ الخدمات - ${categoryCode}`;
+    }
+    
     return labels[pageLocation] || pageLocation;
 }
 
@@ -907,5 +902,294 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initial update
         updateLocationDescription();
     }, 500);
+    
+    // Load categories on page load
+    loadCategories();
 });
+
+// ==================== SERVICE CATEGORIES MANAGEMENT ====================
+
+// Default categories
+const defaultCategories = [
+    { code: 'electricity', name: 'الكهرباء', icon: '⚡' },
+    { code: 'plumbing', name: 'السباكة', icon: '🔧' },
+    { code: 'cleaning', name: 'التنظيف', icon: '🧹' },
+    { code: 'painting', name: 'الدهان', icon: '🎨' },
+    { code: 'carpentry', name: 'النجارة', icon: '🪚' },
+    { code: 'air_conditioning', name: 'التكييف', icon: '❄️' },
+    { code: 'gardening', name: 'البستنة', icon: '🌳' },
+    { code: 'security', name: 'الأمن', icon: '🔒' },
+    { code: 'other', name: 'أخرى', icon: '📦' }
+];
+
+// Get categories from localStorage
+function getCategories() {
+    const stored = localStorage.getItem('service_categories');
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch (e) {
+            console.error('Error parsing categories:', e);
+            return defaultCategories;
+        }
+    }
+    // Initialize with default categories
+    saveCategories(defaultCategories);
+    return defaultCategories;
+}
+
+// Save categories to localStorage
+function saveCategories(categories) {
+    localStorage.setItem('service_categories', JSON.stringify(categories));
+}
+
+// Load and render categories
+function loadCategories() {
+    const categories = getCategories();
+    renderCategories(categories);
+    updateCategoriesDropdown(categories);
+    updateCategoriesCount(categories.length);
+}
+
+// Render categories list
+function renderCategories(categories) {
+    const container = document.getElementById('categoriesList');
+    if (!container) return;
+    
+    if (categories.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                <i class="fas fa-tags" style="font-size: 48px; margin-bottom: 15px; opacity: 0.3;"></i>
+                <p>لا توجد فئات حالياً</p>
+                <p style="font-size: 13px; margin-top: 5px;">ابدأ بإضافة فئة جديدة</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = categories.map((cat, index) => `
+        <div class="category-item" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: var(--bg-color); border-radius: 8px; border: 1px solid var(--border-color); transition: all 0.2s;">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                <div style="font-size: 24px;">${cat.icon || '🏷️'}</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: var(--text-color); margin-bottom: 4px;">
+                        ${cat.name}
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); font-family: monospace;">
+                        <i class="fas fa-code"></i> ${cat.code} → services_${cat.code}
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-icon" onclick="deleteCategory('${cat.code}')" style="color: #ef4444; padding: 8px 12px;" title="حذف الفئة">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+// Update categories dropdown in ad form
+function updateCategoriesDropdown(categories) {
+    const select = document.getElementById('adServiceCategory');
+    if (!select) return;
+    
+    // Keep "الكل" option
+    const allOption = select.querySelector('option[value=""]');
+    const currentValue = select.value;
+    
+    // Clear existing category options (keep "الكل")
+    Array.from(select.options).forEach(opt => {
+        if (opt.value !== '') opt.remove();
+    });
+    
+    // Add category options
+    categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.code;
+        option.textContent = `${cat.icon || '🏷️'} ${cat.name}`;
+        select.appendChild(option);
+    });
+    
+    // Restore selected value if still exists
+    if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
+        select.value = currentValue;
+    }
+}
+
+// Update categories count
+function updateCategoriesCount(count) {
+    const countEl = document.getElementById('categoriesCount');
+    if (countEl) {
+        countEl.textContent = count;
+    }
+}
+
+// Toggle add category form
+function toggleAddCategoryForm() {
+    const form = document.getElementById('addCategoryForm');
+    const batchForm = document.getElementById('batchAddCategoriesForm');
+    
+    if (form) {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        // Close batch form if open
+        if (batchForm) batchForm.style.display = 'none';
+        
+        // Clear inputs when opening
+        if (form.style.display === 'block') {
+            document.getElementById('newCategoryCode').value = '';
+            document.getElementById('newCategoryName').value = '';
+        }
+    }
+}
+
+// Toggle batch add categories form
+function toggleBatchAddCategories() {
+    const form = document.getElementById('batchAddCategoriesForm');
+    const singleForm = document.getElementById('addCategoryForm');
+    
+    if (form) {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        // Close single form if open
+        if (singleForm) singleForm.style.display = 'none';
+        
+        // Clear input when opening
+        if (form.style.display === 'block') {
+            document.getElementById('batchCategoriesInput').value = '';
+        }
+    }
+}
+
+// Add single category
+function addSingleCategory() {
+    const code = document.getElementById('newCategoryCode').value.trim();
+    const name = document.getElementById('newCategoryName').value.trim();
+    
+    if (!code || !name) {
+        showToast('يرجى إدخال رمز الفئة واسمها', 'error');
+        return;
+    }
+    
+    // Validate code (English only, lowercase, no spaces)
+    if (!/^[a-z0-9_]+$/.test(code)) {
+        showToast('رمز الفئة يجب أن يكون إنجليزي فقط (أحرف صغيرة، أرقام، _)', 'error');
+        return;
+    }
+    
+    const categories = getCategories();
+    
+    // Check if code already exists
+    if (categories.find(c => c.code === code)) {
+        showToast('رمز الفئة موجود بالفعل', 'error');
+        return;
+    }
+    
+    // Add new category
+    const newCategory = {
+        code: code,
+        name: name,
+        icon: '🏷️' // Default icon
+    };
+    
+    categories.push(newCategory);
+    saveCategories(categories);
+    loadCategories();
+    
+    // Clear inputs and close form
+    document.getElementById('newCategoryCode').value = '';
+    document.getElementById('newCategoryName').value = '';
+    toggleAddCategoryForm();
+    
+    showToast(`تم إضافة فئة "${name}" بنجاح`, 'success');
+}
+
+// Add batch categories
+function addBatchCategories() {
+    const input = document.getElementById('batchCategoriesInput').value.trim();
+    
+    if (!input) {
+        showToast('يرجى إدخال الفئات', 'error');
+        return;
+    }
+    
+    const lines = input.split('\n').filter(line => line.trim());
+    const categories = getCategories();
+    const newCategories = [];
+    const errors = [];
+    
+    lines.forEach((line, index) => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        
+        const parts = trimmed.split(',').map(p => p.trim());
+        if (parts.length !== 2) {
+            errors.push(`السطر ${index + 1}: صيغة غير صحيحة (يجب أن يكون: رمز,اسم)`);
+            return;
+        }
+        
+        const [code, name] = parts;
+        
+        if (!code || !name) {
+            errors.push(`السطر ${index + 1}: رمز الفئة أو الاسم فارغ`);
+            return;
+        }
+        
+        // Validate code
+        if (!/^[a-z0-9_]+$/.test(code)) {
+            errors.push(`السطر ${index + 1}: رمز الفئة "${code}" غير صحيح (يجب أن يكون إنجليزي فقط)`);
+            return;
+        }
+        
+        // Check if code already exists
+        if (categories.find(c => c.code === code) || newCategories.find(c => c.code === code)) {
+            errors.push(`السطر ${index + 1}: رمز الفئة "${code}" موجود بالفعل`);
+            return;
+        }
+        
+        newCategories.push({
+            code: code,
+            name: name,
+            icon: '🏷️'
+        });
+    });
+    
+    if (errors.length > 0) {
+        showToast(`أخطاء:\n${errors.join('\n')}`, 'error');
+        return;
+    }
+    
+    if (newCategories.length === 0) {
+        showToast('لم يتم إضافة أي فئات', 'error');
+        return;
+    }
+    
+    // Add all new categories
+    categories.push(...newCategories);
+    saveCategories(categories);
+    loadCategories();
+    
+    // Clear input and close form
+    document.getElementById('batchCategoriesInput').value = '';
+    toggleBatchAddCategories();
+    
+    showToast(`تم إضافة ${newCategories.length} فئة بنجاح`, 'success');
+}
+
+// Delete category
+function deleteCategory(code) {
+    if (!confirm('هل أنت متأكد من حذف هذه الفئة؟\n\nملاحظة: الإعلانات المرتبطة بهذه الفئة لن تتأثر، لكن لن تظهر في القائمة.')) {
+        return;
+    }
+    
+    const categories = getCategories();
+    const filtered = categories.filter(c => c.code !== code);
+    
+    if (filtered.length === categories.length) {
+        showToast('الفئة غير موجودة', 'error');
+        return;
+    }
+    
+    saveCategories(filtered);
+    loadCategories();
+    
+    showToast('تم حذف الفئة بنجاح', 'success');
+}
 
