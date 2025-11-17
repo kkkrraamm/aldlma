@@ -1617,6 +1617,12 @@ class _OffersSectionState extends State<_OffersSection> {
           ],
         ),
         const SizedBox(height: 16),
+        // إعلانات في قسم "العروض والإعلانات"
+        const AdBanner(
+          pageLocation: 'home',
+          position: 'offers',
+        ),
+        const SizedBox(height: 16),
         SizedBox(
           height: 180,
           child: PageView.builder(
@@ -1766,6 +1772,19 @@ class _OfferCard extends StatelessWidget {
 }
 
 class _ServicesSection extends StatelessWidget {
+  // نفس الفئات الثابتة من services_page.dart
+  static const List<Map<String, dynamic>> categories = [
+    {"id": "electricity", "name": "الكهرباء", "icon": "⚡", "code": "electricity"},
+    {"id": "plumbing", "name": "السباكة", "icon": "🔧", "code": "plumbing"},
+    {"id": "cleaning", "name": "التنظيف", "icon": "🧹", "code": "cleaning"},
+    {"id": "painting", "name": "الدهان", "icon": "🎨", "code": "painting"},
+    {"id": "carpentry", "name": "النجارة", "icon": "🪚", "code": "carpentry"},
+    {"id": "air_conditioning", "name": "التكييف", "icon": "❄️", "code": "air_conditioning"},
+    {"id": "gardening", "name": "البستنة", "icon": "🌳", "code": "gardening"},
+    {"id": "security", "name": "الأمن", "icon": "🔒", "code": "security"},
+    {"id": "other", "name": "أخرى", "icon": "📦", "code": "other"},
+  ];
+  
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -1782,17 +1801,16 @@ class _ServicesSection extends StatelessWidget {
           height: 120,
           child: ListView(
             scrollDirection: Axis.horizontal,
-            children: [
-              _ServiceCard('🍽️', 'مطاعم', '12+'),
-              const SizedBox(width: 12),
-              _ServiceCard('🔧', 'صيانة', '8+'),
-              const SizedBox(width: 12),
-              _ServiceCard('🧽', 'تنظيف', '15+'),
-              const SizedBox(width: 12),
-              _ServiceCard('💄', 'تجميل', '6+'),
-              const SizedBox(width: 12),
-              _ServiceCard('🚚', 'نقل', '10+'),
-            ],
+            children: categories.map((category) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: _ServiceCard(
+                  category['icon'] ?? '🏷️',
+                  category['name'] ?? '',
+                  category['code'] ?? '',
+                ),
+              );
+            }).toList(),
           ),
         ),
       ],
@@ -1803,8 +1821,8 @@ class _ServicesSection extends StatelessWidget {
 class _ServiceCard extends StatelessWidget {
   final String emoji;
   final String title;
-  final String count;
-  const _ServiceCard(this.emoji, this.title, this.count);
+  final String code;
+  const _ServiceCard(this.emoji, this.title, this.code);
   @override
   Widget build(BuildContext context) {
     final theme = ThemeConfig.instance;
@@ -1823,15 +1841,16 @@ class _ServiceCard extends StatelessWidget {
         children: [
           Text(emoji, style: const TextStyle(fontSize: 24)),
           const SizedBox(height: 8),
-          Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: theme.textPrimaryColor)),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: isDark ? ThemeConfig.kNightAccent : Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(12),
+          Text(
+            title, 
+            style: TextStyle(
+              fontWeight: FontWeight.w600, 
+              fontSize: 12, 
+              color: theme.textPrimaryColor
             ),
-            child: Text(count, style: TextStyle(fontSize: 10, color: theme.textSecondaryColor)),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
