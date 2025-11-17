@@ -353,10 +353,23 @@ async function handleImageUpload(event) {
     try {
         showToast('جاري رفع الصورة...', 'info');
         
+        // Show preview immediately with local URL
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        
+        // Create local preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.src = e.target.result;
+            imagePreview.style.display = 'block';
+            uploadPlaceholder.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+        
         // Upload to Cloudinary
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('upload_preset', 'dalma_ads'); // Set this in Cloudinary
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
         
         const response = await fetch(
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -366,21 +379,33 @@ async function handleImageUpload(event) {
             }
         );
         
+        if (!response.ok) {
+            throw new Error(`Cloudinary error: ${response.status}`);
+        }
+        
         const data = await response.json();
+        
+        if (!data.secure_url) {
+            throw new Error('No URL returned from Cloudinary');
+        }
+        
         uploadedImageUrl = data.secure_url;
         
-        // Show preview
-        const imagePreview = document.getElementById('imagePreview');
-        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-        
+        // Update preview with Cloudinary URL
         imagePreview.src = uploadedImageUrl;
-        imagePreview.style.display = 'block';
-        uploadPlaceholder.style.display = 'none';
         
+        console.log('✅ Image uploaded:', uploadedImageUrl);
         showToast('تم رفع الصورة بنجاح', 'success');
     } catch (error) {
         console.error('❌ Error uploading image:', error);
-        showToast('فشل رفع الصورة', 'error');
+        showToast('فشل رفع الصورة: ' + error.message, 'error');
+        
+        // Reset preview on error
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        imagePreview.style.display = 'none';
+        uploadPlaceholder.style.display = 'block';
+        uploadedImageUrl = null;
     }
 }
 
@@ -577,5 +602,7 @@ function showToast(message, type = 'info') {
 }
 
 // Cloudinary config (set your cloud name)
-const CLOUDINARY_CLOUD_NAME = 'YOUR_CLOUD_NAME'; // Replace with your Cloudinary cloud name
+// Cloudinary Configuration
+const CLOUDINARY_CLOUD_NAME = 'dxvmlvqda'; // Dalma Cloudinary
+const CLOUDINARY_UPLOAD_PRESET = 'dalma_ads'; // Upload preset
 
