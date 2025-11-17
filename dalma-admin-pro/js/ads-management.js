@@ -628,3 +628,19 @@ function showToast(message, type = 'info') {
 // Image upload is now handled via Backend API
 // No need for Cloudinary credentials in frontend (more secure)
 
+// ==================== KEYBOARD SHORTCUT: Tab + R ====================
+// Show Ad Locations Guide
+document.addEventListener('keydown', (e) => {
+    // Check if Tab + R is pressed
+    if (e.key === 'r' && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        const overlay = document.getElementById('adLocationsOverlay');
+        if (overlay) {
+            overlay.style.display = overlay.style.display === 'none' ? 'block' : 'none';
+            console.log('🗺️ [SHORTCUT] Ad Locations Guide toggled (Tab + R)');
+        }
+    }
+});
+
+console.log('⌨️ [SHORTCUT] Tab + R: Show/Hide Ad Locations Guide');
+

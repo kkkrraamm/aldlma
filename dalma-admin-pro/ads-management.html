@@ -966,9 +966,23 @@
                                         <div class="upload-placeholder" id="uploadPlaceholder">
                                             <i class="fas fa-cloud-upload-alt"></i>
                                             <p>اضغط لرفع الصورة</p>
-                                            <span>PNG, JPG, GIF (Max 5MB)</span>
+                                            <span>PNG, JPG, GIF, WebP (الحد الأقصى: 5MB)</span>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="form-hint" style="margin-top: 12px; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-right: 3px solid #10b981;">
+                                    <p style="margin: 0; font-size: 13px; color: #10b981; font-weight: 500;">
+                                        <i class="fas fa-info-circle"></i> 
+                                        <strong>الأبعاد الموصى بها:</strong>
+                                    </p>
+                                    <ul style="margin: 8px 0 0 20px; font-size: 12px; color: #6b7280; line-height: 1.8;">
+                                        <li><strong>الصفحة الرئيسية:</strong> 1200×400 بكسل (نسبة 3:1)</li>
+                                        <li><strong>صفحة الخدمات:</strong> 800×300 بكسل (نسبة 8:3)</li>
+                                        <li><strong>صفحة العقارات:</strong> 600×400 بكسل (نسبة 3:2)</li>
+                                        <li><strong>صفحة الترندات:</strong> 728×90 بكسل (بانر أفقي)</li>
+                                        <li><strong>الحد الأقصى للملف:</strong> 5 ميجابايت</li>
+                                        <li><strong>الصيغ المدعومة:</strong> JPG, PNG, GIF, WebP</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -1023,13 +1037,30 @@
                                     المسار الداخلي
                                 </label>
                                 <select id="adInternalRoute">
-                                    <option value="">اختر المسار</option>
-                                    <option value="/prayer">🕌 أوقات الصلاة</option>
-                                    <option value="/dalma-ai">🤖 ذكاء الدلما</option>
-                                    <option value="/services">🛠️ الخدمات</option>
-                                    <option value="/realty">🏠 العقارات</option>
-                                    <option value="/trends">📈 الترندات</option>
+                                    <option value="">اختر الصفحة المستهدفة</option>
+                                    <optgroup label="الصفحات الرئيسية (مع شريط التنقل)">
+                                        <option value="/home">🏠 الصفحة الرئيسية</option>
+                                        <option value="/services">🛠️ الخدمات</option>
+                                        <option value="/realty">🏘️ العقارات</option>
+                                        <option value="/trends">📈 الترندات</option>
+                                        <option value="/orders">📋 طلباتي</option>
+                                    </optgroup>
+                                    <optgroup label="الأدوات والميزات (مع شريط التنقل)">
+                                        <option value="/prayer">🕌 أوقات الصلاة</option>
+                                        <option value="/dalma-ai">🤖 ذكاء الدلما</option>
+                                        <option value="/flights">✈️ رحلات الطيران</option>
+                                    </optgroup>
+                                    <optgroup label="صفحات فرعية (بدون شريط التنقل)">
+                                        <option value="/add-property">➕ إضافة عقار</option>
+                                        <option value="/profile">👤 الملف الشخصي</option>
+                                    </optgroup>
                                 </select>
+                                <div class="form-hint" style="margin-top: 8px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; border-right: 3px solid #3b82f6;">
+                                    <p style="margin: 0; font-size: 12px; color: #3b82f6;">
+                                        <i class="fas fa-lightbulb"></i> 
+                                        <strong>ملاحظة:</strong> الصفحات في المجموعة الأولى والثانية تحافظ على شريط التنقل السفلي، بينما الصفحات الفرعية تفتح بدون شريط تنقل.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1142,6 +1173,104 @@
         <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
             <p>جاري التحميل...</p>
+        </div>
+    </div>
+
+    <!-- Ad Locations Guide Overlay (Tab + R) -->
+    <div id="adLocationsOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; overflow-y: auto;">
+        <div style="max-width: 1200px; margin: 40px auto; padding: 20px;">
+            <div style="background: var(--card-bg); border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h2 style="margin: 0; color: var(--text-primary); font-size: 24px;">
+                        <i class="fas fa-map-marked-alt"></i>
+                        خريطة مواقع الإعلانات في التطبيق
+                    </h2>
+                    <button onclick="document.getElementById('adLocationsOverlay').style.display='none'" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <!-- Home Page -->
+                    <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 20px; border-radius: 12px; color: white;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 18px;">
+                            <i class="fas fa-home"></i> الصفحة الرئيسية
+                        </h3>
+                        <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                            <strong>الموقع:</strong> home<br>
+                            <strong>الموضع:</strong> top, middle, bottom<br>
+                            <strong>الحجم الموصى به:</strong> 1200×400px
+                        </div>
+                        <p style="margin: 0; font-size: 13px; opacity: 0.9;">
+                            يظهر في قسم "العروض والإعلانات" في الصفحة الرئيسية
+                        </p>
+                    </div>
+                    
+                    <!-- Services Page -->
+                    <div style="background: linear-gradient(135deg, #3b82f6, #2563eb); padding: 20px; border-radius: 12px; color: white;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 18px;">
+                            <i class="fas fa-cogs"></i> صفحة الخدمات
+                        </h3>
+                        <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                            <strong>الموقع:</strong> services<br>
+                            <strong>الموضع:</strong> top, middle, bottom<br>
+                            <strong>الحجم الموصى به:</strong> 800×300px
+                        </div>
+                        <p style="margin: 0; font-size: 13px; opacity: 0.9;">
+                            يظهر تحت زر "الكل" وحسب الفئة المختارة
+                        </p>
+                    </div>
+                    
+                    <!-- Realty Page -->
+                    <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 20px; border-radius: 12px; color: white;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 18px;">
+                            <i class="fas fa-building"></i> صفحة العقارات
+                        </h3>
+                        <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                            <strong>الموقع:</strong> realty<br>
+                            <strong>الموضع:</strong> top, middle, bottom<br>
+                            <strong>الحجم الموصى به:</strong> 600×400px
+                        </div>
+                        <p style="margin: 0; font-size: 13px; opacity: 0.9;">
+                            يظهر ضمن قائمة العقارات وفي صفحة إضافة عقار
+                        </p>
+                    </div>
+                    
+                    <!-- Trends Page -->
+                    <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); padding: 20px; border-radius: 12px; color: white;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 18px;">
+                            <i class="fas fa-chart-line"></i> صفحة الترندات
+                        </h3>
+                        <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                            <strong>الموقع:</strong> trends<br>
+                            <strong>الموضع:</strong> top, middle, bottom<br>
+                            <strong>الحجم الموصى به:</strong> 728×90px
+                        </div>
+                        <p style="margin: 0; font-size: 13px; opacity: 0.9;">
+                            يظهر بعد قائمة الصحفيين (بانر أفقي)
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; border-right: 4px solid #10b981;">
+                    <h4 style="margin: 0 0 15px 0; color: #10b981;">
+                        <i class="fas fa-lightbulb"></i> نصائح مهمة:
+                    </h4>
+                    <ul style="margin: 0; padding-right: 20px; line-height: 1.8; color: var(--text-secondary);">
+                        <li><strong>الترتيب:</strong> استخدم رقم الترتيب (display_order) للتحكم في ترتيب ظهور الإعلانات</li>
+                        <li><strong>الموضع:</strong> top (أعلى الصفحة)، middle (وسط الصفحة)، bottom (أسفل الصفحة)</li>
+                        <li><strong>التاريخ:</strong> حدد تاريخ البداية والنهاية لعرض الإعلان تلقائياً</li>
+                        <li><strong>الحركة:</strong> إذا كان هناك أكثر من إعلان في نفس الموقع، سيتم عرضها بشكل متحرك (carousel)</li>
+                        <li><strong>الاختصار:</strong> اضغط <kbd style="background: #10b981; color: white; padding: 2px 8px; border-radius: 4px;">Tab + R</kbd> لإظهار/إخفاء هذا الدليل</li>
+                    </ul>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="document.getElementById('adLocationsOverlay').style.display='none'" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 600;">
+                        <i class="fas fa-check"></i> فهمت
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
