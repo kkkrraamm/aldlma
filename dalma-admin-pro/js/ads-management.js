@@ -230,6 +230,7 @@ function toggleAddAdForm() {
         // Show form
         editingAdId = null;
         uploadedImageUrl = null;
+        selectedImageFile = null;
         
         document.getElementById('modalTitle').textContent = 'إضافة إعلان جديد';
         document.getElementById('adForm').reset();
@@ -300,6 +301,7 @@ async function editAd(id) {
     
     // Image
     uploadedImageUrl = ad.image_url;
+    selectedImageFile = null; // Reset file selection
     if (ad.image_url) {
         document.getElementById('imagePreview').src = ad.image_url;
         document.getElementById('imagePreview').style.display = 'block';
@@ -333,44 +335,56 @@ function toggleLinkFields(type) {
     }
 }
 
-// Handle image upload
-async function handleImageUpload(event) {
+// Handle image selection (preview only, no upload yet)
+let selectedImageFile = null;
+
+function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
     // Validate file type
     if (!file.type.startsWith('image/')) {
         showToast('يرجى اختيار صورة صحيحة', 'error');
+        event.target.value = '';
         return;
     }
     
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
         showToast('حجم الصورة يجب أن يكون أقل من 5 ميجابايت', 'error');
+        event.target.value = '';
         return;
     }
     
+    // Store file for later upload
+    selectedImageFile = file;
+    
+    // Show local preview only
+    const imagePreview = document.getElementById('imagePreview');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        imagePreview.src = e.target.result;
+        imagePreview.style.display = 'block';
+        uploadPlaceholder.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+    
+    console.log('📸 [IMAGE] تم اختيار الصورة:', file.name, '- سيتم الرفع عند الحفظ');
+}
+
+// Upload image to Cloudinary (called when saving ad)
+async function uploadImageToCloudinary() {
+    if (!selectedImageFile) {
+        return null;
+    }
+    
     try {
-        showToast('جاري رفع الصورة...', 'info');
+        console.log('☁️ [CLOUDINARY] رفع صورة إعلان:', selectedImageFile.name);
         
-        // Show preview immediately with local URL
-        const imagePreview = document.getElementById('imagePreview');
-        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-        
-        // Create local preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            imagePreview.src = e.target.result;
-            imagePreview.style.display = 'block';
-            uploadPlaceholder.style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-        
-        console.log('☁️ [CLOUDINARY] رفع صورة إعلان:', file.name);
-        
-        // Upload via Backend API (more secure)
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('image', selectedImageFile);
         
         const response = await fetch(
             `${API_BASE}/api/admin/upload-ad-image`,
@@ -395,23 +409,11 @@ async function handleImageUpload(event) {
             throw new Error('No URL returned from server');
         }
         
-        uploadedImageUrl = data.url;
-        
-        // Update preview with Cloudinary URL
-        imagePreview.src = uploadedImageUrl;
-        
-        console.log('✅ [CLOUDINARY] تم رفع الصورة:', uploadedImageUrl);
-        showToast('تم رفع الصورة بنجاح', 'success');
+        console.log('✅ [CLOUDINARY] تم رفع الصورة:', data.url);
+        return data.url;
     } catch (error) {
         console.error('❌ Error uploading image:', error);
-        showToast('فشل رفع الصورة: ' + error.message, 'error');
-        
-        // Reset preview on error
-        const imagePreview = document.getElementById('imagePreview');
-        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-        imagePreview.style.display = 'none';
-        uploadPlaceholder.style.display = 'block';
-        uploadedImageUrl = null;
+        throw error;
     }
 }
 
@@ -436,8 +438,9 @@ async function saveAd(event) {
         return;
     }
     
-    if (!uploadedImageUrl) {
-        showToast('يرجى رفع صورة الإعلان', 'error');
+    // Check if image is selected (either new file or existing URL)
+    if (!selectedImageFile && !uploadedImageUrl) {
+        showToast('يرجى اختيار صورة الإعلان', 'error');
         return;
     }
     
@@ -451,23 +454,33 @@ async function saveAd(event) {
         return;
     }
     
-    const adData = {
-        title,
-        description,
-        image_url: uploadedImageUrl,
-        link_type: linkType,
-        link_url: linkType === 'external' ? linkUrl : null,
-        internal_route: linkType === 'internal' ? internalRoute : null,
-        page_location: pageLocation,
-        position,
-        display_order: displayOrder,
-        start_date: startDate || null,
-        end_date: endDate || null,
-        is_active: true
-    };
-    
     try {
         showToast('جاري الحفظ...', 'info');
+        
+        // Upload image if a new one is selected
+        let finalImageUrl = uploadedImageUrl;
+        if (selectedImageFile) {
+            showToast('جاري رفع الصورة...', 'info');
+            finalImageUrl = await uploadImageToCloudinary();
+            if (!finalImageUrl) {
+                throw new Error('فشل رفع الصورة');
+            }
+        }
+        
+        const adData = {
+            title,
+            description,
+            image_url: finalImageUrl,
+            link_type: linkType,
+            link_url: linkType === 'external' ? linkUrl : null,
+            internal_route: linkType === 'internal' ? internalRoute : null,
+            page_location: pageLocation,
+            position,
+            display_order: displayOrder,
+            start_date: startDate || null,
+            end_date: endDate || null,
+            is_active: true
+        };
         
         const url = editingAdId 
             ? `${API_BASE}/api/admin/ads/${editingAdId}`
@@ -488,6 +501,11 @@ async function saveAd(event) {
         }
         
         showToast(data.message || 'تم حفظ الإعلان بنجاح', 'success');
+        
+        // Reset
+        selectedImageFile = null;
+        uploadedImageUrl = null;
+        
         closeAdModal();
         loadAds();
     } catch (error) {
