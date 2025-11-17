@@ -909,9 +909,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ==================== SERVICE CATEGORIES MANAGEMENT ====================
 
+// الفئات الثابتة (نفسها في التطبيق)
+const staticCategories = [
+    { code: 'electricity', name: 'الكهرباء', icon: '⚡' },
+    { code: 'plumbing', name: 'السباكة', icon: '🔧' },
+    { code: 'cleaning', name: 'التنظيف', icon: '🧹' },
+    { code: 'painting', name: 'الدهان', icon: '🎨' },
+    { code: 'carpentry', name: 'النجارة', icon: '🪚' },
+    { code: 'air_conditioning', name: 'التكييف', icon: '❄️' },
+    { code: 'gardening', name: 'البستنة', icon: '🌳' },
+    { code: 'security', name: 'الأمن', icon: '🔒' },
+    { code: 'other', name: 'أخرى', icon: '📦' }
+];
+
 let categoriesData = [];
 
-// Load categories from API
+// Load categories from API (with fallback to static)
 async function loadCategories() {
     try {
         console.log('📋 Loading service categories...');
@@ -927,24 +940,34 @@ async function loadCategories() {
             return;
         }
         
-        if (!response.ok) {
-            throw new Error('Failed to load categories');
+        if (response.ok) {
+            categoriesData = await response.json();
+            console.log('✅ Categories loaded from API');
+        } else {
+            // Fallback to static categories
+            console.warn('⚠️ Failed to load from API, using static categories');
+            categoriesData = staticCategories;
         }
         
-        categoriesData = await response.json();
         renderCategories(categoriesData);
         updateCategoriesDropdown(categoriesData);
         updateCategoriesCount(categoriesData.length);
-        console.log('✅ Categories loaded successfully');
+        console.log('✅ Categories ready: ${categoriesData.length}');
     } catch (error) {
-        console.error('❌ Error loading categories:', error);
-        showToast('فشل تحميل الفئات', 'error');
+        console.error('❌ Error loading categories, using static:', error);
+        // Use static categories as fallback
+        categoriesData = staticCategories;
+        renderCategories(categoriesData);
+        updateCategoriesDropdown(categoriesData);
+        updateCategoriesCount(categoriesData.length);
     }
 }
 
 // Get categories (for use in other functions)
 function getCategories() {
-    return categoriesData;
+    // Always return static categories for dropdown (to match app)
+    // But show database categories in management section
+    return staticCategories;
 }
 
 // Render categories list
@@ -988,8 +1011,8 @@ function updateCategoriesDropdown(categories) {
     const select = document.getElementById('adServiceCategory');
     if (!select) return;
     
-    // Keep "الكل" option
-    const allOption = select.querySelector('option[value=""]');
+    // Always use static categories for dropdown (to match app)
+    const categoriesToUse = staticCategories;
     const currentValue = select.value;
     
     // Clear existing category options (keep "الكل")
@@ -997,8 +1020,8 @@ function updateCategoriesDropdown(categories) {
         if (opt.value !== '') opt.remove();
     });
     
-    // Add category options
-    categories.forEach(cat => {
+    // Add category options from static categories
+    categoriesToUse.forEach(cat => {
         const option = document.createElement('option');
         option.value = cat.code;
         option.textContent = `${cat.icon || '🏷️'} ${cat.name}`;
