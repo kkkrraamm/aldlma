@@ -11,6 +11,7 @@ import 'notifications.dart';
 import 'orders_service.dart';
 import 'orders_page.dart';
 import 'theme_config.dart';
+import 'widgets/ad_banner.dart';
 // سنستخدم نسخة محلية من الهيدر المطابق الموجود في الرئيسية/الترندات
 
 class ServicesPage extends StatefulWidget {
@@ -277,62 +278,15 @@ class _ServicesPageState extends State<ServicesPage> {
     );
   }
 
-  Widget _buildAdsCarousel() {
-    final List<String> banners = [
-      'assets/img/aldlma.png',
-      'assets/img/al5dmat.png',
-      'assets/img/al5re6h.png',
-    ];
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        children: [
-          SizedBox(
-            height: 160,
-            child: PageView.builder(
-              controller: _adsController,
-              itemCount: banners.length,
-              onPageChanged: (i) => setState(() => _adsIndex = i),
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.asset(banners[index], fit: BoxFit.cover),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [Colors.black.withOpacity(0.35), Colors.transparent],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(banners.length, (i) => Container(
-              width: 8,
-              height: 8,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: i == _adsIndex ? const Color(0xFF10B981) : Colors.grey.shade300,
-              ),
-            )),
-          ),
-        ],
-      ),
+  // إعلانات ديناميكية حسب الفئة المختارة
+  Widget _buildDynamicAds() {
+    // إذا كانت الفئة "الكل" نعرض إعلانات عامة
+    // إذا كانت فئة محددة نعرض إعلانات خاصة بها
+    final String adCategory = _selectedCategory == "all" ? "services" : "services_$_selectedCategory";
+    
+    return AdBanner(
+      pageLocation: adCategory,
+      position: 'top',
     );
   }
   // أيقونة الفئة
@@ -373,8 +327,8 @@ class _ServicesPageState extends State<ServicesPage> {
           SliverToBoxAdapter(child: _showSearchInput ? _buildSearchInput() : const SizedBox.shrink()),
           SliverToBoxAdapter(child: _buildCategoriesFilter()),
 
-          // بانر واحد بالعرض يدور تلقائياً
-          SliverToBoxAdapter(child: _buildAdsCarousel()),
+          // إعلانات ديناميكية حسب الفئة
+          SliverToBoxAdapter(child: _buildDynamicAds()),
 
           // قسم طلباتي (مدمج)
           SliverToBoxAdapter(child: _buildMyOrdersSection()),

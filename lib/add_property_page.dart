@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'theme_config.dart';
 import 'chat_page.dart';
 import 'api_config.dart';
+import 'widgets/ad_banner.dart';
 
 class AddPropertyPage extends StatefulWidget {
   const AddPropertyPage({super.key});
@@ -178,6 +179,14 @@ class _AddPropertyPageState extends State<AddPropertyPage> with SingleTickerProv
                                   _buildMainTitle(theme),
                                   
                                   const SizedBox(height: 30),
+                                  
+                                  // إعلان في صفحة ضيف عقارك
+                                  const AdBanner(
+                                    pageLocation: 'add_property',
+                                    position: 'top',
+                                  ),
+                                  
+                                  const SizedBox(height: 20),
                                   
                                   // شعارات المكاتب المتحركة
                                   _buildAnimatedLogos(theme),

@@ -26,6 +26,7 @@ import 'ai_tools_page.dart';
 import 'dalma_ai_page.dart';
 import 'prayer_button.dart';
 import 'flights_button.dart';
+import 'widgets/ad_banner.dart';
 import 'package:provider/provider.dart';
 import 'theme_config.dart';
 import 'theme_aware_widgets.dart';
@@ -237,6 +238,11 @@ class _HomeScreen extends StatelessWidget {
                   child: _SearchField(),
                 ),
                 const SizedBox(height: 16),
+                // إعلانات الصفحة الرئيسية - أعلى
+                const AdBanner(
+                  pageLocation: 'home',
+                  position: 'top',
+                ),
                 // زر أوقات الصلاة
                 const PrayerButton(),
                 const SizedBox(height: 16),

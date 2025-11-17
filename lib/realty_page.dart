@@ -28,6 +28,7 @@ import 'loan_calculator_page.dart';
 import 'salary_calculator_page.dart';
 import 'construction_cost_calculator_page.dart';
 import 'finishing_cost_calculator_page.dart';
+import 'widgets/ad_banner.dart';
 
 class RealtyPage extends StatefulWidget {
   const RealtyPage({super.key});
@@ -2158,9 +2159,26 @@ class _RealtyPageState extends State<RealtyPage> with SingleTickerProviderStateM
         right: 16,
         bottom: 100,
       ),
-      itemCount: _listings.length,
+      itemCount: _listings.length + 1, // +1 للإعلان
       itemBuilder: (context, index) {
-        return _buildFullListingCard(_listings[index], theme);
+        // عرض إعلان بعد أول 3 عقارات
+        if (index == 3) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: AdBanner(
+              pageLocation: 'realty',
+              position: 'middle',
+            ),
+          );
+        }
+        
+        // تعديل الـ index للعقارات بعد الإعلان
+        final listingIndex = index > 3 ? index - 1 : index;
+        if (listingIndex >= _listings.length) {
+          return const SizedBox.shrink();
+        }
+        
+        return _buildFullListingCard(_listings[listingIndex], theme);
       },
     );
   }

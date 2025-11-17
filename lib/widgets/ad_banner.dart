@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../prayer_times_page.dart';
@@ -26,11 +27,38 @@ class _AdBannerState extends State<AdBanner> {
   List<dynamic> _ads = [];
   bool _loading = true;
   final Set<int> _trackedImpressions = {};
+  late PageController _pageController;
+  int _currentPage = 0;
+  Timer? _autoPlayTimer;
   
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     _loadAds();
+  }
+  
+  @override
+  void dispose() {
+    _autoPlayTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+  
+  void _startAutoPlay() {
+    if (_ads.length <= 1) return;
+    
+    _autoPlayTimer?.cancel();
+    _autoPlayTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (_pageController.hasClients) {
+        final nextPage = (_currentPage + 1) % _ads.length;
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
   
   Future<void> _loadAds() async {
@@ -49,9 +77,21 @@ class _AdBannerState extends State<AdBanner> {
         });
         print('✅ [ADS] Loaded ${_ads.length} ads');
         
-        // Track impressions for all loaded ads
-        for (var ad in _ads) {
-          _trackImpression(ad['id']);
+        // Track impression ONLY for the first visible ad (index 0)
+        // This is the only ad that is immediately visible when the page loads
+        // Other ads in the carousel will be tracked ONLY when they become visible:
+        // - When user manually swipes to them
+        // - When auto-play moves to them
+        // This ensures accurate impression tracking - only count what user actually sees
+        if (_ads.isNotEmpty) {
+          _trackImpression(_ads[0]['id']);
+          _currentPage = 0; // Set initial page
+          print('👁️ [ADS] Initial impression tracked for first ad (index 0, Ad #${_ads[0]['id']})');
+        }
+        
+        // Start auto-play if multiple ads
+        if (_ads.length > 1) {
+          _startAutoPlay();
         }
       } else {
         setState(() => _loading = false);
@@ -63,16 +103,21 @@ class _AdBannerState extends State<AdBanner> {
   }
   
   Future<void> _trackImpression(int adId) async {
-    if (_trackedImpressions.contains(adId)) return;
+    // Prevent duplicate tracking - each ad should be counted only once per session
+    if (_trackedImpressions.contains(adId)) {
+      print('⏭️ [ADS] Ad #$adId already tracked, skipping');
+      return;
+    }
     
     try {
+      print('👁️ [ADS] Tracking impression for ad #$adId (now visible on screen)');
       await http.post(
         Uri.parse('https://dalma-api.onrender.com/api/ads/$adId/impression'),
       );
       _trackedImpressions.add(adId);
-      print('👁️ [ADS] Impression tracked for ad #$adId');
+      print('✅ [ADS] Impression successfully tracked for ad #$adId');
     } catch (e) {
-      print('❌ [ADS] Impression tracking error: $e');
+      print('❌ [ADS] Impression tracking error for ad #$adId: $e');
     }
   }
   
@@ -161,17 +206,26 @@ class _AdBannerState extends State<AdBanner> {
       return const SizedBox.shrink();
     }
     
-    return Container(
-      height: 120,
-      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-      child: PageView.builder(
-        itemCount: _ads.length,
-        onPageChanged: (index) {
-          // Track impression when user swipes to a new ad
-          final ad = _ads[index];
-          _trackImpression(ad['id']);
-        },
-        itemBuilder: (context, index) {
+    return Column(
+      children: [
+        Container(
+          height: 120,
+          margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: _ads.length,
+            onPageChanged: (index) {
+              setState(() => _currentPage = index);
+              // Track impression ONLY when ad becomes visible
+              // This is called when:
+              // 1. User manually swipes to a new ad
+              // 2. Auto-play moves to the next ad
+              // 3. Any page change in the carousel
+              final ad = _ads[index];
+              _trackImpression(ad['id']);
+              print('📊 [ADS] Page changed to index $index (Ad #${ad['id']})');
+            },
+            itemBuilder: (context, index) {
           final ad = _ads[index];
           return GestureDetector(
             onTap: () => _handleAdTap(ad),
@@ -262,6 +316,30 @@ class _AdBannerState extends State<AdBanner> {
           );
         },
       ),
+    ),
+    // Page indicators (dots) - only show if multiple ads
+    if (_ads.length > 1)
+      Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            _ads.length,
+            (index) => Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _currentPage == index
+                    ? const Color(0xFF10b981)
+                    : Colors.grey.withOpacity(0.4),
+              ),
+            ),
+          ),
+        ),
+      ),
+      ],
     );
   }
 }

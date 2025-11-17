@@ -12,6 +12,7 @@ import 'theme_config.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'api_config.dart';
+import 'widgets/ad_banner.dart';
 
 class TrendsPage extends StatefulWidget {
   const TrendsPage({Key? key}) : super(key: key);
@@ -677,6 +678,13 @@ class _TrendsPageState extends State<TrendsPage> {
           SliverToBoxAdapter(child: _AskDalmaTrendsButton()),
           SliverToBoxAdapter(child: _buildSearchSection()),
           SliverToBoxAdapter(child: _buildJournalistsList()),
+          // إعلان في صفحة الترندات
+          const SliverToBoxAdapter(
+            child: AdBanner(
+              pageLocation: 'trends',
+              position: 'top',
+            ),
+          ),
           // مكان طلب المستخدم: اجعل "كيف أسجل كإعلامي؟" فوق المنشورات
           SliverToBoxAdapter(child: _buildJournalistRegistrationSection()),
           SliverToBoxAdapter(child: _buildPostsFeed()),
