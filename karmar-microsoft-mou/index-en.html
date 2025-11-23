@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memorandum of Understanding - KARMAR & Microsoft</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .document {
+            padding: 40px;
+            min-height: 297mm;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #0078d4;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 50px;
+        }
+
+        .logo {
+            height: 80px;
+        }
+
+        .document-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .document-title h1 {
+            font-size: 28px;
+            color: #0078d4;
+            margin-bottom: 10px;
+        }
+
+        .document-title h2 {
+            font-size: 22px;
+            color: #333;
+        }
+
+        /* Content Styles */
+        .parties {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .party {
+            margin-bottom: 30px;
+        }
+
+        .party h3 {
+            color: #0078d4;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .party-details {
+            margin-left: 20px;
+        }
+
+        .party-details p {
+            margin-bottom: 5px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h3 {
+            font-size: 20px;
+            color: #0078d4;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-number {
+            background-color: #0078d4;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        .section-content {
+            margin-left: 40px;
+        }
+
+        .section-content ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .section-content ul li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 10px;
+        }
+
+        .section-content ul li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #0078d4;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        /* Signatures */
+        .signatures {
+            margin-top: 80px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+        }
+
+        .signature-block {
+            text-align: center;
+        }
+
+        .signature-block h4 {
+            font-size: 18px;
+            color: #0078d4;
+            margin-bottom: 20px;
+        }
+
+        .signature-line {
+            border-bottom: 2px solid #333;
+            height: 50px;
+            margin-bottom: 10px;
+        }
+
+        .signature-details p {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #0078d4;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #005a9e;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .confidential {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 30px;
+            color: #856404;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background-color: white;
+            }
+
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+
+            .controls {
+                display: none !important;
+            }
+
+            .document {
+                padding: 0;
+            }
+
+            .header {
+                page-break-after: avoid;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            .signatures {
+                page-break-before: always;
+            }
+
+            /* Hide file path in print */
+            @page {
+                margin: 20mm;
+            }
+        }
+
+        /* Hide print margins that might show file path */
+        @page {
+            margin-top: 20mm;
+            margin-bottom: 20mm;
+            margin-left: 20mm;
+            margin-right: 20mm;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button class="btn btn-primary" onclick="window.print()">Print to PDF</button>
+        <button class="btn btn-secondary" onclick="window.location.href='../dalma-investor-site/index.html'">Back to Site</button>
+    </div>
+
+    <div class="container">
+        <div class="document">
+            <!-- Header with Logos -->
+            <div class="header">
+                <div class="logo-container">
+                    <img src="../dalma-investor-site/assets/karmar-logo.png" alt="KARMAR" class="logo">
+                    <div style="text-align: center;">
+                        <h3 style="color: #333;">MEMORANDUM OF UNDERSTANDING</h3>
+                        <p style="color: #666;">Technical Cooperation Agreement</p>
+                    </div>
+                    <svg class="logo" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#f25022" d="M0 0h10.5v10.5H0z"/>
+                        <path fill="#7fba00" d="M12 0h10.5v10.5H12z"/>
+                        <path fill="#00a4ef" d="M0 12h10.5v10.5H0z"/>
+                        <path fill="#ffb900" d="M12 12h10.5v10.5H12z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Document Title -->
+            <div class="document-title">
+                <h1>MEMORANDUM OF UNDERSTANDING</h1>
+                <h2>For Technical Cooperation between KARMAR LLC and Microsoft Corporation</h2>
+            </div>
+
+            <!-- Parties -->
+            <div class="parties">
+                <div class="party">
+                    <h3>FIRST PARTY:</h3>
+                    <div class="party-details">
+                        <p><strong>KARMAR – Limited Liability Company</strong></p>
+                        <p>(KARMAR – LLC)</p>
+                        <p>Headquarters: Kingdom of Saudi Arabia</p>
+                        <p>Represented by: Abdulkarim Abdullah Alanazi</p>
+                        <p>Title: Official Representative and Chief Executive Officer</p>
+                        <p>Hereinafter referred to as "KARMAR".</p>
+                    </div>
+                </div>
+
+                <div class="party">
+                    <h3>SECOND PARTY:</h3>
+                    <div class="party-details">
+                        <p><strong>Microsoft Corporation</strong></p>
+                        <p>Headquarters: Redmond, Washington, United States</p>
+                        <p>Represented by: Kevin Scott</p>
+                        <p>Title: Chief Technology Officer – Microsoft</p>
+                        <p>Hereinafter referred to as "Microsoft".</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 1 -->
+            <div class="section">
+                <h3><span class="section-number">1</span> INTRODUCTION</h3>
+                <div class="section-content">
+                    <p>In the mutual interest of both parties to establish a technical and strategic cooperation relationship in the fields of cloud computing, artificial intelligence, and digital platforms, this memorandum has been signed to serve as a general framework for cooperation and knowledge exchange.</p>
+                </div>
+            </div>
+
+            <!-- Section 2 -->
+            <div class="section">
+                <h3><span class="section-number">2</span> OBJECTIVES</h3>
+                <div class="section-content">
+                    <p>This memorandum aims to:</p>
+                    <ul>
+                        <li>Develop joint products and solutions based on Azure services and Microsoft technologies.</li>
+                        <li>Enable KARMAR to utilize Microsoft's cloud and artificial intelligence services.</li>
+                        <li>Support KARMAR's staff with training and technical certifications.</li>
+                        <li>Enhance collaboration opportunities in smart cities and modern digital systems.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 3 -->
+            <div class="section">
+                <h3><span class="section-number">3</span> SCOPE OF COOPERATION</h3>
+                <div class="section-content">
+                    <p>The scope of cooperation includes, but is not limited to:</p>
+                    <ul>
+                        <li>Integration of KARMAR systems with Azure platform.</li>
+                        <li>Utilizing Microsoft AI and Cognitive Services.</li>
+                        <li>Developing artificial intelligence solutions and joint technical projects.</li>
+                        <li>Exchanging consultative knowledge and technical support.</li>
+                        <li>Regular coordination meetings between technical teams of both parties.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 4 -->
+            <div class="section">
+                <h3><span class="section-number">4</span> OBLIGATIONS</h3>
+                <div class="section-content">
+                    <h4 style="color: #0078d4; margin-bottom: 10px;">KARMAR Obligations</h4>
+                    <ul>
+                        <li>Provide technical and executive team supporting the implementation of cooperation projects.</li>
+                        <li>Comply with cybersecurity policies and data protection.</li>
+                        <li>Respect intellectual property rights of both parties.</li>
+                        <li>Use Microsoft services within agreed limits.</li>
+                    </ul>
+
+                    <h4 style="color: #0078d4; margin-top: 20px; margin-bottom: 10px;">Microsoft Obligations</h4>
+                    <ul>
+                        <li>Provide technical support for Azure services and artificial intelligence technologies.</li>
+                        <li>Enable KARMAR to access necessary cloud tools.</li>
+                        <li>Provide appropriate training and facilitate technical certification paths.</li>
+                        <li>Support the development of technical solutions based on Microsoft products.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 5 -->
+            <div class="section">
+                <h3><span class="section-number">5</span> CONFIDENTIALITY AND DATA PROTECTION</h3>
+                <div class="section-content">
+                    <p>Both parties commit to maintaining the confidentiality of exchanged information and not disclosing or using it outside the scope of cooperation, except with written consent from the other party.</p>
+                </div>
+            </div>
+
+            <!-- Section 6 -->
+            <div class="section">
+                <h3><span class="section-number">6</span> DURATION</h3>
+                <div class="section-content">
+                    <p>The duration of this memorandum is two years from the date of signing, and shall be automatically renewed or by a new written agreement between the parties.</p>
+                </div>
+            </div>
+
+            <!-- Section 7 -->
+            <div class="section">
+                <h3><span class="section-number">7</span> LEGAL NATURE</h3>
+                <div class="section-content">
+                    <p>This memorandum is not a commercial contract and does not impose direct financial obligations. It is a preliminary technical cooperation framework, and binding contracts may be signed later as needed.</p>
+                </div>
+            </div>
+
+            <!-- Section 8 -->
+            <div class="section">
+                <h3><span class="section-number">8</span> TERMINATION</h3>
+                <div class="section-content">
+                    <p>Either party may terminate this memorandum with prior written notice of not less than thirty (30) days.</p>
+                </div>
+            </div>
+
+            <!-- Signatures -->
+            <div class="signatures">
+                <div class="signature-block">
+                    <h4>FIRST PARTY – KARMAR LLC</h4>
+                    <div class="signature-line"></div>
+                    <div class="signature-details">
+                        <p><strong>Name:</strong> Abdulkarim Abdullah Alanazi</p>
+                        <p><strong>Title:</strong> Chief Executive Officer</p>
+                        <p><strong>Date:</strong> September 12, 2025</p>
+                    </div>
+                </div>
+
+                <div class="signature-block">
+                    <h4>SECOND PARTY – Microsoft Corporation</h4>
+                    <div class="signature-line"></div>
+                    <div class="signature-details">
+                        <p><strong>Name:</strong> Kevin Scott</p>
+                        <p><strong>Title:</strong> Chief Technology Officer</p>
+                        <p><strong>Date:</strong> September 12, 2025</p>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Confidential Notice -->
+            <div class="confidential">
+                <p><strong>CONFIDENTIAL</strong> - This document contains confidential information belonging to the mentioned parties</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <p>Page 1 of 1</p>
+                <p>Memorandum of Understanding - KARMAR & Microsoft - 2025</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

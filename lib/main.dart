@@ -33,6 +33,8 @@ import 'theme_aware_widgets.dart';
 import 'widget_inspector.dart';
 import 'app_config.dart';
 import 'notifications_service.dart' as fcm;
+import 'explore_page.dart';
+import 'stores_page.dart';
 
 final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
 
@@ -154,26 +156,24 @@ class _MyHomePageState extends State<MyHomePage> {
           print('🔄 [MAIN] getCurrentPage - Index: $_currentIndex, isLoggedIn: ${authState.isLoggedIn}, role: ${authState.userRole}');
           switch (_currentIndex) {
             case 0:
-              // ✅ دائماً عرض صفحة المستخدم العادي (يحتوي على زر للانتقال لـ Media Dashboard)
-              print('📱 [MAIN] عرض صفحة DalmaMyAccountOasis');
+              // حسابي
               return const DalmaMyAccountOasis();
             case 1:
-              return OrdersPage(showAppBar: false);
+              // ترند
+              return TrendsPage();
             case 2:
+              // الرئيسية (الوسط)
               return _HomeScreen(
                 onNavigate: (index) {
                   setState(() => _currentIndex = index);
                 },
               );
             case 3:
-              return TrendsPage();
+              // متاجر
+              return const StoresPage();
             case 4:
-              return ServicesPage(
-                showAppBar: false,
-                onNavigate: (index) {
-                  setState(() => _currentIndex = index);
-                },
-              );
+              // استكشف
+              return ExplorePage();
             default:
               return _HomeScreen(
                 onNavigate: (index) {
@@ -202,10 +202,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
                 destinations: const [
                   NavigationDestination(icon: Icon(Icons.person_outline), label: 'حسابي'),
-                  NavigationDestination(icon: Icon(Icons.receipt_long_outlined), label: 'طلباتي'),
+                  NavigationDestination(icon: Icon(Icons.local_fire_department_outlined), label: 'ترند'),
                   NavigationDestination(icon: Icon(Icons.home_outlined), label: 'الرئيسية'),
-                  NavigationDestination(icon: Icon(Icons.trending_up), label: 'التزودات'),
-                  NavigationDestination(icon: Icon(Icons.widgets_outlined), label: 'خدمات'),
+                  NavigationDestination(icon: Icon(Icons.storefront_outlined), label: 'متاجر'),
+                  NavigationDestination(icon: Icon(Icons.explore_outlined), label: 'استكشف'),
                 ],
               ),
             ),

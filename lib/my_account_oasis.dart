@@ -20,6 +20,7 @@ import 'auth.dart';
 import 'request_media_page.dart';
 import 'request_provider_page.dart';
 import 'media_dashboard.dart';
+import 'provider_store_dashboard.dart';
 
 class DalmaMyAccountOasis extends StatefulWidget {
   const DalmaMyAccountOasis({super.key});
@@ -421,6 +422,16 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
       context,
       MaterialPageRoute(
         builder: (_) => const DalmaMediaDashboard(),
+      ),
+    );
+  }
+
+  void _navigateToProviderDashboard() {
+    // الانتقال إلى لوحة تحكم مقدم الخدمة
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ProviderStoreDashboard(),
       ),
     );
   }
@@ -860,6 +871,9 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
                                     status: _providerRequest!['status'],
                                     date: _formatDate(_providerRequest!['created_at']),
                                     onUploadLicense: _hasLicenseImage(_providerRequest!) ? null : () => _uploadLicenseImage(),
+                                    onNavigateToProviderDashboard: _providerRequest!['status'] == 'approved' 
+                                      ? () => _navigateToProviderDashboard() 
+                                      : null,
                                   ),
                               ],
                             ),
@@ -1707,6 +1721,7 @@ class _RequestStatusTile extends StatelessWidget {
   final VoidCallback? onUploadId;
   final VoidCallback? onUploadLicense;
   final VoidCallback? onNavigateToMediaDashboard;
+  final VoidCallback? onNavigateToProviderDashboard;
   
   const _RequestStatusTile({
     required this.icon,
@@ -1716,6 +1731,7 @@ class _RequestStatusTile extends StatelessWidget {
     this.onUploadId,
     this.onUploadLicense,
     this.onNavigateToMediaDashboard,
+    this.onNavigateToProviderDashboard,
   });
   
   @override
@@ -1863,6 +1879,34 @@ class _RequestStatusTile extends StatelessWidget {
                 icon: Icon(Icons.dashboard_customize_rounded, size: 18),
                 label: Text(
                   'انتقال إلى إدارة إعلامي 🚀',
+                  style: GoogleFonts.cairo(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                  elevation: 4,
+                  shadowColor: (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen).withOpacity(0.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                ),
+              ),
+            ),
+          ],
+          // زر الانتقال إلى متجر مقدم الخدمة (عند الموافقة)
+          if (status == 'approved' && onNavigateToProviderDashboard != null) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onNavigateToProviderDashboard,
+                icon: Icon(Icons.store_rounded, size: 18),
+                label: Text(
+                  'انتقال إلى متجري 🏪',
                   style: GoogleFonts.cairo(
                     fontWeight: FontWeight.w900,
                     fontSize: 14,

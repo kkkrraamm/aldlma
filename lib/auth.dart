@@ -15,6 +15,7 @@ class AuthState extends ChangeNotifier {
   String? _userName;
   String? _phone;
   String? _userRole;
+  String? _token;
   List<Map<String, dynamic>> _users = <Map<String, dynamic>>[]; // {phone, name, password, dob}
   
   // السيرفر الحقيقي (من ApiConfig)
@@ -24,6 +25,7 @@ class AuthState extends ChangeNotifier {
   String? get userName => _userName;
   String? get phone => _phone;
   String? get userRole => _userRole;
+  String? get token => _token;
   
   // Reload auth state (useful after login from other pages)
   Future<void> reloadAuthState() async {
@@ -181,6 +183,7 @@ class AuthState extends ChangeNotifier {
         _userName = tokenUserName;
         _phone = tokenUserPhone;
         _userRole = tokenUserRole;
+        _token = token;
         
         // التأكد من وجود user_token للمفضلة والدردشة
         await prefs.setString('user_token', token);
@@ -312,6 +315,7 @@ class AuthState extends ChangeNotifier {
         _userName = name;
         _phone = phone.trim();
         _userRole = role;
+        _token = token;
         
         print('💾 [STORAGE] تم حفظ البيانات في SharedPreferences');
         print('🔐━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');

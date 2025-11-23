@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memorandum of Understanding - KARMAR & OpenAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Arial:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .document {
+            padding: 40px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #10a37f;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 50px;
+        }
+
+        .logo {
+            height: 80px;
+        }
+
+        .openai-logo {
+            height: 60px;
+            width: auto;
+        }
+
+        .document-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .document-title h1 {
+            font-size: 28px;
+            color: #10a37f;
+            margin-bottom: 10px;
+        }
+
+        .document-title h2 {
+            font-size: 22px;
+            color: #333;
+        }
+
+        /* Content Styles */
+        .parties {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .party {
+            margin-bottom: 30px;
+        }
+
+        .party h3 {
+            color: #10a37f;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .party-details {
+            margin-left: 20px;
+        }
+
+        .party-details p {
+            margin-bottom: 5px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h3 {
+            font-size: 20px;
+            color: #10a37f;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-number {
+            background-color: #10a37f;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        .section-content {
+            margin-left: 40px;
+        }
+
+        .section-content ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .section-content ul li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 10px;
+        }
+
+        .section-content ul li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #10a37f;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        /* Signatures */
+        .signatures {
+            margin-top: 80px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+        }
+
+        .signature-block {
+            text-align: center;
+        }
+
+        .signature-block h4 {
+            font-size: 18px;
+            color: #10a37f;
+            margin-bottom: 20px;
+        }
+
+        .signature-line {
+            border-bottom: 2px solid #333;
+            height: 50px;
+            margin-bottom: 10px;
+        }
+
+        .signature-details p {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #10a37f;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0d8967;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            page-break-inside: avoid;
+        }
+
+        .confidential {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 30px;
+            color: #856404;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background-color: white;
+                margin: 0;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+                margin: 0;
+            }
+
+            .controls {
+                display: none !important;
+            }
+
+            .document {
+                padding: 20mm;
+                margin: 0;
+                min-height: auto;
+            }
+
+            .header {
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+
+            .section {
+                page-break-inside: avoid;
+                margin-bottom: 20px;
+            }
+
+            .parties {
+                page-break-inside: avoid;
+            }
+
+            .party {
+                page-break-inside: avoid;
+            }
+
+            .signatures {
+                page-break-inside: avoid;
+                margin-top: 40px;
+            }
+
+            .section-content {
+                orphans: 3;
+                widows: 3;
+            }
+        }
+
+        /* Hide all browser print headers/footers */
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        /* Additional print settings to ensure no headers/footers */
+        @media print {
+            html, body {
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+            }
+
+            @page {
+                size: A4 portrait;
+                margin: 0mm;
+            }
+            
+            .container {
+                min-height: auto !important;
+                height: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button class="btn btn-primary" onclick="printDocument()">Print to PDF</button>
+        <button class="btn btn-secondary" onclick="window.location.href='../dalma-investor-site/index.html'">Back to Site</button>
+    </div>
+
+    <script>
+        function printDocument() {
+            // Alert user about print settings
+            if (window.navigator.userAgent.indexOf("Chrome") != -1) {
+                alert("Important for Chrome users:\n\n1. Click 'More settings'\n2. Uncheck 'Headers and footers'\n3. Set Margins to 'None'\n4. Make sure 'Pages' is set to 'All'\n5. Choose 'Save as PDF'\n\nThe document will print on multiple pages.");
+            } else if (window.navigator.userAgent.indexOf("Safari") != -1) {
+                alert("Important for Safari users:\n\n1. Uncheck 'Print headers and footers'\n2. Set margins to minimum\n3. Check that all pages are selected\n4. Choose 'Save as PDF'\n\nThe document will print on multiple pages.");
+            } else if (window.navigator.userAgent.indexOf("Firefox") != -1) {
+                alert("Important for Firefox users:\n\n1. Go to 'Page Setup'\n2. Set all margins to 0\n3. Clear Headers and Footers\n4. Select 'All pages'\n5. Choose 'Save as PDF'\n\nThe document will print on multiple pages.");
+            } else {
+                alert("Important: Please disable headers/footers and ensure all pages are selected in print settings for a complete PDF");
+            }
+            
+            // Delay print to allow alert to be read
+            setTimeout(function() {
+                window.print();
+            }, 100);
+        }
+    </script>
+
+    <div class="container">
+        <div class="document">
+            <!-- Header with Logos -->
+            <div class="header">
+                <div class="logo-container">
+                    <img src="../dalma-investor-site/assets/karmar-logo.png" alt="KARMAR" class="logo">
+                    <div style="text-align: center;">
+                        <h3 style="color: #333;">MEMORANDUM OF UNDERSTANDING</h3>
+                        <p style="color: #666;">Technical Cooperation Agreement</p>
+                    </div>
+                    <svg class="openai-logo" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M230.4 78.8c11.5-22.7 8.5-51.3-9.4-70.7-14.7-16-36.6-22.1-57.2-16-33.8-17.3-75.1-6.2-95.7 25.5-15.8 1.7-31.2 8.7-42.7 20.7-19.4 20.4-23.1 51.4-9 75.6-11.5 22.7-8.5 51.3 9.4 70.7 14.7 16 36.6 22.1 57.2 16 33.8 17.3 75.1 6.2 95.7-25.5 15.8-1.7 31.2-8.7 42.7-20.7 19.4-20.3 23.1-51.3 9-75.6zm-136.6 106c-9.3-5.4-17.7-11.8-24.7-19.4 1-6.7 2.7-13.4 5.2-19.7 2.5-6.3 5.8-12.4 9.8-17.9 4 5.5 8.6 10.5 13.8 14.9 5.2 4.4 10.9 8.2 17 11.2-.3 10.8-1.7 21.3-4.2 31.2-5.5.2-11.2-.5-16.9-2.3zm-62.6-38.5c-4-9.5-4-20.3 0-29.8 4.6-1.1 9.4-1.6 14.2-1.7 5.9-.1 11.8.7 17.5 2.3-.2 5.2.1 10.3.9 15.4s2.1 10.1 3.9 14.9c-5.8 3.4-11.2 7.5-15.9 12.2-5.1-2.2-9.8-5.1-14.1-8.4-2.3-1.8-4.5-3.5-6.5-4.9zm18.7-96.8c9.3 5.4 17.6 11.8 24.7 19.4-1 6.7-2.7 13.4-5.2 19.7-2.5 6.3-5.8 12.4-9.8 17.9-4-5.5-8.6-10.5-13.8-14.9-5.2-4.4-10.9-8.2-17-11.2.3-10.8 1.8-21.3 4.2-31.2 5.5-.2 11.2.5 16.9 2.3zm24.7 58.5c0-6.4.8-12.7 2.3-18.8 5.7 3.3 11 7.2 15.8 11.8 4.8 4.5 9.1 9.6 12.7 15.1-3.6 5.5-7.9 10.6-12.7 15.1-4.8 4.5-10.1 8.5-15.8 11.8-1.5-6-2.3-12.4-2.3-18.8v-16.2zm95 31.2c-4.6 1.1-9.4 1.6-14.2 1.6-5.9.1-11.8-.7-17.5-2.3.2-5.2-.1-10.3-.9-15.4s-2.1-10.1-3.9-14.9c5.8-3.4 11.2-7.5 15.9-12.2 5.1 2.2 9.8 5.1 14.1 8.4 10.7 8.2 10.7 21.4 0 29.6-2.2 1.8-4.4 3.5-6.4 4.9 4.4.1 8.8.2 12.9.3zm-7.4-86.1c9.3 9.9 11.2 24.6 4.8 36.5-4.7-3.3-9.8-6.2-15.1-8.4-5.3-2.2-10.9-3.8-16.6-4.7-1.5-6-3.7-11.7-6.6-17.1s-6.4-10.4-10.4-14.9c6.4-3.7 13.7-5.6 21.2-5.4 8.9.2 17.2 5.2 22.7 14zm-107.2-26c10.7-8.2 24.9-8.2 35.5 0-2.3 4.6-4.2 9.5-5.5 14.5s-2.1 10.2-2.4 15.5c-6 1.6-11.8 3.8-17.2 6.7s-10.4 6.4-14.9 10.4c-3.7-6.5-5.6-13.8-5.4-21.3.2-8.9 1.1-17.7 9.9-25.8zm-37.8 57.9c-9.3-9.9-11.2-24.6-4.8-36.5 4.7 3.3 9.8 6.2 15.1 8.4 5.3 2.2 10.9 3.8 16.6 4.7 1.5 6 3.7 11.7 6.6 17.1s6.4 10.4 10.4 14.9c-6.4 3.7-13.7 5.6-21.2 5.4-8.9-.2-17.2-5.2-22.7-14zm15 109.9c-10.7-11.6-13.7-28.4-7.5-42.8 7.3 2.3 14.8 3.4 22.4 3.4 2.1 0 4.3-.1 6.4-.3 3 5.5 6.7 10.6 10.9 15.3 4.2 4.7 8.9 8.8 14.1 12.4-2.8 6.8-7.4 12.6-13.5 17-9.2 6.6-21.8 6.2-32.8-4zm107.2 26.1c-10.7 8.2-24.9 8.2-35.5 0 2.3-4.6 4.2-9.5 5.5-14.5s2.1-10.2 2.4-15.5c6-1.6 11.8-3.8 17.2-6.7s10.4-6.4 14.9-10.4c3.7 6.5 5.6 13.8 5.4 21.3-.3 8.9-1.2 17.6-9.9 25.8zm64.4-16.1c-7.3-2.3-14.8-3.4-22.4-3.4-2.1 0-4.3.1-6.4.3-3-5.5-6.7-10.6-10.9-15.3-4.2-4.7-8.9-8.8-14.1-12.4 2.8-6.8 7.4-12.6 13.5-17 21.5-15.4 51.3 2.5 46.3 27.8-1.3 6.3-3.3 13.3-6 20z" fill="#10a37f"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Document Title -->
+            <div class="document-title">
+                <h1>MEMORANDUM OF UNDERSTANDING</h1>
+                <h2>Between KARMAR LLC and OpenAI</h2>
+            </div>
+
+            <!-- Parties -->
+            <div class="parties">
+                <div class="party">
+                    <h3>PARTY ONE:</h3>
+                    <div class="party-details">
+                        <p><strong>KARMAR – Limited Liability Company</strong></p>
+                        <p>(KARMAR – LLC)</p>
+                        <p>Headquarters: Kingdom of Saudi Arabia</p>
+                        <p>Represented by: Abdulkarim Abdullah Alanazi</p>
+                        <p>Title: Chief Executive Officer & Authorized Representative</p>
+                        <p>Hereinafter referred to as "KARMAR".</p>
+                    </div>
+                </div>
+
+                <div class="party">
+                    <h3>PARTY TWO:</h3>
+                    <div class="party-details">
+                        <p><strong>OpenAI, L.L.C.</strong></p>
+                        <p>Headquarters: San Francisco, California, USA</p>
+                        <p>Represented by: Brad Lightcap</p>
+                        <p>Title: Chief Operating Officer</p>
+                        <p>Hereinafter referred to as "OpenAI".</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 1 -->
+            <div class="section">
+                <h3><span class="section-number">1</span> INTRODUCTION</h3>
+                <div class="section-content">
+                    <p>This Memorandum of Understanding ("MoU") is established to define a collaborative framework between KARMAR LLC and OpenAI for the purpose of advancing artificial intelligence applications, improving AI-driven solutions, and exploring innovations that leverage OpenAI technologies.</p>
+                    <p>Both parties aim to strengthen research, development, and responsible deployment of advanced AI systems aligned with shared goals of safety, innovation, and positive global impact.</p>
+                </div>
+            </div>
+
+            <!-- Section 2 -->
+            <div class="section">
+                <h3><span class="section-number">2</span> PURPOSE OF THE MOU</h3>
+                <div class="section-content">
+                    <p>The objectives of this MoU include:</p>
+                    <ul>
+                        <li>Integrating OpenAI technologies, APIs, and models into KARMAR's platforms and applications.</li>
+                        <li>Enhancing KARMAR's AI capabilities through OpenAI's development tools, safety frameworks, and best practices.</li>
+                        <li>Supporting innovation in conversational AI, autonomous systems, smart cities, and enterprise solutions.</li>
+                        <li>Providing technical guidance to KARMAR regarding model optimization, fine-tuning, and scalable AI deployment.</li>
+                        <li>Exploring joint research opportunities in AI safety, advanced reasoning, multimodal intelligence, and developer tools.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 3 -->
+            <div class="section">
+                <h3><span class="section-number">3</span> SCOPE OF COLLABORATION</h3>
+                <div class="section-content">
+                    <p>Collaboration under this MoU may include, but is not limited to:</p>
+                    <ul>
+                        <li>Integration of OpenAI models (GPT, Embeddings, Vision, Audio) into KARMAR systems.</li>
+                        <li>Development of custom AI assistants, enterprise automations, and domain-specific solutions.</li>
+                        <li>Participation in developer programs, technical reviews, and innovation workshops.</li>
+                        <li>Knowledge exchange around safe deployment, alignment standards, and ethical AI use.</li>
+                        <li>Performance tuning, prompt engineering, and infrastructure optimization.</li>
+                        <li>Exploring opportunities to expand AI services regionally and globally.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 4 -->
+            <div class="section">
+                <h3><span class="section-number">4</span> RESPONSIBILITIES OF THE PARTIES</h3>
+                <div class="section-content">
+                    <h4 style="color: #10a37f; margin-bottom: 10px;">Responsibilities of KARMAR</h4>
+                    <ul>
+                        <li>Provide engineering teams to participate in AI development and integration.</li>
+                        <li>Follow OpenAI policies, safety guidelines, and usage standards.</li>
+                        <li>Protect confidential data and respect OpenAI's IP rights.</li>
+                        <li>Deliver high-quality implementations aligned with best practices.</li>
+                    </ul>
+
+                    <h4 style="color: #10a37f; margin-top: 20px; margin-bottom: 10px;">Responsibilities of OpenAI</h4>
+                    <ul>
+                        <li>Provide technical support for OpenAI APIs, models, and tools.</li>
+                        <li>Grant access to documentation, platform resources, and relevant technologies.</li>
+                        <li>Support research, development, and engineering enablement for KARMAR teams.</li>
+                        <li>Offer insights regarding safe deployment, model performance, and responsible AI design.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Section 5 -->
+            <div class="section">
+                <h3><span class="section-number">5</span> CONFIDENTIALITY</h3>
+                <div class="section-content">
+                    <p>All information exchanged during collaboration shall remain confidential and may not be disclosed without prior written consent, except as required by law.</p>
+                </div>
+            </div>
+
+            <!-- Section 6 -->
+            <div class="section">
+                <h3><span class="section-number">6</span> DURATION</h3>
+                <div class="section-content">
+                    <p>This MoU shall remain in effect for two (2) years from the date of signing and may be renewed through mutual written agreement.</p>
+                </div>
+            </div>
+
+            <!-- Section 7 -->
+            <div class="section">
+                <h3><span class="section-number">7</span> LEGAL NATURE</h3>
+                <div class="section-content">
+                    <p>This MoU is non-binding and does not create financial or contractual obligations. It represents a high-level collaboration framework that may lead to future binding agreements.</p>
+                </div>
+            </div>
+
+            <!-- Section 8 -->
+            <div class="section">
+                <h3><span class="section-number">8</span> TERMINATION</h3>
+                <div class="section-content">
+                    <p>Either party may terminate this MoU with a written notice of at least thirty (30) days, without affecting any rights established before termination.</p>
+                </div>
+            </div>
+
+            <!-- Signatures -->
+            <div class="signatures">
+                <div class="signature-block">
+                    <h4>For KARMAR LLC</h4>
+                    <div class="signature-line"></div>
+                    <div class="signature-details">
+                        <p><strong>Name:</strong> Abdulkarim Abdullah Alanazi</p>
+                        <p><strong>Title:</strong> Chief Executive Officer & Authorized Representative</p>
+                        <p><strong>Date:</strong> September 12, 2025</p>
+                    </div>
+                </div>
+
+                <div class="signature-block">
+                    <h4>For OpenAI, L.L.C.</h4>
+                    <div class="signature-line"></div>
+                    <div class="signature-details">
+                        <p><strong>Name:</strong> Brad Lightcap</p>
+                        <p><strong>Title:</strong> Chief Operating Officer</p>
+                        <p><strong>Date:</strong> September 12, 2025</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confidential Notice -->
+            <div class="confidential">
+                <p><strong>CONFIDENTIAL</strong> - This document contains confidential information belonging to the mentioned parties</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <p>MOU Document</p>
+                <p>Memorandum of Understanding - KARMAR & OpenAI - 2025</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

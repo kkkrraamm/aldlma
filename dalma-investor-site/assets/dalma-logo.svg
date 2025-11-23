@@ -1,0 +1,19 @@
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dalmaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2E7D32;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4CAF50;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Camel Icon -->
+  <g transform="translate(10, 10)">
+    <path d="M5 35 Q10 25 15 20 Q20 15 25 15 Q30 15 35 20 L35 25 Q32 28 30 30 L30 35 L25 35 L25 30 Q22 32 20 35 L15 35 L15 30 Q12 32 10 35 L5 35 Z" 
+          fill="url(#dalmaGradient)" stroke="#2E7D32" stroke-width="1"/>
+    <circle cx="25" cy="18" r="2" fill="#2E7D32"/>
+    <path d="M15 20 Q20 18 25 20" stroke="#2E7D32" stroke-width="1" fill="none"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="55" y="35" font-family="Tajawal, Arial" font-size="28" font-weight="700" fill="#2E7D32">الدلما</text>
+</svg>

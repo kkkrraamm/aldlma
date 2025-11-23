@@ -183,7 +183,7 @@ class _RequestProviderPageState extends State<RequestProviderPage> with TickerPr
 
       // TODO: Handle image upload if needed
       
-      final response = await api.post('/api/request-provider', requestData, requireAuth: true);
+      final response = await api.post('/api/provider-request', requestData, requireAuth: true);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (mounted) {
