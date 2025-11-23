@@ -282,16 +282,47 @@
             overflow: hidden;
             box-shadow: 0 2px 8px var(--shadow);
             border: 1px solid var(--border);
-            margin-top: 20px;
+            margin-top: 30px;
+        }
+
+        .table-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-tertiary);
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
         }
 
         .categories-table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 800px;
         }
 
         .categories-table thead {
-            background: var(--bg-tertiary);
+            background: var(--bg-primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .categories-table th {
@@ -301,7 +332,8 @@
             font-weight: 700;
             color: var(--text-secondary);
             text-transform: uppercase;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
         }
 
         .categories-table tbody tr {
@@ -317,6 +349,7 @@
             padding: 18px 20px;
             color: var(--text-primary);
             font-size: 14px;
+            vertical-align: top;
         }
 
         .category-cell {
@@ -325,31 +358,74 @@
             gap: 12px;
         }
 
-        .category-emoji {
+        .table-emoji {
             font-size: 24px;
-            min-width: 32px;
+            min-width: 35px;
             text-align: center;
+            background: var(--bg-tertiary);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .category-info {
+        .table-category-info {
             flex: 1;
         }
 
-        .category-name {
+        .table-category-name {
             font-weight: 600;
             margin-bottom: 4px;
             color: var(--text-primary);
         }
 
-        .category-description {
+        .table-category-description {
             font-size: 12px;
             color: var(--text-secondary);
             opacity: 0.8;
+            max-width: 200px;
+            line-height: 1.4;
         }
 
-        .category-actions {
+        .subcategories-tags {
             display: flex;
-            gap: 8px;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-width: 250px;
+        }
+
+        .subcategory-tag {
+            background: var(--primary);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-inactive {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .table-actions-cell {
+            white-space: nowrap;
         }
 
         .btn-edit, .btn-delete {
@@ -1030,6 +1106,37 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Categories Table View -->
+            <div class="categories-table-container">
+                <div class="table-header">
+                    <h3 class="table-title">جدول الفئات الكامل</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-secondary" onclick="refreshCategoriesTable()">
+                            <i class="fas fa-sync"></i>
+                            تحديث
+                        </button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="categories-table">
+                        <thead>
+                            <tr>
+                                <th>الرمز</th>
+                                <th>اسم الفئة (عربي)</th>
+                                <th>اسم الفئة (إنجليزي)</th>
+                                <th>الوصف</th>
+                                <th>الفئات الفرعية</th>
+                                <th>الحالة</th>
+                                <th>العمليات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody">
+                            <!-- Will be populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -1142,6 +1249,70 @@
                 alert('❌ فشل في تصدير البيانات');
             }
         }
+
+        // Populate categories table
+        function populateCategoriesTable() {
+            const tableBody = document.getElementById('categoriesTableBody');
+            if (!tableBody || !categoriesData || !categoriesData.mainCategories) return;
+
+            tableBody.innerHTML = '';
+            
+            categoriesData.mainCategories.forEach(category => {
+                const subcategories = categoriesData.subcategories[category.id] || [];
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="table-emoji">${category.emoji}</div>
+                    </td>
+                    <td>
+                        <div class="table-category-name">${category.name_ar}</div>
+                    </td>
+                    <td>
+                        <div class="table-category-name">${category.name_en}</div>
+                    </td>
+                    <td>
+                        <div class="table-category-description">${category.description || '-'}</div>
+                    </td>
+                    <td>
+                        <div class="subcategories-tags">
+                            ${subcategories.map(sub => 
+                                `<span class="subcategory-tag">${sub.name_ar}</span>`
+                            ).join('')}
+                            ${subcategories.length === 0 ? '<span style="color: var(--text-secondary); font-style: italic;">لا توجد فئات فرعية</span>' : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-active">نشط</span>
+                    </td>
+                    <td class="table-actions-cell">
+                        <div class="category-actions">
+                            <button class="btn-edit" onclick="editMainCategory('${category.id}')">
+                                <i class="fas fa-edit"></i> تعديل
+                            </button>
+                            <button class="btn-delete" onclick="deleteMainCategory('${category.id}')">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Refresh table function
+        function refreshCategoriesTable() {
+            showSuccessMessage('🔄 جاري تحديث الجدول...');
+            populateCategoriesTable();
+        }
+
+        // Override renderMainCategories to also populate table
+        const originalRenderMainCategories = renderMainCategories;
+        renderMainCategories = function() {
+            originalRenderMainCategories();
+            populateCategoriesTable();
+        };
 
         // Toggle sidebar for mobile
         function toggleSidebar() {
