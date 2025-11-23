@@ -1212,6 +1212,12 @@ class _SettingsTab extends StatelessWidget {
             onTap: () => _showStoreInfoDialog(context),
           ),
           _SettingItem(
+            icon: Icons.category_rounded,
+            title: 'تصنيف المتجر',
+            subtitle: 'حدد التصنيف الذي ينتمي إليه متجرك',
+            onTap: () => _showCategorySelectionDialog(context),
+          ),
+          _SettingItem(
             icon: Icons.schedule_rounded,
             title: 'ساعات العمل',
             subtitle: 'تعيين أوقات الفتح والإغلاق',
@@ -1380,6 +1386,131 @@ class _SettingsTab extends StatelessWidget {
             onPressed: () {
               Navigator.pop(context);
               NotificationsService.instance.toast('✅ تم حفظ معلومات المتجر!');
+            },
+            child: const Text('حفظ'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCategorySelectionDialog(BuildContext context) {
+    final theme = ThemeConfig.instance;
+    final isDark = theme.isDarkMode;
+
+    // Sample categories with emojis (will be loaded from API in production)
+    final categories = [
+      {'name': 'الملابس والأزياء', 'emoji': '👔', 'id': 'clothing'},
+      {'name': 'الإلكترونيات', 'emoji': '📱', 'id': 'electronics'},
+      {'name': 'المنزل والأثاث', 'emoji': '🏠', 'id': 'furniture'},
+      {'name': 'الغذائية والمشروبات', 'emoji': '🍔', 'id': 'food'},
+      {'name': 'الجمال والعناية', 'emoji': '💄', 'id': 'beauty'},
+      {'name': 'الرياضة واللياقة', 'emoji': '⚽', 'id': 'sports'},
+      {'name': 'الكتب والتعليم', 'emoji': '📚', 'id': 'education'},
+      {'name': 'الخدمات', 'emoji': '🛠️', 'id': 'services'},
+    ];
+
+    String? selectedCategory = storeData['category'] as String?;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.cardColor,
+        title: Text(
+          'تصنيف المتجر',
+          style: GoogleFonts.cairo(fontWeight: FontWeight.w900),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            'اختر التصنيف الذي ينتمي إليه متجرك',
+            style: GoogleFonts.cairo(
+              fontSize: 12,
+              color: theme.textSecondaryColor,
+            ),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...categories.map(
+                (cat) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: InkWell(
+                    onTap: () => selectedCategory = cat['id'] as String,
+                    borderRadius: BorderRadius.circular(12),
+                    child: StatefulBuilder(
+                      builder: (context, setState) => Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: selectedCategory == cat['id']
+                              ? (isDark
+                                  ? ThemeConfig.kGoldNight
+                                  : ThemeConfig.kGreen)
+                                  .withOpacity(0.15)
+                              : theme.backgroundColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: selectedCategory == cat['id']
+                                ? (isDark
+                                    ? ThemeConfig.kGoldNight
+                                    : ThemeConfig.kGreen)
+                                : theme.borderColor,
+                            width: 2,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              cat['emoji'] as String,
+                              style: const TextStyle(fontSize: 28),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                cat['name'] as String,
+                                style: GoogleFonts.cairo(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.textPrimaryColor,
+                                ),
+                              ),
+                            ),
+                            if (selectedCategory == cat['id'])
+                              Icon(
+                                Icons.check_circle_rounded,
+                                color: isDark
+                                    ? ThemeConfig.kGoldNight
+                                    : ThemeConfig.kGreen,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (selectedCategory != null) {
+                Navigator.pop(context);
+                NotificationsService.instance.toast(
+                  '✅ تم تحديث تصنيف المتجر!',
+                );
+              } else {
+                NotificationsService.instance.toast(
+                  '⚠️ يرجى اختيار تصنيف',
+                );
+              }
             },
             child: const Text('حفظ'),
           ),

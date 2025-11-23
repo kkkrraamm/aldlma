@@ -19,8 +19,8 @@ class StoresPage extends StatefulWidget {
 class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Map<String, dynamic>> _stores = [];
-  List<String> _categories = ['الكل'];
-  String _selectedCategory = 'الكل';
+  List<Map<String, dynamic>> _categories = [];
+  String _selectedCategoryId = 'all';
   bool _isLoading = true;
   String _searchQuery = '';
 
@@ -40,17 +40,22 @@ class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateM
 
   Future<void> _loadCategories() async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/api/store-categories'),
-        headers: await ApiConfig.getHeaders(),
-      );
+      // Hardcoded categories (will be fetched from API in production)
+      final categories = [
+        {'id': 'all', 'name': 'الكل', 'emoji': '📦', 'color': Colors.grey},
+        {'id': 'clothing', 'name': 'الملابس والأزياء', 'emoji': '👔', 'color': Colors.blue},
+        {'id': 'electronics', 'name': 'الإلكترونيات', 'emoji': '📱', 'color': Colors.purple},
+        {'id': 'furniture', 'name': 'المنزل والأثاث', 'emoji': '🏠', 'color': Colors.orange},
+        {'id': 'food', 'name': 'الغذائية والمشروبات', 'emoji': '🍔', 'color': Colors.red},
+        {'id': 'beauty', 'name': 'الجمال والعناية', 'emoji': '💄', 'color': Colors.pink},
+        {'id': 'sports', 'name': 'الرياضة واللياقة', 'emoji': '⚽', 'color': Colors.green},
+        {'id': 'education', 'name': 'الكتب والتعليم', 'emoji': '📚', 'color': Colors.indigo},
+        {'id': 'services', 'name': 'الخدمات', 'emoji': '🛠️', 'color': Colors.teal},
+      ];
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          _categories = ['الكل', ...data.map((cat) => cat['name'].toString()).toList()];
-        });
-      }
+      setState(() {
+        _categories = categories;
+      });
     } catch (e) {
       print('❌ Error loading categories: $e');
     }
@@ -60,9 +65,9 @@ class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateM
     setState(() => _isLoading = true);
     
     try {
-      final url = _selectedCategory == 'الكل'
+      final url = _selectedCategoryId == 'all'
           ? '${ApiConfig.baseUrl}/api/stores'
-          : '${ApiConfig.baseUrl}/api/stores?category=$_selectedCategory';
+          : '${ApiConfig.baseUrl}/api/stores?category=$_selectedCategoryId';
           
       final response = await http.get(
         Uri.parse(url),
@@ -185,51 +190,85 @@ class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateM
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
-                    height: 50,
+                    height: 60,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _categories.length,
                       itemBuilder: (context, index) {
                         final category = _categories[index];
-                        final isSelected = category == _selectedCategory;
+                        final isSelected = category['id'] == _selectedCategoryId;
+                        final emoji = category['emoji'] as String;
+                        final name = category['name'] as String;
+                        final catColor = category['color'] as Color;
                         
                         return Padding(
                           padding: const EdgeInsets.only(left: 8),
                           child: Material(
                             elevation: isSelected ? 4 : 0,
                             shadowColor: primaryColor.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(16),
                             child: InkWell(
                               onTap: () {
                                 setState(() {
-                                  _selectedCategory = category;
+                                  _selectedCategoryId = category['id'] as String;
                                 });
                                 _loadStores();
                               },
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(16),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
-                                  gradient: isSelected ? LinearGradient(
-                                    colors: isDark 
-                                      ? [const Color(0xFFD4AF37), const Color(0xFFB8941F)]
-                                      : [const Color(0xFF10b981), const Color(0xFF059669)],
-                                  ) : null,
-                                  color: isSelected ? null : cardColor,
-                                  borderRadius: BorderRadius.circular(20),
+                                  gradient: isSelected
+                                      ? LinearGradient(
+                                          colors: isDark
+                                              ? [
+                                                  const Color(0xFFD4AF37),
+                                                  const Color(0xFFB8941F)
+                                                ]
+                                              : [
+                                                  const Color(0xFF10b981),
+                                                  const Color(0xFF059669)
+                                                ],
+                                        )
+                                      : null,
+                                  color: isSelected
+                                      ? null
+                                      : catColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: isSelected ? Colors.transparent : Colors.grey.withOpacity(0.3),
-                                    width: 1,
+                                    color: isSelected
+                                        ? Colors.transparent
+                                        : catColor.withOpacity(0.3),
+                                    width: 1.5,
                                   ),
                                 ),
-                                child: Text(
-                                  category,
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      emoji,
+                                      style: const TextStyle(fontSize: 20),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : catColor,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.w600,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
