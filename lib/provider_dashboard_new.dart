@@ -167,7 +167,7 @@ class _ProviderDashboardNewState extends State<ProviderDashboardNew>
           Icons.settings_rounded,
         ],
         activeIndex: _currentPage,
-        gapLocation: GapLocation.center,
+        gapLocation: GapLocation.end,
         notchSmoothness: NotchSmoothness.smoothEdge,
         onTap: _changePage,
         backgroundColor: theme.cardColor,
@@ -177,54 +177,10 @@ class _ProviderDashboardNewState extends State<ProviderDashboardNew>
         rightCornerRadius: 20,
         iconSize: 24,
       ),
-      // Floating Action Button
-      floatingActionButton: _buildFAB(isDark),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
-  Widget _buildFAB(bool isDark) {
-    List<String> actions = ['المتجر', 'منتج', 'فيديو', 'تحليل', 'إعداد'];
 
-    return GestureDetector(
-      onTap: () {
-        NotificationsService.instance.toast('${actions[_currentPage]} قريباً 🚀');
-      },
-      child: Container(
-        height: 70,
-        width: 70,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            colors: isDark
-                ? [ThemeConfig.kGoldNight, ThemeConfig.kGoldNight.withOpacity(0.8)]
-                : [ThemeConfig.kGreen, ThemeConfig.kGreen.withOpacity(0.8)],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen).withOpacity(0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              NotificationsService.instance.toast('${actions[_currentPage]} قريباً 🚀');
-            },
-            borderRadius: BorderRadius.circular(50),
-            child: Icon(
-              Icons.add_rounded,
-              color: isDark ? ThemeConfig.kNightDeep : Colors.white,
-              size: 32,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 // ============================================
