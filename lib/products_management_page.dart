@@ -594,11 +594,11 @@ class _AddProductSheetState extends State<_AddProductSheet> {
               const SizedBox(height: 16),
 
               // التصنيف
-              DropdownButtonFormField(
+              DropdownButtonFormField<String>(
                 value: _selectedCategory,
                 items: widget.categories.map((cat) {
-                  return DropdownMenuItem(
-                    value: cat['id'],
+                  return DropdownMenuItem<String>(
+                    value: cat['id'].toString(),
                     child: Text(cat['name'] ?? 'بدون اسم'),
                   );
                 }).toList(),

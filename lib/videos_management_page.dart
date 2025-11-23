@@ -217,7 +217,7 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
               Expanded(
                 child: _StatPill(
                   label: 'إجمالي المشاهدات',
-                  value: '${_videos.fold(0, (sum, v) => sum + (v['views'] ?? 0))}',
+                  value: '${_videos.fold<int>(0, (sum, v) => sum + (v['views'] ?? 0))}',
                   icon: Icons.remove_red_eye_rounded,
                   color: Colors.blue,
                 ),
@@ -832,16 +832,16 @@ class _UploadVideoSheetState extends State<_UploadVideoSheet> {
               const SizedBox(height: 16),
 
               // المنتج المرتبط
-              DropdownButtonFormField(
+              DropdownButtonFormField<String?>(
                 value: _selectedProduct,
                 items: [
-                  const DropdownMenuItem(
+                  const DropdownMenuItem<String?>(
                     value: null,
                     child: Text('لا يوجد منتج محدد'),
                   ),
                   ...widget.products.map((product) {
-                    return DropdownMenuItem(
-                      value: product['id'],
+                    return DropdownMenuItem<String?>(
+                      value: product['id'].toString(),
                       child: Text(product['name'] ?? 'منتج'),
                     );
                   }).toList(),
