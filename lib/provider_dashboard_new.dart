@@ -148,7 +148,7 @@ class _ProviderDashboardNewState extends State<ProviderDashboardNew>
               onPageChanged: (index) => setState(() => _currentPage = index),
               physics: const NeverScrollableScrollPhysics(), // منع التمرير الجانبي
               children: [
-                _HomeTab(storeData: _storeData!, products: _products, videos: _videos),
+                _HomeTab(storeData: _storeData!, products: _products, videos: _videos, onPageChanged: _changePage),
                 _ProductsTab(products: _products),
                 _VideosTab(videos: _videos),
                 _AnalyticsTab(storeData: _storeData!),
@@ -206,11 +206,13 @@ class _HomeTab extends StatelessWidget {
   final Map<String, dynamic> storeData;
   final List<Map<String, dynamic>> products;
   final List<Map<String, dynamic>> videos;
+  final Function(int) onPageChanged;
 
   const _HomeTab({
     required this.storeData,
     required this.products,
     required this.videos,
+    required this.onPageChanged,
   });
 
   @override
@@ -435,14 +437,14 @@ class _HomeTab extends StatelessWidget {
                   icon: Icons.add_shopping_cart_rounded,
                   title: 'إدارة المنتجات',
                   subtitle: 'عرض وإضافة وتعديل المنتجات',
-                  onTap: () => _changePage(1),
+                  onTap: () => onPageChanged(1),
                 ),
                 const SizedBox(height: 12),
                 _QuickActionButton(
                   icon: Icons.video_call_rounded,
                   title: 'إدارة الفيديوهات',
                   subtitle: 'رفع وتعديل الفيديوهات',
-                  onTap: () => _changePage(2),
+                  onTap: () => onPageChanged(2),
                 ),
               ],
             ),
