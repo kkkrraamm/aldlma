@@ -84,19 +84,21 @@
 
         /* Sidebar - Force Visibility */
         .sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 280px;
-            height: 100vh;
-            background: var(--bg-secondary);
-            border-left: 1px solid var(--border);
-            z-index: 1000;
+            position: fixed !important;
+            top: 0 !important;
+            right: 0 !important;
+            width: 280px !important;
+            height: 100vh !important;
+            background: #1a1d2e !important;
+            border-left: 1px solid #2d3142 !important;
+            z-index: 9999 !important;
             display: flex !important;
-            flex-direction: column;
+            flex-direction: column !important;
             visibility: visible !important;
             opacity: 1 !important;
             transform: translateX(0) !important;
+            overflow-y: auto !important;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3) !important;
         }
 
         .sidebar.active {
@@ -294,15 +296,17 @@
 
         /* Main Content with Sidebar Space */
         .main-content {
-            margin-right: 300px;
+            margin-right: 280px !important;
             transition: margin-right 0.3s ease;
             min-height: 100vh;
-            padding: 0;
+            padding: 0 !important;
+            background: var(--bg-primary) !important;
         }
 
         .categories-page {
-            padding: 30px;
-            width: 100%;
+            padding: 30px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
 
         @media (min-width: 768px) {
@@ -1977,8 +1981,30 @@
             populateCategoriesTable();
         }
 
+        // Force sidebar visibility on load
+        window.addEventListener('load', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.style.display = 'flex';
+                sidebar.style.visibility = 'visible';
+                sidebar.style.opacity = '1';
+                sidebar.style.right = '0';
+                console.log('✅ Sidebar forced visible');
+            }
+        });
+
         // Override renderMainCategories to also populate table
         document.addEventListener('DOMContentLoaded', function() {
+            // Force sidebar visibility immediately
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.style.display = 'flex';
+                sidebar.style.visibility = 'visible';
+                sidebar.style.opacity = '1';
+                sidebar.style.right = '0';
+                console.log('✅ Sidebar visible on DOM ready');
+            }
+
             // Wait for other scripts to load first
             setTimeout(() => {
                 loadCategoriesData();
