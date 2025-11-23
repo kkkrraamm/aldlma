@@ -217,7 +217,7 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
               Expanded(
                 child: _StatPill(
                   label: 'إجمالي المشاهدات',
-                  value: '${_videos.fold<int>(0, (sum, v) => sum + (v['views'] ?? 0))}',
+                  value: '${_videos.fold<int>(0, (sum, v) => sum + ((v['views'] as int?) ?? 0))}',
                   icon: Icons.remove_red_eye_rounded,
                   color: Colors.blue,
                 ),
