@@ -20,7 +20,7 @@ import 'auth.dart';
 import 'request_media_page.dart';
 import 'request_provider_page.dart';
 import 'media_dashboard.dart';
-import 'provider_store_dashboard.dart';
+import 'provider_dashboard_new.dart';
 
 class DalmaMyAccountOasis extends StatefulWidget {
   const DalmaMyAccountOasis({super.key});
@@ -427,11 +427,11 @@ class _DalmaMyAccountOasisState extends State<DalmaMyAccountOasis>
   }
 
   void _navigateToProviderDashboard() {
-    // الانتقال إلى لوحة تحكم مقدم الخدمة
+    // الانتقال إلى لوحة تحكم مقدم الخدمة الاحترافية
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const ProviderStoreDashboard(),
+        builder: (_) => const ProviderDashboardNew(),
       ),
     );
   }
