@@ -1540,10 +1540,6 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
     );
   }
 }
-      ),
-    );
-  }
-}
 
 // ============================================
 // Period Selector
