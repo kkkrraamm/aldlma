@@ -255,13 +255,22 @@ function renderProviderRequests() {
         return;
     }
     
-    container.innerHTML = providerRequests.map(request => `
+    container.innerHTML = providerRequests.map(request => {
+        // Parse location_address JSON if it's a string
+        let locationData = {};
+        try {
+            locationData = typeof request.location_address === 'string' ? JSON.parse(request.location_address) : request.location_address || {};
+        } catch (e) {
+            console.error('Error parsing location_address:', e);
+        }
+        
+        return `
         <div class="request-card">
-            <div class="request-avatar">${getInitials(request.name)}</div>
+            <div class="request-avatar">${getInitials(request.user_name)}</div>
             
             <div class="request-info">
                 <div class="request-header">
-                    <div class="request-name">${request.business_name || request.name}</div>
+                    <div class="request-name">${request.business_name || request.user_name || 'غير محدد'}</div>
                     <span class="request-status ${request.status}">
                         ${getStatusLabel(request.status)}
                     </span>
@@ -270,32 +279,32 @@ function renderProviderRequests() {
                 <div class="request-details">
                     <div class="detail-item">
                         <i class="fas fa-user"></i>
-                        <span>${request.name}</span>
+                        <span><strong>المالك:</strong> ${request.user_name || 'غير محدد'}</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-envelope"></i>
-                        <span>${request.email}</span>
+                        <span>${request.email || 'غير محدد'}</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-phone"></i>
-                        <span>${request.phone}</span>
+                        <span>${request.whatsapp_number || 'غير محدد'}</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-briefcase"></i>
-                        <span>${request.service_type}</span>
+                        <span><strong>النوع:</strong> ${request.business_category || locationData.category || 'غير محدد'}</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>${request.location_address}</span>
+                        <span><strong>الموقع:</strong> ${request.location_address && typeof request.location_address !== 'string' ? request.location_address : locationData.location || 'غير محدد'}</span>
                     </div>
                     <div class="detail-item">
-                        <i class="fas fa-${request.has_commercial_license ? 'check-circle' : 'times-circle'}"></i>
-                        <span>${request.has_commercial_license ? 'لديه رخصة تجارية' : 'بدون رخصة'}</span>
+                        <i class="fas fa-${locationData.has_commercial_license || request.has_commercial_license ? 'check-circle text-success' : 'times-circle text-danger'}"></i>
+                        <span>${locationData.has_commercial_license || request.has_commercial_license ? '✅ لديه رخصة تجارية' : '❌ بدون رخصة'}</span>
                     </div>
-                    ${request.license_number ? `
+                    ${locationData.license_number || request.license_number ? `
                         <div class="detail-item">
                             <i class="fas fa-certificate"></i>
-                            <span>${request.license_number}</span>
+                            <span><strong>رقم الرخصة:</strong> ${locationData.license_number || request.license_number}</span>
                         </div>
                     ` : ''}
                     <div class="detail-item">
@@ -304,9 +313,17 @@ function renderProviderRequests() {
                     </div>
                 </div>
                 
-                ${request.license_image_url ? `
+                ${locationData.description ? `
+                    <div class="request-bio">
+                        <strong>الوصف:</strong><br>
+                        ${locationData.description}
+                    </div>
+                ` : ''}
+                
+                ${locationData.license_image_url ? `
                     <div class="image-preview">
-                        <img src="${request.license_image_url}" alt="License" onclick="openImageModal('${request.license_image_url}')">
+                        <strong style="display: block; margin-bottom: 10px;">📄 صورة الرخصة:</strong>
+                        <img src="${locationData.license_image_url}" alt="License" onclick="openImageModal('${locationData.license_image_url}')">
                     </div>
                 ` : '<p style="color: var(--text-secondary); font-size: 13px;"><i class="fas fa-exclamation-circle"></i> لم يتم رفع صورة الرخصة</p>'}
             </div>
@@ -333,7 +350,8 @@ function renderProviderRequests() {
                 </button>
             </div>
         </div>
-    `).join('');
+    `};
+    }).join('');
 }
 
 // Switch tab
