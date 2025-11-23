@@ -1,11 +1,12 @@
 // lib/videos_management_page.dart
-// صفحة إدارة الفيديوهات الكاملة - Complete Videos Management Page
+// صفحة إدارة الفيديوهات المحسّنة - Enhanced Videos Management Page
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 import 'theme_config.dart';
 import 'notifications.dart';
@@ -21,14 +22,27 @@ class VideosManagementPage extends StatefulWidget {
 class _VideosManagementPageState extends State<VideosManagementPage> {
   final theme = ThemeConfig.instance;
   bool _isLoading = true;
+  bool _hasError = false;
   List<Map<String, dynamic>> _videos = [];
+  List<Map<String, dynamic>> _filteredVideos = [];
   List<Map<String, dynamic>> _products = [];
   String? _token;
+  String _searchQuery = '';
   String _sortBy = 'الأحدث';
+  late Timer _loadingTimeout;
 
   @override
   void initState() {
     super.initState();
+    _loadingTimeout = Timer(const Duration(seconds: 15), () {
+      if (_isLoading) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+        NotificationsService.instance.toast('⏱️ انتهت مهلة التحميل');
+      }
+    });
     _loadData();
   }
 
@@ -37,17 +51,26 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
       final prefs = await SharedPreferences.getInstance();
       _token = prefs.getString('authToken');
 
+      if (_token == null) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+        NotificationsService.instance.toast('❌ التوكن غير موجود');
+        return;
+      }
+
       // تحميل الفيديوهات
       final videosResponse = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/provider/videos'),
         headers: {'Authorization': 'Bearer $_token'},
-      );
+      ).timeout(const Duration(seconds: 10));
 
       // تحميل المنتجات
       final productsResponse = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/provider/products'),
         headers: {'Authorization': 'Bearer $_token'},
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (videosResponse.statusCode == 200 && productsResponse.statusCode == 200) {
         setState(() {
@@ -57,13 +80,47 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
           _products = List<Map<String, dynamic>>.from(
             jsonDecode(productsResponse.body)['data'] ?? [],
           );
+          _filteredVideos = _videos;
           _isLoading = false;
+          _hasError = false;
+        });
+        _loadingTimeout.cancel();
+      } else {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
         });
       }
     } catch (e) {
-      NotificationsService.instance.toast('خطأ في تحميل البيانات');
-      setState(() => _isLoading = false);
+      print('Error loading videos: $e');
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
     }
+  }
+
+  void _filterAndSortVideos() {
+    setState(() {
+      _filteredVideos = _videos.where((video) {
+        final matchesSearch = (video['title'] ?? '')
+            .toString()
+            .toLowerCase()
+            .contains(_searchQuery.toLowerCase());
+        return matchesSearch;
+      }).toList();
+
+      // الترتيب
+      if (_sortBy == 'الأحدث') {
+        _filteredVideos.sort((a, b) =>
+            (b['uploadedAt'] as DateTime?)?.compareTo(a['uploadedAt'] as DateTime? ?? DateTime.now()) ?? 0);
+      } else if (_sortBy == 'الأكثر مشاهدة') {
+        _filteredVideos.sort((a, b) => (b['views'] ?? 0).compareTo(a['views'] ?? 0));
+      } else if (_sortBy == 'الأقدم') {
+        _filteredVideos.sort((a, b) =>
+            (a['uploadedAt'] as DateTime?)?.compareTo(b['uploadedAt'] as DateTime? ?? DateTime.now()) ?? 0);
+      }
+    });
   }
 
   @override
@@ -106,36 +163,31 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
         ],
       ),
       body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                color: theme.primaryColor,
-              ),
-            )
-          : Column(
-              children: [
-                // شريط التصفية والبحث
-                _buildFilterBar(),
-                
-                // قائمة الفيديوهات
-                Expanded(
-                  child: _videos.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _videos.length,
-                          itemBuilder: (context, index) {
-                            return _VideoItemCard(
-                              video: _videos[index],
-                              theme: theme,
-                              onEdit: () => _showEditVideoSheet(_videos[index]),
-                              onDelete: () => _showDeleteConfirmation(_videos[index]),
-                              onView: () => _showVideoPreview(_videos[index]),
-                            );
-                          },
-                        ),
+          ? _buildLoadingState()
+          : _hasError
+              ? _buildErrorState()
+              : Column(
+                  children: [
+                    _buildFilterBar(),
+                    Expanded(
+                      child: _filteredVideos.isEmpty
+                          ? _buildEmptyState()
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _filteredVideos.length,
+                              itemBuilder: (context, index) {
+                                return _VideoItemCard(
+                                  video: _filteredVideos[index],
+                                  theme: theme,
+                                  onEdit: () => _showEditVideoSheet(_filteredVideos[index]),
+                                  onDelete: () => _showDeleteConfirmation(_filteredVideos[index]),
+                                  onView: () => _showVideoPreview(_filteredVideos[index]),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showUploadVideoSheet(),
         label: Text(
@@ -144,6 +196,86 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
         ),
         icon: const Icon(Icons.videocam_rounded),
         backgroundColor: theme.primaryColor,
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 60,
+            height: 60,
+            child: CircularProgressIndicator(
+              color: theme.primaryColor,
+              strokeWidth: 3,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'جاري تحميل الفيديوهات...',
+            style: GoogleFonts.cairo(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: theme.textPrimaryColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'يرجى الانتظار قليلاً',
+            style: GoogleFonts.cairo(
+              fontSize: 13,
+              color: theme.textSecondaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: 80,
+            color: Colors.red.withOpacity(0.5),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'حدث خطأ في التحميل',
+            style: GoogleFonts.cairo(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: theme.textPrimaryColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'تأكد من الاتصال بالإنترنت وحاول مجدداً',
+            style: GoogleFonts.cairo(
+              fontSize: 13,
+              color: theme.textSecondaryColor,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              setState(() => _isLoading = true);
+              _loadData();
+            },
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('حاول مجدداً'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -158,11 +290,25 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
             children: [
               Expanded(
                 child: TextField(
+                  onChanged: (value) {
+                    _searchQuery = value;
+                    _filterAndSortVideos();
+                  },
                   decoration: InputDecoration(
                     hintText: 'ابحث عن فيديو...',
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () {
+                              _searchQuery = '';
+                              _filterAndSortVideos();
+                            },
+                          )
+                        : null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: theme.borderColor),
                     ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
@@ -177,7 +323,8 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
                 ),
                 child: PopupMenuButton(
                   onSelected: (value) {
-                    setState(() => _sortBy = value);
+                    _sortBy = value;
+                    _filterAndSortVideos();
                   },
                   itemBuilder: (context) => [
                     const PopupMenuItem(
@@ -211,13 +358,16 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
             ],
           ),
           const SizedBox(height: 12),
+          
           // شريط الإحصائيات
           Row(
             children: [
               Expanded(
                 child: _StatPill(
                   label: 'إجمالي المشاهدات',
-                  value: '${_videos.fold<int>(0, (sum, v) => sum + ((v['views'] as int?) ?? 0))}',
+                  value: _videos.isEmpty
+                      ? '0'
+                      : '${_videos.fold<int>(0, (sum, v) => sum + ((v['views'] as int?) ?? 0))}',
                   icon: Icons.remove_red_eye_rounded,
                   color: Colors.blue,
                 ),
@@ -225,9 +375,9 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatPill(
-                  label: 'متوسط المدة',
-                  value: '${_calculateAverageDuration()}',
-                  icon: Icons.schedule_rounded,
+                  label: 'عدد الفيديوهات',
+                  value: _videos.length.toString(),
+                  icon: Icons.videocam_rounded,
                   color: Colors.orange,
                 ),
               ),
@@ -236,12 +386,6 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
         ],
       ),
     );
-  }
-
-  String _calculateAverageDuration() {
-    if (_videos.isEmpty) return '0:00';
-    // يمكن حسابها من مدة الفيديوهات
-    return '2:45';
   }
 
   Widget _buildEmptyState() {
@@ -265,7 +409,9 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'ابدأ برفع فيديوهات لعرض منتجاتك',
+            _searchQuery.isNotEmpty
+                ? 'لم نجد نتائج البحث'
+                : 'ابدأ برفع فيديوهات لعرض منتجاتك',
             style: GoogleFonts.cairo(
               fontSize: 14,
               color: theme.textSecondaryColor,
@@ -285,7 +431,10 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
         products: _products,
         theme: theme,
         onSave: (video) {
-          setState(() => _videos.insert(0, video));
+          setState(() {
+            _videos.insert(0, video);
+            _filterAndSortVideos();
+          });
           Navigator.pop(context);
           NotificationsService.instance.toast('✅ تم رفع الفيديو بنجاح!');
         },
@@ -305,7 +454,10 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
         onSave: (updatedVideo) {
           final index = _videos.indexWhere((v) => v['id'] == video['id']);
           if (index != -1) {
-            setState(() => _videos[index] = updatedVideo);
+            setState(() {
+              _videos[index] = updatedVideo;
+              _filterAndSortVideos();
+            });
           }
           Navigator.pop(context);
           NotificationsService.instance.toast('✅ تم تحديث الفيديو!');
@@ -335,7 +487,10 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
-              setState(() => _videos.removeWhere((v) => v['id'] == video['id']));
+              setState(() {
+                _videos.removeWhere((v) => v['id'] == video['id']);
+                _filterAndSortVideos();
+              });
               Navigator.pop(context);
               NotificationsService.instance.toast('🗑️ تم حذف الفيديو!');
             },
@@ -358,7 +513,7 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
               width: double.infinity,
               height: 200,
               color: Colors.black,
-              child: Icon(
+              child: const Icon(
                 Icons.play_circle_outline_rounded,
                 size: 80,
                 color: Colors.white,
@@ -391,6 +546,12 @@ class _VideosManagementPageState extends State<VideosManagementPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _loadingTimeout.cancel();
+    super.dispose();
   }
 }
 
@@ -488,7 +649,7 @@ class _VideoItemCard extends StatelessWidget {
           onTap: onView,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -497,7 +658,7 @@ class _VideoItemCard extends StatelessWidget {
                   children: [
                     Container(
                       width: double.infinity,
-                      height: 150,
+                      height: 180,
                       decoration: BoxDecoration(
                         color: theme.backgroundColor,
                         borderRadius: BorderRadius.circular(12),
@@ -506,7 +667,7 @@ class _VideoItemCard extends StatelessWidget {
                       child: Icon(
                         Icons.videocam_rounded,
                         color: theme.textSecondaryColor,
-                        size: 50,
+                        size: 60,
                       ),
                     ),
                     Positioned(
@@ -530,14 +691,18 @@ class _VideoItemCard extends StatelessWidget {
                     ),
                     Positioned(
                       top: 50,
-                      left: 50,
+                      left: 0,
+                      right: 0,
                       child: GestureDetector(
                         onTap: onView,
                         child: Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: Colors.red,
                             shape: BoxShape.circle,
+                          ),
+                          margin: EdgeInsets.symmetric(
+                            horizontal: MediaQuery.of(context).size.width * 0.35,
                           ),
                           child: const Icon(
                             Icons.play_arrow_rounded,
@@ -549,7 +714,7 @@ class _VideoItemCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // معلومات الفيديو
                 Text(
@@ -560,21 +725,21 @@ class _VideoItemCard extends StatelessWidget {
                     color: theme.textPrimaryColor,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   video['description'] ?? 'بدون وصف',
                   style: GoogleFonts.cairo(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: theme.textSecondaryColor,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
                 // الإحصائيات
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _StatItem(
                       icon: Icons.remove_red_eye_rounded,
@@ -602,7 +767,7 @@ class _VideoItemCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
                 // الأزرار
                 Row(
@@ -610,11 +775,15 @@ class _VideoItemCard extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: onEdit,
-                        icon: const Icon(Icons.edit_rounded),
-                        label: const Text('تعديل'),
+                        icon: const Icon(Icons.edit_rounded, size: 18),
+                        label: Text(
+                          'تعديل',
+                          style: GoogleFonts.cairo(fontWeight: FontWeight.w600),
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.primaryColor.withOpacity(0.1),
+                          backgroundColor: theme.primaryColor.withOpacity(0.15),
                           foregroundColor: theme.primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                       ),
                     ),
@@ -622,11 +791,15 @@ class _VideoItemCard extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: onDelete,
-                        icon: const Icon(Icons.delete_rounded),
-                        label: const Text('حذف'),
+                        icon: const Icon(Icons.delete_rounded, size: 18),
+                        label: Text(
+                          'حذف',
+                          style: GoogleFonts.cairo(fontWeight: FontWeight.w600),
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.withOpacity(0.1),
+                          backgroundColor: Colors.red.withOpacity(0.15),
                           foregroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                       ),
                     ),
@@ -739,7 +912,6 @@ class _UploadVideoSheetState extends State<_UploadVideoSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // الرأس
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -759,7 +931,6 @@ class _UploadVideoSheetState extends State<_UploadVideoSheet> {
               ),
               const SizedBox(height: 24),
 
-              // اختيار الفيديو
               GestureDetector(
                 onTap: () => NotificationsService.instance.toast('📹 اختر فيديو من الجهاز'),
                 child: Container(
@@ -771,7 +942,6 @@ class _UploadVideoSheetState extends State<_UploadVideoSheet> {
                     border: Border.all(
                       color: widget.theme.primaryColor,
                       width: 2,
-                      style: BorderStyle.solid,
                     ),
                   ),
                   child: Column(
@@ -805,7 +975,6 @@ class _UploadVideoSheetState extends State<_UploadVideoSheet> {
               ),
               const SizedBox(height: 24),
 
-              // عنوان الفيديو
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
@@ -816,9 +985,8 @@ class _UploadVideoSheetState extends State<_UploadVideoSheet> {
                 ),
                 validator: (value) => value?.isEmpty ?? true ? 'مطلوب' : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-              // الوصف
               TextFormField(
                 controller: _descController,
                 maxLines: 3,
@@ -826,12 +994,10 @@ class _UploadVideoSheetState extends State<_UploadVideoSheet> {
                   labelText: 'الوصف',
                   hintText: 'اكتب وصفاً تفصيلياً للفيديو...',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.description_rounded),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-              // المنتج المرتبط
               DropdownButtonFormField<String?>(
                 value: _selectedProduct,
                 items: [
@@ -855,13 +1021,12 @@ class _UploadVideoSheetState extends State<_UploadVideoSheet> {
               ),
               const SizedBox(height: 32),
 
-              // زر الرفع
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: widget.theme.primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: _isProcessing ? null : _uploadVideo,
                   child: _isProcessing
@@ -894,7 +1059,6 @@ class _UploadVideoSheetState extends State<_UploadVideoSheet> {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isProcessing = true);
 
-      // محاكاة تأخير الرفع
       Future.delayed(const Duration(seconds: 2), () {
         final video = {
           'id': DateTime.now().millisecondsSinceEpoch,
@@ -906,7 +1070,7 @@ class _UploadVideoSheetState extends State<_UploadVideoSheet> {
           'likes': 0,
           'shares': 0,
           'comments': 0,
-          'uploaded_at': DateTime.now().toString(),
+          'uploadedAt': DateTime.now(),
         };
 
         widget.onSave(video);
@@ -1004,7 +1168,7 @@ class _EditVideoSheetState extends State<_EditVideoSheet> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               TextFormField(
                 controller: _descController,
@@ -1021,7 +1185,7 @@ class _EditVideoSheetState extends State<_EditVideoSheet> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: widget.theme.primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () {
                     if (_formKey.currentState?.validate() ?? false) {
