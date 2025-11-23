@@ -257,55 +257,91 @@ function saveSubcategory() {
     const nameAr = document.getElementById('subcategoryNameAr').value.trim();
     const nameEn = document.getElementById('subcategoryNameEn').value.trim();
     const description = document.getElementById('subcategoryDescription').value.trim();
+    const editId = document.getElementById('editSubcategoryId')?.value;
 
     if (!nameAr || !nameEn) {
         alert('⚠️ الرجاء إدخال الاسم بالعربية والإنجليزية');
         return;
     }
 
-    const newSubcategory = {
-        id: Date.now().toString(),
-        name_ar: nameAr,
-        name_en: nameEn,
-        description: description,
-        order: (categoriesData.subcategories[selectedMainCategory]?.length || 0) + 1,
-        is_active: true,
-        created_at: new Date().toISOString()
-    };
+    // Check if editing or adding new
+    if (editId && window.editingSubcategoryId) {
+        // Edit existing subcategory
+        const mainCatId = window.editingMainCategoryId || selectedMainCategory;
+        const subcategories = categoriesData.subcategories[mainCatId];
+        const subcategory = subcategories.find(s => s.id === editId);
+        
+        if (subcategory) {
+            subcategory.name_ar = nameAr;
+            subcategory.name_en = nameEn;
+            subcategory.description = description;
+            subcategory.updated_at = new Date().toISOString();
+            
+            saveToLocalStorage();
+            renderMainCategories();
+            renderSubcategories();
+            showSuccessMessage('✅ تم تحديث الفئة الفرعية بنجاح!');
+        }
+        
+        // Reset editing state
+        window.editingSubcategoryId = null;
+        window.editingMainCategoryId = null;
+        if (typeof resetSubcategoryModal === 'function') {
+            resetSubcategoryModal();
+        }
+    } else {
+        // Add new subcategory
+        const newSubcategory = {
+            id: Date.now().toString(),
+            name_ar: nameAr,
+            name_en: nameEn,
+            description: description,
+            order: (categoriesData.subcategories[selectedMainCategory]?.length || 0) + 1,
+            is_active: true,
+            created_at: new Date().toISOString()
+        };
 
-    if (!categoriesData.subcategories[selectedMainCategory]) {
-        categoriesData.subcategories[selectedMainCategory] = [];
+        if (!categoriesData.subcategories[selectedMainCategory]) {
+            categoriesData.subcategories[selectedMainCategory] = [];
+        }
+
+        categoriesData.subcategories[selectedMainCategory].push(newSubcategory);
+        
+        saveToLocalStorage();
+        renderMainCategories();
+        renderSubcategories();
+        showSuccessMessage('✅ تم إضافة الفئة الفرعية بنجاح!');
     }
-
-    categoriesData.subcategories[selectedMainCategory].push(newSubcategory);
     
-    saveToLocalStorage();
-    renderMainCategories();
-    renderSubcategories();
-    showSuccessMessage('✅ تم إضافة الفئة الفرعية بنجاح!');
     closeAddSubcategoryModal();
 }
 
 function editSubcategory(subcategoryId, event) {
     event.stopPropagation();
     
-    const subcategories = categoriesData.subcategories[selectedMainCategory];
-    const subcategory = subcategories.find(s => s.id === subcategoryId);
-    if (!subcategory) return;
+    // Call the function from HTML file to open edit modal
+    if (typeof openEditSubcategoryModal === 'function') {
+        openEditSubcategoryModal(selectedMainCategory, subcategoryId);
+    } else {
+        // Fallback to prompt if function not available
+        const subcategories = categoriesData.subcategories[selectedMainCategory];
+        const subcategory = subcategories.find(s => s.id === subcategoryId);
+        if (!subcategory) return;
 
-    const nameAr = prompt('الاسم بالعربية:', subcategory.name_ar);
-    if (!nameAr) return;
+        const nameAr = prompt('الاسم بالعربية:', subcategory.name_ar);
+        if (!nameAr) return;
 
-    const nameEn = prompt('الاسم بالإنجليزية:', subcategory.name_en);
-    if (!nameEn) return;
+        const nameEn = prompt('الاسم بالإنجليزية:', subcategory.name_en);
+        if (!nameEn) return;
 
-    subcategory.name_ar = nameAr;
-    subcategory.name_en = nameEn;
-    subcategory.updated_at = new Date().toISOString();
+        subcategory.name_ar = nameAr;
+        subcategory.name_en = nameEn;
+        subcategory.updated_at = new Date().toISOString();
 
-    saveToLocalStorage();
-    renderSubcategories();
-    showSuccessMessage('✅ تم تحديث الفئة الفرعية بنجاح!');
+        saveToLocalStorage();
+        renderSubcategories();
+        showSuccessMessage('✅ تم تحديث الفئة الفرعية بنجاح!');
+    }
 }
 
 function deleteSubcategory(subcategoryId, event) {

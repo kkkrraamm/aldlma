@@ -1493,6 +1493,10 @@
                         <i class="fas fa-download"></i>
                         <span>تصدير البيانات</span>
                     </button>
+                    <button class="btn btn-secondary" onclick="openBulkImportModal()" style="background: #f59e0b;">
+                        <i class="fas fa-file-import"></i>
+                        <span>إضافة سريعة (نص)</span>
+                    </button>
                     <button class="btn btn-primary" onclick="openAddMainCategoryModal()">
                         <i class="fas fa-plus"></i>
                         <span>إضافة فئة رئيسية</span>
@@ -1636,12 +1640,13 @@
     <div class="modal" id="addSubcategoryModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>إضافة فئة فرعية</h2>
+                <h2 id="subcategoryModalTitle">إضافة فئة فرعية</h2>
                 <button class="btn btn-icon" onclick="closeAddSubcategoryModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
+                <input type="hidden" id="editSubcategoryId">
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="subcategoryNameAr">اسم الفئة الفرعية (عربي)</label>
@@ -1666,6 +1671,54 @@
         </div>
     </div>
 
+    <!-- Bulk Import Modal (إضافة سريعة) -->
+    <div class="modal" id="bulkImportModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>إضافة سريعة من نص</h2>
+                <button class="btn btn-icon" onclick="closeBulkImportModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group full-width">
+                    <label>الصيغة المطلوبة:</label>
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px; margin-bottom: 15px; font-family: monospace; font-size: 12px; color: var(--text-secondary);">
+                        [إيموجي] اسم الفئة بالعربي | اسم الفئة بالإنجليزي<br>
+                        - فئة فرعية بالعربي | فئة فرعية بالإنجليزي<br>
+                        - فئة فرعية أخرى | Another subcategory<br>
+                        <br>
+                        [إيموجي] فئة أخرى | Another Category<br>
+                        - sub 1 | sub 1 en<br>
+                        - sub 2 | sub 2 en
+                    </div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="bulkImportText">الصق النص هنا:</label>
+                    <textarea id="bulkImportText" rows="15" placeholder="الصق النص بالصيغة المطلوبة..." style="font-family: monospace; font-size: 13px;"></textarea>
+                </div>
+
+                <div id="importPreview" style="display: none; margin-top: 15px;">
+                    <label style="font-weight: 600; margin-bottom: 10px; display: block;">معاينة:</label>
+                    <div id="importPreviewContent" style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-cancel" onclick="closeBulkImportModal()">إلغاء</button>
+                    <button class="btn btn-secondary" onclick="previewBulkImport()" style="background: #6366f1;">
+                        <i class="fas fa-eye"></i>
+                        معاينة
+                    </button>
+                    <button class="btn btn-save" onclick="executeBulkImport()">
+                        <i class="fas fa-check"></i>
+                        إضافة الكل
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Overlay -->
     <div class="modal-overlay" onclick="closeAllModals()"></div>
 
@@ -1674,6 +1727,210 @@
     <script src="js/categories-api.js"></script>
     <script src="js/categories-hierarchical.js"></script>
     <script>
+        // Global variable for editing subcategory
+        let editingSubcategoryId = null;
+        let editingMainCategoryId = null;
+
+        // Open Edit Subcategory Modal
+        function openEditSubcategoryModal(mainCatId, subCatId) {
+            editingMainCategoryId = mainCatId;
+            editingSubcategoryId = subCatId;
+            
+            const subcategories = categoriesData.subcategories[mainCatId] || [];
+            const subcategory = subcategories.find(sub => sub.id === subCatId);
+            
+            if (subcategory) {
+                document.getElementById('subcategoryModalTitle').textContent = 'تعديل الفئة الفرعية';
+                document.getElementById('editSubcategoryId').value = subCatId;
+                document.getElementById('subcategoryNameAr').value = subcategory.name_ar || subcategory.nameAr || '';
+                document.getElementById('subcategoryNameEn').value = subcategory.name_en || subcategory.nameEn || '';
+                document.getElementById('subcategoryDescription').value = subcategory.description || '';
+                
+                document.getElementById('addSubcategoryModal').classList.add('active');
+                document.querySelector('.modal-overlay').classList.add('active');
+            }
+        }
+
+        // Reset Subcategory Modal
+        function resetSubcategoryModal() {
+            editingSubcategoryId = null;
+            document.getElementById('subcategoryModalTitle').textContent = 'إضافة فئة فرعية';
+            document.getElementById('editSubcategoryId').value = '';
+            document.getElementById('subcategoryNameAr').value = '';
+            document.getElementById('subcategoryNameEn').value = '';
+            document.getElementById('subcategoryDescription').value = '';
+        }
+
+        // Open Bulk Import Modal
+        function openBulkImportModal() {
+            document.getElementById('bulkImportModal').classList.add('active');
+            document.querySelector('.modal-overlay').classList.add('active');
+            document.getElementById('bulkImportText').value = '';
+            document.getElementById('importPreview').style.display = 'none';
+        }
+
+        // Close Bulk Import Modal
+        function closeBulkImportModal() {
+            document.getElementById('bulkImportModal').classList.remove('active');
+            document.querySelector('.modal-overlay').classList.remove('active');
+        }
+
+        // Preview Bulk Import
+        function previewBulkImport() {
+            const text = document.getElementById('bulkImportText').value.trim();
+            if (!text) {
+                alert('⚠️ الرجاء إدخال نص للمعاينة');
+                return;
+            }
+
+            const parsed = parseBulkImportText(text);
+            if (parsed.length === 0) {
+                alert('❌ لم يتم العثور على فئات صحيحة في النص');
+                return;
+            }
+
+            let previewHTML = '';
+            parsed.forEach((cat, index) => {
+                previewHTML += `
+                    <div style="margin-bottom: 15px; padding: 10px; background: var(--bg-primary); border-radius: 6px; border-right: 3px solid var(--primary);">
+                        <div style="font-weight: 700; color: var(--primary); margin-bottom: 8px;">
+                            ${cat.emoji} ${cat.nameAr} | ${cat.nameEn}
+                        </div>
+                        ${cat.subcategories.length > 0 ? `
+                            <div style="margin-right: 20px; font-size: 13px;">
+                                ${cat.subcategories.map(sub => 
+                                    `<div style="padding: 4px 0; color: var(--text-secondary);">→ ${sub.nameAr} | ${sub.nameEn}</div>`
+                                ).join('')}
+                            </div>
+                        ` : '<div style="margin-right: 20px; font-size: 12px; color: var(--text-secondary); font-style: italic;">لا توجد فئات فرعية</div>'}
+                    </div>
+                `;
+            });
+
+            document.getElementById('importPreviewContent').innerHTML = previewHTML;
+            document.getElementById('importPreview').style.display = 'block';
+        }
+
+        // Parse Bulk Import Text
+        function parseBulkImportText(text) {
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+            const categories = [];
+            let currentCategory = null;
+
+            lines.forEach(line => {
+                // Check if it's a main category line (starts with emoji in brackets or just emoji)
+                const mainCatMatch = line.match(/^\[?([^\[\]]+)\]?\s*(.+?)\s*\|\s*(.+)$/);
+                
+                if (mainCatMatch && !line.startsWith('-')) {
+                    // Save previous category if exists
+                    if (currentCategory) {
+                        categories.push(currentCategory);
+                    }
+                    
+                    // Extract emoji (first character or content in brackets)
+                    let emoji = mainCatMatch[1].trim();
+                    if (emoji.length > 2) {
+                        emoji = emoji.charAt(0); // Take first char if multiple
+                    }
+                    
+                    const nameAr = mainCatMatch[2].trim();
+                    const nameEn = mainCatMatch[3].trim();
+                    
+                    currentCategory = {
+                        emoji: emoji,
+                        nameAr: nameAr,
+                        nameEn: nameEn,
+                        description: '',
+                        subcategories: []
+                    };
+                } 
+                // Check if it's a subcategory line (starts with -)
+                else if (line.startsWith('-') && currentCategory) {
+                    const subMatch = line.substring(1).trim().match(/^(.+?)\s*\|\s*(.+)$/);
+                    if (subMatch) {
+                        currentCategory.subcategories.push({
+                            nameAr: subMatch[1].trim(),
+                            nameEn: subMatch[2].trim(),
+                            description: ''
+                        });
+                    }
+                }
+            });
+
+            // Add last category
+            if (currentCategory) {
+                categories.push(currentCategory);
+            }
+
+            return categories;
+        }
+
+        // Execute Bulk Import
+        async function executeBulkImport() {
+            const text = document.getElementById('bulkImportText').value.trim();
+            if (!text) {
+                alert('⚠️ الرجاء إدخال نص للإضافة');
+                return;
+            }
+
+            const parsed = parseBulkImportText(text);
+            if (parsed.length === 0) {
+                alert('❌ لم يتم العثور على فئات صحيحة في النص');
+                return;
+            }
+
+            if (!confirm(`هل تريد إضافة ${parsed.length} فئة رئيسية مع فئاتها الفرعية؟`)) {
+                return;
+            }
+
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const cat of parsed) {
+                try {
+                    // Add main category
+                    const mainCatData = {
+                        emoji: cat.emoji,
+                        name_ar: cat.nameAr,
+                        name_en: cat.nameEn,
+                        description: cat.description || `${cat.nameAr} - ${cat.nameEn}`
+                    };
+
+                    const result = await addMainCategoryAPI(mainCatData);
+                    
+                    if (result && result.id) {
+                        // Add subcategories
+                        for (const sub of cat.subcategories) {
+                            try {
+                                await addSubcategoryAPI(result.id, {
+                                    name_ar: sub.nameAr,
+                                    name_en: sub.nameEn,
+                                    description: sub.description || `${sub.nameAr} - ${sub.nameEn}`
+                                });
+                            } catch (error) {
+                                console.error('Error adding subcategory:', error);
+                            }
+                        }
+                        successCount++;
+                    }
+                } catch (error) {
+                    console.error('Error adding main category:', error);
+                    errorCount++;
+                }
+            }
+
+            closeBulkImportModal();
+            
+            if (successCount > 0) {
+                showSuccessMessage(`✅ تم إضافة ${successCount} فئة بنجاح!` + (errorCount > 0 ? ` (${errorCount} فشلت)` : ''));
+                await loadCategories();
+                renderMainCategories();
+                populateCategoriesTable();
+            } else {
+                alert('❌ فشلت جميع العمليات. الرجاء التحقق من الاتصال بالإنترنت.');
+            }
+        }
+
         // Export categories function
         function exportCategories() {
             try {
