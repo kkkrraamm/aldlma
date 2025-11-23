@@ -3,7 +3,7 @@
 // استبدال localStorage بـ API calls
 // ============================================
 
-const API_BASE_URL = '';  // سيستخدم current origin
+const API_BASE_URL = 'https://dalma-api.onrender.com';  // استخدام الـ API المباشر
 
 async function getAuthToken() {
   return localStorage.getItem('token') || localStorage.getItem('admin_token');
