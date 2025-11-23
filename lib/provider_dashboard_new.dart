@@ -14,6 +14,8 @@ import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.da
 import 'theme_config.dart';
 import 'notifications.dart';
 import 'api_config.dart';
+import 'products_management_page.dart';
+import 'videos_management_page.dart';
 
 class ProviderDashboardNew extends StatefulWidget {
   const ProviderDashboardNew({super.key});
@@ -432,16 +434,30 @@ class _HomeTab extends StatelessWidget {
                 const SizedBox(height: 16),
                 _QuickActionButton(
                   icon: Icons.add_shopping_cart_rounded,
-                  title: 'إضافة منتج',
-                  subtitle: 'أضف منتج جديد لمتجرك',
-                  onTap: () => _showAddProductDialog(context),
+                  title: 'إدارة المنتجات',
+                  subtitle: 'عرض وإضافة وتعديل المنتجات',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProductsManagementPage(),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
                 _QuickActionButton(
                   icon: Icons.video_call_rounded,
-                  title: 'رفع فيديو',
-                  subtitle: 'انشر فيديو لمنتجاتك',
-                  onTap: () => _showUploadVideoDialog(context),
+                  title: 'إدارة الفيديوهات',
+                  subtitle: 'رفع وتعديل الفيديوهات',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const VideosManagementPage(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
