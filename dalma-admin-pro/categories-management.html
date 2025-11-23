@@ -19,6 +19,69 @@
     <link rel="stylesheet" href="css/topbar.css">
 
     <style>
+        /* Categories Page Styles */
+        .categories-page {
+            padding: 30px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title i {
+            color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
         /* Hierarchical Categories Styles */
         .categories-container {
             display: grid;
@@ -311,41 +374,29 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
+    <!-- Unified Sidebar -->
     <div id="sidebarContainer"></div>
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Header -->
-        <header class="main-header">
-            <div class="header-left">
-                <button class="btn btn-icon" id="sidebarToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1>🏷️ إدارة الفئات الهرمية</h1>
-            </div>
-            <div class="header-right">
-                <button class="btn btn-icon" id="themeToggle">
-                    <i class="fas fa-moon"></i>
-                </button>
-                <div class="user-menu">
-                    <span id="adminName">Admin</span>
-                    <i class="fas fa-user-circle"></i>
-                </div>
-            </div>
-        </header>
-
         <!-- Content -->
-        <div class="content-container">
-            <div class="tab-header">
-                <h2>
+        <div class="categories-page">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">
                     <i class="fas fa-tags"></i>
-                    إدارة الفئات والفئات الفرعية
-                </h2>
-                <button class="btn btn-primary" onclick="openAddMainCategoryModal()">
-                    <i class="fas fa-plus"></i>
-                    إضافة فئة رئيسية
-                </button>
+                    إدارة الفئات الهرمية
+                </h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="exportCategories()">
+                        <i class="fas fa-download"></i>
+                        <span>تصدير البيانات</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="openAddMainCategoryModal()">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة فئة رئيسية</span>
+                    </button>
+                </div>
             </div>
 
             <div class="success-message" id="successMessage">
@@ -458,5 +509,33 @@
     <script src="js/theme.js"></script>
     <script src="js/categories-api.js"></script>
     <script src="js/categories-hierarchical.js"></script>
+    <script>
+        // Export categories function
+        function exportCategories() {
+            try {
+                const data = {
+                    mainCategories: categoriesData.mainCategories || [],
+                    subcategories: categoriesData.subcategories || {}
+                };
+                
+                const jsonString = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `categories_export_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showSuccessMessage('✅ تم تصدير البيانات بنجاح');
+            } catch (error) {
+                console.error('خطأ في التصدير:', error);
+                alert('❌ فشل في تصدير البيانات');
+            }
+        }
+    </script>
 </body>
 </html>
