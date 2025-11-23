@@ -1560,7 +1560,7 @@ class _SettingsTab extends StatelessWidget {
 }
 
 // ============================================
-// Products Tab
+// Products Tab - Professional Management
 // ============================================
 class _ProductsTab extends StatefulWidget {
   final List<Map<String, dynamic>> products;
@@ -1571,10 +1571,19 @@ class _ProductsTab extends StatefulWidget {
   State<_ProductsTab> createState() => _ProductsTabState();
 }
 
-class _ProductsTabState extends State<_ProductsTab> {
+class _ProductsTabState extends State<_ProductsTab> with TickerProviderStateMixin {
   late List<Map<String, dynamic>> _products;
   late List<Map<String, dynamic>> _filteredProducts;
+  List<Map<String, dynamic>> _categories = [
+    {'id': 1, 'name': 'إلكترونيات', 'color': Colors.blue},
+    {'id': 2, 'name': 'ملابس', 'color': Colors.purple},
+    {'id': 3, 'name': 'أثاث', 'color': Colors.orange},
+  ];
   String _searchQuery = '';
+  String? _selectedCategory;
+  bool _showCategoryInput = false;
+  final _categoryController = TextEditingController();
+  Map<int, bool> _expandedProducts = {};
 
   @override
   void initState() {
@@ -1583,25 +1592,155 @@ class _ProductsTabState extends State<_ProductsTab> {
     _filteredProducts = _products;
   }
 
+  @override
+  void dispose() {
+    _categoryController.dispose();
+    super.dispose();
+  }
+
   void _filterProducts(String query) {
     setState(() {
       _searchQuery = query;
       _filteredProducts = _products
-          .where((p) => (p['name'] ?? '')
-              .toString()
-              .toLowerCase()
-              .contains(query.toLowerCase()))
+          .where((p) {
+            final matchesSearch = (p['name'] ?? '')
+                .toString()
+                .toLowerCase()
+                .contains(query.toLowerCase());
+            final matchesCategory = _selectedCategory == null ||
+                p['category'] == _selectedCategory;
+            return matchesSearch && matchesCategory;
+          })
           .toList();
     });
+  }
+
+  void _addCategory() {
+    if (_categoryController.text.isNotEmpty) {
+      setState(() {
+        _categories.add({
+          'id': _categories.length + 1,
+          'name': _categoryController.text,
+          'color': Colors.primaries[_categories.length % Colors.primaries.length],
+        });
+        _categoryController.clear();
+        _showCategoryInput = false;
+      });
+      NotificationsService.instance.toast('✅ تمت إضافة التصنيف!');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = ThemeConfig.instance;
+    final isDark = theme.isDarkMode;
 
     return Column(
       children: [
-        // Header
+        // Professional Header
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [ThemeConfig.kNightSoft, ThemeConfig.kNightDeep.withOpacity(0.8)]
+                  : [const Color(0xFFECFDF5), ThemeConfig.kBeige],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'إدارة المنتجات',
+                          style: GoogleFonts.cairo(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: theme.textPrimaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_products.length} منتج نشط',
+                          style: GoogleFonts.cairo(
+                            fontSize: 14,
+                            color: theme.textSecondaryColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen)
+                            .withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.add_rounded,
+                            color: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'إضافة منتج',
+                            style: GoogleFonts.cairo(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color:
+                                  isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Search Bar
+                TextField(
+                  onChanged: _filterProducts,
+                  decoration: InputDecoration(
+                    hintText: 'ابحث عن منتج...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () => _filterProducts(''),
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: theme.cardColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: theme.borderColor),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Category Management
         Container(
           color: theme.cardColor,
           padding: const EdgeInsets.all(16),
@@ -1612,54 +1751,175 @@ class _ProductsTabState extends State<_ProductsTab> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'المنتجات',
+                    'التصنيفات',
                     style: GoogleFonts.cairo(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
                       color: theme.textPrimaryColor,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.backgroundColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: theme.borderColor),
-                    ),
-                    child: Text(
-                      '${_products.length} منتج',
-                      style: GoogleFonts.cairo(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: theme.textPrimaryColor,
+                  if (!_showCategoryInput)
+                    GestureDetector(
+                      onTap: () => setState(() => _showCategoryInput = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen)
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.add_rounded,
+                              size: 16,
+                              color: isDark
+                                  ? ThemeConfig.kGoldNight
+                                  : ThemeConfig.kGreen,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'إضافة',
+                              style: GoogleFonts.cairo(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? ThemeConfig.kGoldNight
+                                    : ThemeConfig.kGreen,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                onChanged: _filterProducts,
-                decoration: InputDecoration(
-                  hintText: 'ابحث عن منتج...',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.close_rounded),
-                          onPressed: () => _filterProducts(''),
-                        )
-                      : null,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: theme.borderColor),
+              const SizedBox(height: 12),
+              if (_showCategoryInput)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _categoryController,
+                          decoration: InputDecoration(
+                            hintText: 'اسم التصنيف الجديد',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                        ),
+                        onPressed: _addCategory,
+                        child: const Icon(Icons.check_rounded, size: 18),
+                      ),
+                      const SizedBox(width: 4),
+                      OutlinedButton(
+                        onPressed: () => setState(() => _showCategoryInput = false),
+                        child: const Icon(Icons.close_rounded, size: 18),
+                      ),
+                    ],
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() {
+                        _selectedCategory = null;
+                        _filterProducts(_searchQuery);
+                      }),
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _selectedCategory == null
+                              ? (isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen)
+                              : theme.backgroundColor,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _selectedCategory == null
+                                ? (isDark
+                                    ? ThemeConfig.kGoldNight
+                                    : ThemeConfig.kGreen)
+                                : theme.borderColor,
+                          ),
+                        ),
+                        child: Text(
+                          'الكل',
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _selectedCategory == null
+                                ? Colors.white
+                                : theme.textPrimaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    ..._categories.map((cat) {
+                      final isSelected = _selectedCategory == cat['name'];
+                      return GestureDetector(
+                        onTap: () => setState(() {
+                          _selectedCategory = cat['name'];
+                          _filterProducts(_searchQuery);
+                        }),
+                        child: Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? (cat['color'] as Color).withOpacity(0.2)
+                                : theme.backgroundColor,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected
+                                  ? (cat['color'] as Color)
+                                  : theme.borderColor,
+                            ),
+                          ),
+                          child: Text(
+                            cat['name'],
+                            style: GoogleFonts.cairo(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected
+                                  ? (cat['color'] as Color)
+                                  : theme.textPrimaryColor,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-        // Content
+
+        // Products List
         Expanded(
           child: _filteredProducts.isEmpty
               ? Center(
@@ -1680,6 +1940,14 @@ class _ProductsTabState extends State<_ProductsTab> {
                           color: theme.textPrimaryColor,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'ابدأ بإضافة منتجات لمتجرك',
+                        style: GoogleFonts.cairo(
+                          fontSize: 14,
+                          color: theme.textSecondaryColor,
+                        ),
+                      ),
                     ],
                   ),
                 )
@@ -1688,11 +1956,26 @@ class _ProductsTabState extends State<_ProductsTab> {
                   itemCount: _filteredProducts.length,
                   itemBuilder: (context, index) {
                     final product = _filteredProducts[index];
+                    final isExpanded =
+                        _expandedProducts[index] ?? false;
                     return _ProductItemCard(
                       product: product,
                       theme: theme,
-                      onEdit: () => _showEditProductDialog(context, product),
-                      onDelete: () => _showDeleteProductConfirmation(context, product),
+                      isExpanded: isExpanded,
+                      onToggleExpand: () => setState(
+                        () => _expandedProducts[index] =
+                            !isExpanded,
+                      ),
+                      onDelete: () {
+                        setState(() {
+                          _products.removeWhere(
+                            (p) => p['id'] == product['id'],
+                          );
+                          _filterProducts(_searchQuery);
+                        });
+                        NotificationsService.instance
+                            .toast('🗑️ تم حذف المنتج!');
+                      },
                     );
                   },
                 ),
@@ -1700,86 +1983,462 @@ class _ProductsTabState extends State<_ProductsTab> {
       ],
     );
   }
+}
 
-  void _showEditProductDialog(BuildContext context, Map<String, dynamic> product) {
-    final theme = ThemeConfig.instance;
-    final nameController = TextEditingController(text: product['name'] ?? '');
-    final priceController = TextEditingController(text: product['price']?.toString() ?? '');
+// ============================================
+// Product Item Card - Professional Inline Editing
+// ============================================
+class _ProductItemCard extends StatefulWidget {
+  final Map<String, dynamic> product;
+  final ThemeConfig theme;
+  final bool isExpanded;
+  final VoidCallback onToggleExpand;
+  final VoidCallback onDelete;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: theme.cardColor,
-        title: Text('تعديل المنتج', style: GoogleFonts.cairo(fontWeight: FontWeight.w900)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'اسم المنتج',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: priceController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'السعر',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              NotificationsService.instance.toast('✅ تم تحديث المنتج!');
-            },
-            child: const Text('حفظ'),
-          ),
-        ],
-      ),
-    );
+  const _ProductItemCard({
+    required this.product,
+    required this.theme,
+    required this.isExpanded,
+    required this.onToggleExpand,
+    required this.onDelete,
+  });
+
+  @override
+  State<_ProductItemCard> createState() => _ProductItemCardState();
+}
+
+class _ProductItemCardState extends State<_ProductItemCard> {
+  late TextEditingController _nameController;
+  late TextEditingController _priceController;
+  late TextEditingController _stockController;
+  late TextEditingController _descriptionController;
+  List<String> _images = [];
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController =
+        TextEditingController(text: widget.product['name'] ?? '');
+    _priceController = TextEditingController(
+        text: widget.product['price']?.toString() ?? '');
+    _stockController = TextEditingController(
+        text: widget.product['stock']?.toString() ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.product['description'] ?? '');
+    _images = List<String>.from(widget.product['images'] ?? []);
   }
 
-  void _showDeleteProductConfirmation(BuildContext context, Map<String, dynamic> product) {
-    final theme = ThemeConfig.instance;
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _stockController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: theme.cardColor,
-        title: Text('حذف المنتج؟', style: GoogleFonts.cairo(fontWeight: FontWeight.w900)),
-        content: Text(
-          'هل أنت متأكد من حذف "${product['name']}"؟',
-          style: GoogleFonts.cairo(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+  @override
+  Widget build(BuildContext context) {
+    final theme = widget.theme;
+    final isDark = theme.isDarkMode;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.borderColor),
+      ),
+      child: Column(
+        children: [
+          // Header Row
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Product Image Gallery
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: theme.backgroundColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.borderColor),
+                  ),
+                  child: _images.isNotEmpty
+                      ? PageView.builder(
+                          itemCount: _images.length,
+                          itemBuilder: (context, index) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(11),
+                              child: Image.network(
+                                _images[index],
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Icon(
+                                      Icons.image_not_supported_rounded,
+                                      color: theme.textSecondaryColor,
+                                      size: 40,
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.image_outlined,
+                              color: theme.textSecondaryColor,
+                              size: 40,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'بدون صور',
+                              style: GoogleFonts.cairo(
+                                fontSize: 10,
+                                color: theme.textSecondaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+                const SizedBox(width: 16),
+                // Product Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _nameController.text,
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: theme.textPrimaryColor,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${_priceController.text} ر.س',
+                              style: GoogleFonts.cairo(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'المخزون: ${_stockController.text}',
+                              style: GoogleFonts.cairo(
+                                fontSize: 12,
+                                color: Colors.blue,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${_images.length} صور',
+                        style: GoogleFonts.cairo(
+                          fontSize: 11,
+                          color: theme.textSecondaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Action Buttons
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        widget.isExpanded
+                            ? Icons.expand_less_rounded
+                            : Icons.expand_more_rounded,
+                        color:
+                            isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+                      ),
+                      onPressed: widget.onToggleExpand,
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_rounded,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                      onPressed: widget.onDelete,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              setState(() {
-                _products.removeWhere((p) => p['id'] == product['id']);
-                _filterProducts(_searchQuery);
-              });
-              Navigator.pop(context);
-              NotificationsService.instance.toast('🗑️ تم حذف المنتج!');
-            },
-            child: const Text('حذف'),
-          ),
+          // Expanded Details Section
+          if (widget.isExpanded) ...[
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!_isEditing) ...[
+                    // View Mode
+                    _DetailRow(
+                      label: 'الوصف',
+                      value: _descriptionController.text.isEmpty
+                          ? 'لا يوجد وصف'
+                          : _descriptionController.text,
+                      theme: theme,
+                    ),
+                    const SizedBox(height: 16),
+                    // Image Gallery
+                    Text(
+                      'الصور (حد أقصى 5 صور)',
+                      style: GoogleFonts.cairo(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (_images.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: theme.backgroundColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: theme.borderColor),
+                          borderStyle: BorderStyle.dashed,
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.cloud_upload_outlined,
+                              color: theme.textSecondaryColor,
+                              size: 40,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'لا توجد صور\nاضغط لإضافة صور',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.cairo(
+                                fontSize: 12,
+                                color: theme.textSecondaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          ..._images.asMap().entries.map((entry) {
+                            return Stack(
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: theme.borderColor,
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(11),
+                                    child: Image.network(
+                                      entry.value,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Center(
+                                          child: Icon(
+                                            Icons
+                                                .image_not_supported_rounded,
+                                            color: theme.textSecondaryColor,
+                                            size: 30,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: -4,
+                                  right: -4,
+                                  child: CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: Colors.red,
+                                    child: GestureDetector(
+                                      onTap: () => setState(
+                                        () => _images.removeAt(entry.key),
+                                      ),
+                                      child: const Icon(
+                                        Icons.close_rounded,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                          if (_images.length < 5)
+                            GestureDetector(
+                              onTap: () {
+                                NotificationsService.instance.toast(
+                                  '📸 ميزة رفع الصور قريباً',
+                                );
+                              },
+                              child: Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: theme.backgroundColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: theme.borderColor,
+                                    style: BorderStyle.dashed,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_rounded,
+                                      color: theme.textSecondaryColor,
+                                      size: 24,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'إضافة',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 10,
+                                        color: theme.textSecondaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    const SizedBox(height: 16),
+                    // Edit Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.edit_rounded),
+                        label: const Text('تعديل المنتج'),
+                        onPressed: () =>
+                            setState(() => _isEditing = true),
+                      ),
+                    ),
+                  ] else ...[
+                    // Edit Mode
+                    Text(
+                      'تعديل المنتج',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _EditField(
+                      label: 'اسم المنتج',
+                      controller: _nameController,
+                      theme: theme,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _EditField(
+                            label: 'السعر',
+                            controller: _priceController,
+                            keyboardType: TextInputType.number,
+                            theme: theme,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _EditField(
+                            label: 'المخزون',
+                            controller: _stockController,
+                            keyboardType: TextInputType.number,
+                            theme: theme,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _EditField(
+                      label: 'الوصف',
+                      controller: _descriptionController,
+                      maxLines: 3,
+                      theme: theme,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.check_rounded),
+                            label: const Text('حفظ'),
+                            onPressed: () {
+                              setState(() => _isEditing = false);
+                              NotificationsService.instance
+                                  .toast('✅ تم حفظ التغييرات!');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.close_rounded),
+                          label: const Text('إلغاء'),
+                          onPressed: () =>
+                              setState(() => _isEditing = false),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1787,115 +2446,89 @@ class _ProductsTabState extends State<_ProductsTab> {
 }
 
 // ============================================
-// Product Item Card
+// Helper Widgets
 // ============================================
-class _ProductItemCard extends StatelessWidget {
-  final Map<String, dynamic> product;
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
   final ThemeConfig theme;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
 
-  const _ProductItemCard({
-    required this.product,
+  const _DetailRow({
+    required this.label,
+    required this.value,
     required this.theme,
-    required this.onEdit,
-    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.borderColor),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: theme.backgroundColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.borderColor),
-              ),
-              child: Icon(
-                Icons.image_rounded,
-                color: theme.textSecondaryColor,
-                size: 40,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product['name'] ?? 'منتج',
-                    style: GoogleFonts.cairo(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: theme.textPrimaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '${product['price'] ?? 0} ر.س',
-                          style: GoogleFonts.cairo(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'المخزون: ${product['stock'] ?? 0}',
-                          style: GoogleFonts.cairo(
-                            fontSize: 12,
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit_rounded, size: 20),
-                  onPressed: onEdit,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_rounded, size: 20, color: Colors.red),
-                  onPressed: onDelete,
-                ),
-              ],
-            ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: theme.textSecondaryColor,
+          ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.cairo(
+            fontSize: 14,
+            color: theme.textPrimaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EditField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final ThemeConfig theme;
+  final TextInputType keyboardType;
+  final int maxLines;
+
+  const _EditField({
+    required this.label,
+    required this.controller,
+    required this.theme,
+    this.keyboardType = TextInputType.text,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: theme.textSecondaryColor,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
