@@ -339,7 +339,7 @@ function loadCategories() {
 
 async function loadCategoriesFromAPI() {
     try {
-      const response = await fetch('/api/categories/hierarchical');
+      const response = await fetch('https://dalma-api.onrender.com/api/categories/hierarchical');
       if (!response.ok) throw new Error('فشل جلب الفئات');
       
       const data = await response.json();
@@ -347,12 +347,33 @@ async function loadCategoriesFromAPI() {
       renderMainCategories();
     } catch (error) {
       console.error('❌ خطأ في جلب الفئات:', error);
-      // في حالة الخطأ، جاري من localStorage
+      // في حالة الخطأ، جاري من localStorage أو بيانات تجريبية
       const saved = localStorage.getItem('hierarchicalCategories');
       if (saved) {
         categoriesData = JSON.parse(saved);
-        renderMainCategories();
+      } else {
+        // بيانات تجريبية للتطوير
+        categoriesData = {
+          mainCategories: [
+            { id: 1, emoji: '🍕', name_ar: 'الغذاء والمشروبات', name_en: 'Food & Beverages', description: 'المطاعم والمقاهي والمخابز' },
+            { id: 2, emoji: '👕', name_ar: 'الملابس والأزياء', name_en: 'Clothing & Fashion', description: 'الملابس والأحذية والإكسسوارات' },
+            { id: 3, emoji: '📱', name_ar: 'الإلكترونيات', name_en: 'Electronics', description: 'الأجهزة الإلكترونية والأدوات' },
+            { id: 4, emoji: '🏠', name_ar: 'المنزل والأثاث', name_en: 'Home & Furniture', description: 'الأثاث ومستلزمات المنزل' }
+          ],
+          subcategories: {
+            1: [
+              { id: 1, name_ar: 'المطاعم', name_en: 'Restaurants', description: 'مطاعم الوجبات السريعة والمطاعم الفاخرة' },
+              { id: 2, name_ar: 'المقاهي', name_en: 'Cafes', description: 'المقاهي والقهوة والحلويات' }
+            ],
+            2: [
+              { id: 3, name_ar: 'الملابس الرجالية', name_en: 'Mens Clothing', description: 'ملابس رجالية وقمصان' },
+              { id: 4, name_ar: 'الملابس النسائية', name_en: 'Womens Clothing', description: 'ملابس نسائية وفساتين' }
+            ]
+          }
+        };
+        showSuccessMessage('⚠️ تم تحميل بيانات تجريبية (اتصال الإنترنت مطلوب للبيانات الحقيقية)');
       }
+      renderMainCategories();
     }
 }// ============================================
 // UI Helpers
