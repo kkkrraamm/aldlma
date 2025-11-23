@@ -14,8 +14,6 @@ import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.da
 import 'theme_config.dart';
 import 'notifications.dart';
 import 'api_config.dart';
-import 'products_management_page.dart';
-import 'videos_management_page.dart';
 
 class ProviderDashboardNew extends StatefulWidget {
   const ProviderDashboardNew({super.key});
@@ -151,8 +149,8 @@ class _ProviderDashboardNewState extends State<ProviderDashboardNew>
               physics: const NeverScrollableScrollPhysics(), // منع التمرير الجانبي
               children: [
                 _HomeTab(storeData: _storeData!, products: _products, videos: _videos),
-                ProductsManagementPage(),
-                VideosManagementPage(),
+                _ProductsTab(products: _products),
+                _VideosTab(videos: _videos),
                 _AnalyticsTab(storeData: _storeData!),
                 _SettingsTab(storeData: _storeData!),
               ],
@@ -437,28 +435,14 @@ class _HomeTab extends StatelessWidget {
                   icon: Icons.add_shopping_cart_rounded,
                   title: 'إدارة المنتجات',
                   subtitle: 'عرض وإضافة وتعديل المنتجات',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProductsManagementPage(),
-                      ),
-                    );
-                  },
+                  onTap: () => _changePage(1),
                 ),
                 const SizedBox(height: 12),
                 _QuickActionButton(
                   icon: Icons.video_call_rounded,
                   title: 'إدارة الفيديوهات',
                   subtitle: 'رفع وتعديل الفيديوهات',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const VideosManagementPage(),
-                      ),
-                    );
-                  },
+                  onTap: () => _changePage(2),
                 ),
               ],
             ),
@@ -1568,6 +1552,686 @@ class _SettingsTab extends StatelessWidget {
             child: const Text('تأكيد الحذف'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ============================================
+// Products Tab
+// ============================================
+class _ProductsTab extends StatefulWidget {
+  final List<Map<String, dynamic>> products;
+
+  const _ProductsTab({required this.products});
+
+  @override
+  State<_ProductsTab> createState() => _ProductsTabState();
+}
+
+class _ProductsTabState extends State<_ProductsTab> {
+  late List<Map<String, dynamic>> _products;
+  late List<Map<String, dynamic>> _filteredProducts;
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _products = widget.products;
+    _filteredProducts = _products;
+  }
+
+  void _filterProducts(String query) {
+    setState(() {
+      _searchQuery = query;
+      _filteredProducts = _products
+          .where((p) => (p['name'] ?? '')
+              .toString()
+              .toLowerCase()
+              .contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ThemeConfig.instance;
+
+    return Column(
+      children: [
+        // Header
+        Container(
+          color: theme.cardColor,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'المنتجات',
+                    style: GoogleFonts.cairo(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: theme.textPrimaryColor,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.backgroundColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: theme.borderColor),
+                    ),
+                    child: Text(
+                      '${_products.length} منتج',
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                onChanged: _filterProducts,
+                decoration: InputDecoration(
+                  hintText: 'ابحث عن منتج...',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () => _filterProducts(''),
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: theme.borderColor),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Content
+        Expanded(
+          child: _filteredProducts.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 80,
+                        color: theme.textSecondaryColor,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'لا توجد منتجات',
+                        style: GoogleFonts.cairo(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: theme.textPrimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    final product = _filteredProducts[index];
+                    return _ProductItemCard(
+                      product: product,
+                      theme: theme,
+                      onEdit: () => _showEditProductDialog(context, product),
+                      onDelete: () => _showDeleteProductConfirmation(context, product),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  void _showEditProductDialog(BuildContext context, Map<String, dynamic> product) {
+    final theme = ThemeConfig.instance;
+    final nameController = TextEditingController(text: product['name'] ?? '');
+    final priceController = TextEditingController(text: product['price']?.toString() ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.cardColor,
+        title: Text('تعديل المنتج', style: GoogleFonts.cairo(fontWeight: FontWeight.w900)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'اسم المنتج',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: priceController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'السعر',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              NotificationsService.instance.toast('✅ تم تحديث المنتج!');
+            },
+            child: const Text('حفظ'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteProductConfirmation(BuildContext context, Map<String, dynamic> product) {
+    final theme = ThemeConfig.instance;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.cardColor,
+        title: Text('حذف المنتج؟', style: GoogleFonts.cairo(fontWeight: FontWeight.w900)),
+        content: Text(
+          'هل أنت متأكد من حذف "${product['name']}"؟',
+          style: GoogleFonts.cairo(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              setState(() {
+                _products.removeWhere((p) => p['id'] == product['id']);
+                _filterProducts(_searchQuery);
+              });
+              Navigator.pop(context);
+              NotificationsService.instance.toast('🗑️ تم حذف المنتج!');
+            },
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================
+// Product Item Card
+// ============================================
+class _ProductItemCard extends StatelessWidget {
+  final Map<String, dynamic> product;
+  final ThemeConfig theme;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _ProductItemCard({
+    required this.product,
+    required this.theme,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.borderColor),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: theme.backgroundColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.borderColor),
+              ),
+              child: Icon(
+                Icons.image_rounded,
+                color: theme.textSecondaryColor,
+                size: 40,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product['name'] ?? 'منتج',
+                    style: GoogleFonts.cairo(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: theme.textPrimaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${product['price'] ?? 0} ر.س',
+                          style: GoogleFonts.cairo(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'المخزون: ${product['stock'] ?? 0}',
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit_rounded, size: 20),
+                  onPressed: onEdit,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_rounded, size: 20, color: Colors.red),
+                  onPressed: onDelete,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================
+// Videos Tab
+// ============================================
+class _VideosTab extends StatefulWidget {
+  final List<Map<String, dynamic>> videos;
+
+  const _VideosTab({required this.videos});
+
+  @override
+  State<_VideosTab> createState() => _VideosTabState();
+}
+
+class _VideosTabState extends State<_VideosTab> {
+  late List<Map<String, dynamic>> _videos;
+  late List<Map<String, dynamic>> _filteredVideos;
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _videos = widget.videos;
+    _filteredVideos = _videos;
+  }
+
+  void _filterVideos(String query) {
+    setState(() {
+      _searchQuery = query;
+      _filteredVideos = _videos
+          .where((v) => (v['title'] ?? '')
+              .toString()
+              .toLowerCase()
+              .contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ThemeConfig.instance;
+
+    return Column(
+      children: [
+        // Header
+        Container(
+          color: theme.cardColor,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'الفيديوهات',
+                    style: GoogleFonts.cairo(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: theme.textPrimaryColor,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.backgroundColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: theme.borderColor),
+                    ),
+                    child: Text(
+                      '${_videos.length} فيديو',
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                onChanged: _filterVideos,
+                decoration: InputDecoration(
+                  hintText: 'ابحث عن فيديو...',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () => _filterVideos(''),
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: theme.borderColor),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Content
+        Expanded(
+          child: _filteredVideos.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.videocam_off_rounded,
+                        size: 80,
+                        color: theme.textSecondaryColor,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'لا توجد فيديوهات',
+                        style: GoogleFonts.cairo(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: theme.textPrimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _filteredVideos.length,
+                  itemBuilder: (context, index) {
+                    final video = _filteredVideos[index];
+                    return _VideoItemCard(
+                      video: video,
+                      theme: theme,
+                      onEdit: () => _showEditVideoDialog(context, video),
+                      onDelete: () => _showDeleteVideoConfirmation(context, video),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  void _showEditVideoDialog(BuildContext context, Map<String, dynamic> video) {
+    final theme = ThemeConfig.instance;
+    final titleController = TextEditingController(text: video['title'] ?? '');
+    final descController = TextEditingController(text: video['description'] ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.cardColor,
+        title: Text('تعديل الفيديو', style: GoogleFonts.cairo(fontWeight: FontWeight.w900)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: 'عنوان الفيديو',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'الوصف',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              NotificationsService.instance.toast('✅ تم تحديث الفيديو!');
+            },
+            child: const Text('حفظ'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteVideoConfirmation(BuildContext context, Map<String, dynamic> video) {
+    final theme = ThemeConfig.instance;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.cardColor,
+        title: Text('حذف الفيديو؟', style: GoogleFonts.cairo(fontWeight: FontWeight.w900)),
+        content: Text(
+          'هل أنت متأكد من حذف "${video['title']}"؟',
+          style: GoogleFonts.cairo(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              setState(() {
+                _videos.removeWhere((v) => v['id'] == video['id']);
+                _filterVideos(_searchQuery);
+              });
+              Navigator.pop(context);
+              NotificationsService.instance.toast('🗑️ تم حذف الفيديو!');
+            },
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================
+// Video Item Card
+// ============================================
+class _VideoItemCard extends StatelessWidget {
+  final Map<String, dynamic> video;
+  final ThemeConfig theme;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _VideoItemCard({
+    required this.video,
+    required this.theme,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.borderColor),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: theme.backgroundColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.borderColor),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    Icons.videocam_rounded,
+                    color: theme.textSecondaryColor,
+                    size: 40,
+                  ),
+                  Icon(
+                    Icons.play_circle_filled_rounded,
+                    color: Colors.red.withOpacity(0.7),
+                    size: 50,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    video['title'] ?? 'فيديو',
+                    style: GoogleFonts.cairo(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: theme.textPrimaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    video['description'] ?? 'بدون وصف',
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      color: theme.textSecondaryColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.remove_red_eye_rounded, size: 14, color: theme.textSecondaryColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${video['views'] ?? 0} مشاهدة',
+                        style: GoogleFonts.cairo(
+                          fontSize: 12,
+                          color: theme.textSecondaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit_rounded, size: 20),
+                  onPressed: onEdit,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_rounded, size: 20, color: Colors.red),
+                  onPressed: onDelete,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
