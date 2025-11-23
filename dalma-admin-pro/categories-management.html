@@ -1321,8 +1321,162 @@
     </style>
 </head>
 <body>
-    <!-- Unified Sidebar (loaded dynamically by sidebar.js) -->
-    <div id="sidebarContainer"></div>
+    <!-- Unified Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Logo -->
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span class="logo-text">Dalma Admin Pro</span>
+            </div>
+            <button class="btn-icon" id="sidebarToggle">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <div class="nav-section">
+                <span class="nav-section-title">الرئيسية</span>
+                <a href="index.html" class="nav-item" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>لوحة التحكم</span>
+                </a>
+            </div>
+
+            <!-- Security -->
+            <div class="nav-section">
+                <span class="nav-section-title">الأمن السيبراني</span>
+                <a href="ip-management.html" class="nav-item" data-page="ip-management">
+                    <i class="fas fa-network-wired"></i>
+                    <span>إدارة IPs</span>
+                </a>
+                <a href="security-monitoring.html" class="nav-item" data-page="security-monitoring">
+                    <i class="fas fa-shield-virus"></i>
+                    <span>مراقبة الأمان</span>
+                </a>
+                <a href="roles-management.html" class="nav-item" data-page="roles-management">
+                    <i class="fas fa-user-shield"></i>
+                    <span>الأدوار والصلاحيات</span>
+                </a>
+            </div>
+
+            <!-- Users -->
+            <div class="nav-section">
+                <span class="nav-section-title">المستخدمين</span>
+                <a href="users-management.html" class="nav-item" data-page="users-management">
+                    <i class="fas fa-users"></i>
+                    <span>جميع المستخدمين</span>
+                </a>
+            </div>
+
+            <!-- Categories -->
+            <div class="nav-section">
+                <span class="nav-section-title">التصنيفات</span>
+                <a href="categories-management.html" class="nav-item active" data-page="categories-management">
+                    <i class="fas fa-tags"></i>
+                    <span>إدارة الفئات</span>
+                </a>
+            </div>
+
+            <!-- Requests -->
+            <div class="nav-section">
+                <span class="nav-section-title">الطلبات</span>
+                <a href="requests-management.html" class="nav-item" data-page="requests-management">
+                    <i class="fas fa-file-alt"></i>
+                    <span>إدارة الطلبات</span>
+                    <span class="badge badge-warning" id="pendingRequestsBadge">0</span>
+                </a>
+            </div>
+
+            <!-- Realty System -->
+            <div class="nav-section">
+                <span class="nav-section-title">نظام العقار</span>
+                <a href="office-registrations.html" class="nav-item" data-page="office-registrations">
+                    <i class="fas fa-building"></i>
+                    <span>طلبات المكاتب العقارية</span>
+                    <span class="badge badge-warning" id="officeRequestsBadge">0</span>
+                </a>
+                <a href="offices-management.html" class="nav-item" data-page="offices-management">
+                    <i class="fas fa-building"></i>
+                    <span>إدارة المكاتب النشطة</span>
+                </a>
+                <a href="upgrade-requests.html" class="nav-item" data-page="upgrade-requests">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>طلبات الترقية</span>
+                    <span class="badge badge-warning" id="upgradeRequestsBadge">0</span>
+                </a>
+                <a href="realty-subscriptions.html" class="nav-item" data-page="realty-subscriptions">
+                    <i class="fas fa-chart-line"></i>
+                    <span>إدارة الاشتراكات المالية</span>
+                </a>
+            </div>
+
+            <!-- Finance -->
+            <div class="nav-section">
+                <span class="nav-section-title">المالية</span>
+                <a href="finance-monitoring.html" class="nav-item" data-page="finance-monitoring">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>الرقابة المالية</span>
+                </a>
+            </div>
+
+            <!-- Content & Marketing -->
+            <div class="nav-section">
+                <span class="nav-section-title">المحتوى والتسويق</span>
+                <a href="ads-management.html" class="nav-item" data-page="ads-management">
+                    <i class="fas fa-ad"></i>
+                    <span>إدارة الإعلانات</span>
+                </a>
+                <a href="content-management.html" class="nav-item" data-page="content-management">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>إدارة المحتوى</span>
+                </a>
+                <a href="notifications.html" class="nav-item" data-page="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span>الإشعارات</span>
+                </a>
+            </div>
+
+            <!-- Analytics & Reports -->
+            <div class="nav-section">
+                <span class="nav-section-title">التحليلات</span>
+                <a href="reports.html" class="nav-item" data-page="reports">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>التقارير</span>
+                </a>
+                <a href="ai-analytics.html" class="nav-item" data-page="ai-analytics">
+                    <i class="fas fa-brain"></i>
+                    <span>التحليلات الذكية</span>
+                </a>
+            </div>
+
+            <!-- App Settings -->
+            <div class="nav-section">
+                <span class="nav-section-title">الإعدادات</span>
+                <a href="settings.html" class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>الإعدادات العامة</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="adminName">kima</div>
+                    <div class="user-role">Super Admin</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </aside>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -1516,15 +1670,10 @@
     <div class="modal-overlay" onclick="closeAllModals()"></div>
 
     <!-- Scripts -->
-    <!-- Unified Sidebar & Top Bar -->
-    <script src="js/topbar.js"></script>
-    <script src="js/sidebar.js"></script>
+    <script src="js/theme.js"></script>
     <script src="js/categories-api.js"></script>
     <script src="js/categories-hierarchical.js"></script>
     <script>
-        // Initialize Top Bar
-        renderTopBar('إدارة الفئات');
-
         // Export categories function
         function exportCategories() {
             try {
@@ -1750,66 +1899,8 @@
             }
         }
 
-        // Initialize with sample data for testing
-        let categoriesData = {
-            mainCategories: [
-                {
-                    id: '1',
-                    emoji: '🍔',
-                    name_ar: 'الطعام والمشروبات',
-                    name_en: 'Food & Drinks',
-                    description: 'جميع أنواع المأكولات والمشروبات'
-                },
-                {
-                    id: '2',
-                    emoji: '👔',
-                    name_ar: 'الملابس والأزياء',
-                    name_en: 'Clothes & Fashion',
-                    description: 'ملابس رجالية ونسائية وإكسسوارات'
-                },
-                {
-                    id: '3',
-                    emoji: '🏠',
-                    name_ar: 'المنزل والحديقة',
-                    name_en: 'Home & Garden',
-                    description: 'أثاث ومعدات منزلية'
-                },
-                {
-                    id: '4',
-                    emoji: '💄',
-                    name_ar: 'الجمال والعناية',
-                    name_en: 'Beauty & Care',
-                    description: 'منتجات التجميل والعناية الشخصية'
-                },
-                {
-                    id: '5',
-                    emoji: '⚽',
-                    name_ar: 'الرياضة واللياقة',
-                    name_en: 'Sports & Fitness',
-                    description: 'معدات رياضية ولياقة بدنية'
-                }
-            ],
-            subcategories: {
-                '1': [
-                    { id: 's1', name_ar: 'برجر', name_en: 'Burger', description: 'برجر بأنواعه' },
-                    { id: 's2', name_ar: 'بيتزا', name_en: 'Pizza', description: 'بيتزا إيطالية' }
-                ],
-                '2': [
-                    { id: 's3', name_ar: 'قمصان', name_en: 'Shirts', description: 'قمصان رجالية ونسائية' },
-                    { id: 's4', name_ar: 'أحذية', name_en: 'Shoes', description: 'أحذية بأنواعها' }
-                ],
-                '3': [
-                    { id: 's5', name_ar: 'أثاث', name_en: 'Furniture', description: 'أثاث منزلي' }
-                ],
-                '4': [
-                    { id: 's6', name_ar: 'مكياج', name_en: 'Makeup', description: 'أدوات التجميل' }
-                ],
-                '5': [
-                    { id: 's7', name_ar: 'كرة قدم', name_en: 'Football', description: 'معدات كرة القدم' }
-                ]
-            }
-        };
-
+        // Note: categoriesData is defined in js/categories-hierarchical.js
+        
         // Load categories data function
         async function loadCategoriesData() {
             try {
@@ -1832,14 +1923,44 @@
             populateCategoriesTable();
         }
 
-        // Initialize on page load
+        // Force sidebar visibility on load
+        window.addEventListener('load', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.style.display = 'flex';
+                sidebar.style.visibility = 'visible';
+                sidebar.style.opacity = '1';
+                sidebar.style.right = '0';
+                console.log('✅ Sidebar forced visible');
+            }
+        });
+
+        // Override renderMainCategories to also populate table
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('✅ Categories page loaded');
-            
+            // Force sidebar visibility immediately
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.style.display = 'flex';
+                sidebar.style.visibility = 'visible';
+                sidebar.style.opacity = '1';
+                sidebar.style.right = '0';
+                console.log('✅ Sidebar visible on DOM ready');
+            }
+
             // Wait for other scripts to load first
             setTimeout(() => {
                 loadCategoriesData();
             }, 500);
+            
+            // Create mobile toggle button if needed
+            const pageTitle = document.querySelector('.page-title');
+            if (pageTitle && window.innerWidth <= 768) {
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'btn btn-icon mobile-sidebar-toggle';
+                toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                toggleBtn.onclick = toggleSidebar;
+                pageTitle.parentElement.insertBefore(toggleBtn, pageTitle);
+            }
         });
     </script>
 </body>
