@@ -174,7 +174,7 @@ class _ProviderDashboardNewState extends State<ProviderDashboardNew>
         activeColor: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
         inactiveColor: theme.textSecondaryColor,
         leftCornerRadius: 20,
-        rightCornerRadius: 20,
+        rightCornerRadius: 0,
         iconSize: 24,
       ),
     );
