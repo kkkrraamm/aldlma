@@ -1277,33 +1277,46 @@
         // Populate categories table
         function populateCategoriesTable() {
             const tableBody = document.getElementById('categoriesTableBody');
-            if (!tableBody || !categoriesData || !categoriesData.mainCategories) return;
+            if (!tableBody) {
+                console.log('❌ Table body element not found');
+                return;
+            }
 
+            // Check if data exists
+            if (!categoriesData || !categoriesData.mainCategories || categoriesData.mainCategories.length === 0) {
+                console.log('⚠️ No categories data available');
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">لا توجد فئات محفوظة</td></tr>';
+                return;
+            }
+
+            console.log('🔄 Populating table with', categoriesData.mainCategories.length, 'categories');
             tableBody.innerHTML = '';
             
-            categoriesData.mainCategories.forEach(category => {
+            categoriesData.mainCategories.forEach((category, index) => {
                 const subcategories = categoriesData.subcategories[category.id] || [];
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>
-                        <div class="table-emoji">${category.emoji}</div>
+                        <div class="table-emoji">${category.emoji || '📦'}</div>
                     </td>
                     <td>
-                        <div class="table-category-name">${category.name_ar}</div>
+                        <div class="table-category-name">${category.name_ar || category.nameAr || 'غير محدد'}</div>
                     </td>
                     <td>
-                        <div class="table-category-name">${category.name_en}</div>
+                        <div class="table-category-name">${category.name_en || category.nameEn || 'Not specified'}</div>
                     </td>
                     <td>
                         <div class="table-category-description">${category.description || '-'}</div>
                     </td>
                     <td>
                         <div class="subcategories-tags">
-                            ${subcategories.map(sub => 
-                                `<span class="subcategory-tag">${sub.name_ar}</span>`
-                            ).join('')}
-                            ${subcategories.length === 0 ? '<span style="color: var(--text-secondary); font-style: italic;">لا توجد فئات فرعية</span>' : ''}
+                            ${subcategories.length > 0 
+                                ? subcategories.map(sub => 
+                                    `<span class="subcategory-tag">${sub.name_ar || sub.nameAr || sub.name}</span>`
+                                ).join('')
+                                : '<span style="color: var(--text-secondary); font-style: italic;">لا توجد فئات فرعية</span>'
+                            }
                         </div>
                     </td>
                     <td>
@@ -1311,10 +1324,10 @@
                     </td>
                     <td class="table-actions-cell">
                         <div class="category-actions">
-                            <button class="btn-edit" onclick="editMainCategory('${category.id}')">
+                            <button class="btn-edit" onclick="editMainCategory('${category.id || index}')">
                                 <i class="fas fa-edit"></i> تعديل
                             </button>
-                            <button class="btn-delete" onclick="deleteMainCategory('${category.id}')">
+                            <button class="btn-delete" onclick="deleteMainCategory('${category.id || index}')">
                                 <i class="fas fa-trash"></i> حذف
                             </button>
                         </div>
@@ -1323,6 +1336,8 @@
                 
                 tableBody.appendChild(row);
             });
+            
+            console.log('✅ Table populated successfully');
         }
 
         // Refresh table function
@@ -1355,10 +1370,37 @@
             }
         }
 
+        // Load categories data function
+        async function loadCategoriesData() {
+            try {
+                // Use the existing loadCategories function from categories-hierarchical.js
+                if (typeof loadCategories === 'function') {
+                    await loadCategories();
+                } else {
+                    // Fallback to direct API call
+                    const data = await fetchCategoriesFromAPI();
+                    categoriesData = data;
+                }
+                renderMainCategories();
+                populateCategoriesTable();
+            } catch (error) {
+                console.error('خطأ في تحميل البيانات:', error);
+                // Use fallback data if API fails
+                if (typeof categoriesData === 'undefined' || !categoriesData.mainCategories) {
+                    // Initialize with empty data
+                    categoriesData = { mainCategories: [], subcategories: {} };
+                    renderMainCategories();
+                    populateCategoriesTable();
+                }
+            }
+        }
+
         // Override renderMainCategories to also populate table
         document.addEventListener('DOMContentLoaded', function() {
-            // Load data and render both cards and table
-            loadCategoriesData();
+            // Wait for other scripts to load first
+            setTimeout(() => {
+                loadCategoriesData();
+            }, 500);
             
             // Create mobile toggle button if needed
             const pageTitle = document.querySelector('.page-title');
@@ -1369,11 +1411,6 @@
                 toggleBtn.onclick = toggleSidebar;
                 pageTitle.parentElement.insertBefore(toggleBtn, pageTitle);
             }
-            
-            // Initial table population
-            setTimeout(() => {
-                populateCategoriesTable();
-            }, 1000);
         });
     </script>
 </body>
