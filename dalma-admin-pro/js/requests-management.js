@@ -350,7 +350,7 @@ function renderProviderRequests() {
                 </button>
             </div>
         </div>
-    `};
+        `;
     }).join('');
 }
 
