@@ -158,24 +158,39 @@ class _ProviderDashboardNewState extends State<ProviderDashboardNew>
         ),
       ),
       // Bottom Navigation Bar
-      bottomNavigationBar: AnimatedBottomNavigationBar(
-        icons: const [
-          Icons.home_rounded,
-          Icons.inventory_rounded,
-          Icons.videocam_rounded,
-          Icons.analytics_rounded,
-          Icons.settings_rounded,
-        ],
-        activeIndex: _currentPage,
-        gapLocation: GapLocation.end,
-        notchSmoothness: NotchSmoothness.smoothEdge,
-        onTap: _changePage,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentPage,
+        onDestinationSelected: _changePage,
         backgroundColor: theme.cardColor,
-        activeColor: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
-        inactiveColor: theme.textSecondaryColor,
-        leftCornerRadius: 20,
-        rightCornerRadius: 0,
-        iconSize: 24,
+        indicatorColor: isDark ? ThemeConfig.kGoldNight : ThemeConfig.kGreen,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'الرئيسية',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.inventory_2_outlined),
+            selectedIcon: Icon(Icons.inventory_2_rounded),
+            label: 'المنتجات',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.videocam_outlined),
+            selectedIcon: Icon(Icons.videocam_rounded),
+            label: 'الفيديوهات',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.analytics_outlined),
+            selectedIcon: Icon(Icons.analytics_rounded),
+            label: 'الإحصائيات',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings_rounded),
+            label: 'الإعدادات',
+          ),
+        ],
       ),
     );
   }
@@ -497,7 +512,7 @@ class _ProductsTab extends StatelessWidget {
 }
 
 // ============================================
-// Videos Tab
+// Videos Tab - محسّنة
 // ============================================
 class _VideosTab extends StatelessWidget {
   final List<Map<String, dynamic>> videos;
@@ -584,6 +599,33 @@ class _AnalyticsTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
+          
+          // مبيعات اليوم والشهر
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 1.2,
+            children: [
+              _StatCard(
+                icon: Icons.trending_up_rounded,
+                title: 'المبيعات',
+                value: '${storeData['total_sales'] ?? 0} ر.س',
+                color: Colors.blue,
+              ),
+              _StatCard(
+                icon: Icons.star_rounded,
+                title: 'التقييم',
+                value: '${storeData['rating'] ?? 0}/5',
+                color: Colors.amber,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // رسم بياني
           Container(
             height: 250,
             decoration: BoxDecoration(
@@ -592,6 +634,46 @@ class _AnalyticsTab extends StatelessWidget {
               border: Border.all(color: theme.borderColor),
             ),
             child: const _SalesChart(),
+          ),
+          const SizedBox(height: 20),
+          
+          // معلومات إضافية
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: theme.borderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'إحصائيات سريعة',
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: theme.textPrimaryColor,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _StatRow(
+                  label: 'إجمالي الطلبات',
+                  value: '${storeData['total_orders'] ?? 0}',
+                  theme: theme,
+                ),
+                _StatRow(
+                  label: 'العملاء الراضون',
+                  value: '${storeData['happy_customers'] ?? 0}%',
+                  theme: theme,
+                ),
+                _StatRow(
+                  label: 'متوسط الرد',
+                  value: '2 ساعة',
+                  theme: theme,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 30),
         ],
@@ -884,13 +966,34 @@ class _ProductCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        '${product['price'] ?? 0} ر.س',
-                        style: GoogleFonts.cairo(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: ThemeConfig.kGreen,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            '${product['price'] ?? 0} ر.س',
+                            style: GoogleFonts.cairo(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: ThemeConfig.kGreen,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          if (product['stock'] != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: ThemeConfig.kGreen.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'الرصيد: ${product['stock']}',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 12,
+                                  color: ThemeConfig.kGreen,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -966,20 +1069,40 @@ class _VideoCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.remove_red_eye_rounded,
-                          size: 14,
-                          color: theme.textSecondaryColor,
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.remove_red_eye_rounded,
+                              size: 14,
+                              color: theme.textSecondaryColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${video['views_count'] ?? 0}',
+                              style: GoogleFonts.cairo(
+                                fontSize: 12,
+                                color: theme.textSecondaryColor,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${video['views_count'] ?? 0}',
-                          style: GoogleFonts.cairo(
-                            fontSize: 12,
-                            color: theme.textSecondaryColor,
+                        if (video['duration'] != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: theme.backgroundColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              video['duration'],
+                              style: GoogleFonts.cairo(
+                                fontSize: 11,
+                                color: theme.textSecondaryColor,
+                              ),
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ],
@@ -1152,6 +1275,48 @@ class _NoStoreWidget extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ============================================
+// Stat Row Widget
+// ============================================
+class _StatRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final ThemeConfig theme;
+
+  const _StatRow({
+    required this.label,
+    required this.value,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.cairo(
+              fontSize: 14,
+              color: theme.textSecondaryColor,
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.cairo(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: theme.textPrimaryColor,
+            ),
+          ),
+        ],
       ),
     );
   }
