@@ -2,13 +2,11 @@
 // لوحة تحكم مقدم الخدمة - تصميم احترافي حديث
 // Modern Provider Dashboard - Premium Design 🚀
 
-import 'dart:ui';
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
@@ -16,7 +14,6 @@ import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.da
 import 'theme_config.dart';
 import 'notifications.dart';
 import 'api_config.dart';
-import 'auth.dart';
 
 class ProviderDashboardNew extends StatefulWidget {
   const ProviderDashboardNew({super.key});
@@ -187,7 +184,6 @@ class _ProviderDashboardNewState extends State<ProviderDashboardNew>
   }
 
   Widget _buildFAB(bool isDark) {
-    List<String> labels = ['الرئيسية', 'المنتجات', 'الفيديوهات', 'الإحصائيات', 'الإعدادات'];
     List<String> actions = ['المتجر', 'منتج', 'فيديو', 'تحليل', 'إعداد'];
 
     return GestureDetector(
