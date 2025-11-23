@@ -19,9 +19,12 @@ class StoresPage extends StatefulWidget {
 class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Map<String, dynamic>> _stores = [];
-  List<Map<String, dynamic>> _categories = [];
-  String _selectedCategoryId = 'all';
+  List<Map<String, dynamic>> _mainCategories = [];
+  List<Map<String, dynamic>> _subcategories = [];
+  String _selectedMainCategoryId = 'all';
+  String? _selectedSubcategoryId;
   bool _isLoading = true;
+  bool _showSubcategories = false;
   String _searchQuery = '';
 
   @override
@@ -40,21 +43,117 @@ class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateM
 
   Future<void> _loadCategories() async {
     try {
-      // Hardcoded categories (will be fetched from API in production)
-      final categories = [
-        {'id': 'all', 'name': 'الكل', 'emoji': '📦', 'color': Colors.grey},
-        {'id': 'clothing', 'name': 'الملابس والأزياء', 'emoji': '👔', 'color': Colors.blue},
-        {'id': 'electronics', 'name': 'الإلكترونيات', 'emoji': '📱', 'color': Colors.purple},
-        {'id': 'furniture', 'name': 'المنزل والأثاث', 'emoji': '🏠', 'color': Colors.orange},
-        {'id': 'food', 'name': 'الغذائية والمشروبات', 'emoji': '🍔', 'color': Colors.red},
-        {'id': 'beauty', 'name': 'الجمال والعناية', 'emoji': '💄', 'color': Colors.pink},
-        {'id': 'sports', 'name': 'الرياضة واللياقة', 'emoji': '⚽', 'color': Colors.green},
-        {'id': 'education', 'name': 'الكتب والتعليم', 'emoji': '📚', 'color': Colors.indigo},
-        {'id': 'services', 'name': 'الخدمات', 'emoji': '🛠️', 'color': Colors.teal},
+      // Hierarchical categories with subcategories
+      final hierarchicalCategories = [
+        {
+          'id': 'all',
+          'name': 'الكل',
+          'emoji': '📦',
+          'color': Colors.grey,
+          'name_en': 'All',
+          'subcategories': []
+        },
+        {
+          'id': '1',
+          'emoji': '🍔',
+          'name': 'أكل',
+          'name_en': 'Food',
+          'color': Colors.red,
+          'subcategories': [
+            {'id': '1-1', 'name': 'برقر', 'name_en': 'Burger'},
+            {'id': '1-2', 'name': 'عربي', 'name_en': 'Arabic'},
+            {'id': '1-3', 'name': 'زر', 'name_en': 'Sushi'},
+            {'id': '1-4', 'name': 'صيني', 'name_en': 'Chinese'},
+          ],
+        },
+        {
+          'id': '2',
+          'emoji': '👔',
+          'name': 'ملابس',
+          'name_en': 'Clothing',
+          'color': Colors.blue,
+          'subcategories': [
+            {'id': '2-1', 'name': 'رجالي', 'name_en': 'Mens'},
+            {'id': '2-2', 'name': 'نسائي', 'name_en': 'Womens'},
+            {'id': '2-3', 'name': 'أطفال', 'name_en': 'Kids'},
+          ],
+        },
+        {
+          'id': '3',
+          'emoji': '📱',
+          'name': 'إلكترونيات',
+          'name_en': 'Electronics',
+          'color': Colors.purple,
+          'subcategories': [
+            {'id': '3-1', 'name': 'هواتف', 'name_en': 'Phones'},
+            {'id': '3-2', 'name': 'أجهزة كمبيوتر', 'name_en': 'Computers'},
+            {'id': '3-3', 'name': 'إكسسوارات', 'name_en': 'Accessories'},
+          ],
+        },
+        {
+          'id': '4',
+          'emoji': '🏠',
+          'name': 'منزل وأثاث',
+          'name_en': 'Home & Furniture',
+          'color': Colors.orange,
+          'subcategories': [
+            {'id': '4-1', 'name': 'أثاث', 'name_en': 'Furniture'},
+            {'id': '4-2', 'name': 'ديكور', 'name_en': 'Decor'},
+            {'id': '4-3', 'name': 'أدوات منزلية', 'name_en': 'Tools'},
+          ],
+        },
+        {
+          'id': '5',
+          'emoji': '💄',
+          'name': 'جمال وعناية',
+          'name_en': 'Beauty & Care',
+          'color': Colors.pink,
+          'subcategories': [
+            {'id': '5-1', 'name': 'مستحضرات العناية', 'name_en': 'Skincare'},
+            {'id': '5-2', 'name': 'مستحضرات التجميل', 'name_en': 'Cosmetics'},
+            {'id': '5-3', 'name': 'العناية بالشعر', 'name_en': 'Haircare'},
+          ],
+        },
+        {
+          'id': '6',
+          'emoji': '⚽',
+          'name': 'رياضة',
+          'name_en': 'Sports',
+          'color': Colors.green,
+          'subcategories': [
+            {'id': '6-1', 'name': 'معدات رياضية', 'name_en': 'Equipment'},
+            {'id': '6-2', 'name': 'ملابس رياضية', 'name_en': 'Apparel'},
+            {'id': '6-3', 'name': 'أحذية', 'name_en': 'Shoes'},
+          ],
+        },
+        {
+          'id': '7',
+          'emoji': '📚',
+          'name': 'تعليم وكتب',
+          'name_en': 'Education & Books',
+          'color': Colors.indigo,
+          'subcategories': [
+            {'id': '7-1', 'name': 'كتب', 'name_en': 'Books'},
+            {'id': '7-2', 'name': 'دورات تعليمية', 'name_en': 'Courses'},
+            {'id': '7-3', 'name': 'مذكرات ودفاتر', 'name_en': 'Notebooks'},
+          ],
+        },
+        {
+          'id': '8',
+          'emoji': '🛠️',
+          'name': 'خدمات',
+          'name_en': 'Services',
+          'color': Colors.teal,
+          'subcategories': [
+            {'id': '8-1', 'name': 'صيانة', 'name_en': 'Maintenance'},
+            {'id': '8-2', 'name': 'تصليح', 'name_en': 'Repair'},
+            {'id': '8-3', 'name': 'استشارات', 'name_en': 'Consulting'},
+          ],
+        },
       ];
 
       setState(() {
-        _categories = categories;
+        _mainCategories = hierarchicalCategories;
       });
     } catch (e) {
       print('❌ Error loading categories: $e');
@@ -65,9 +164,15 @@ class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateM
     setState(() => _isLoading = true);
     
     try {
-      final url = _selectedCategoryId == 'all'
-          ? '${ApiConfig.baseUrl}/api/stores'
-          : '${ApiConfig.baseUrl}/api/stores?category=$_selectedCategoryId';
+      String url = '${ApiConfig.baseUrl}/api/stores';
+      
+      if (_selectedMainCategoryId != 'all') {
+        url += '?category=$_selectedMainCategoryId';
+        
+        if (_selectedSubcategoryId != null) {
+          url += '&subcategory=$_selectedSubcategoryId';
+        }
+      }
           
       final response = await http.get(
         Uri.parse(url),
@@ -87,6 +192,26 @@ class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateM
       print('❌ Error loading stores: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  void _selectMainCategory(String categoryId) {
+    setState(() {
+      if (_selectedMainCategoryId == categoryId) {
+        _showSubcategories = !_showSubcategories;
+      } else {
+        _selectedMainCategoryId = categoryId;
+        _selectedSubcategoryId = null;
+        _showSubcategories = categoryId != 'all';
+      }
+    });
+    _loadStores();
+  }
+
+  void _selectSubcategory(String subcategoryId) {
+    setState(() {
+      _selectedSubcategoryId = _selectedSubcategoryId == subcategoryId ? null : subcategoryId;
+    });
+    _loadStores();
   }
 
   List<Map<String, dynamic>> get _filteredStores {
@@ -189,15 +314,16 @@ class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateM
                     ),
                   ),
                   const SizedBox(height: 12),
+                  // Main Categories
                   SizedBox(
                     height: 60,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _categories.length,
+                      itemCount: _mainCategories.length,
                       itemBuilder: (context, index) {
-                        final category = _categories[index];
-                        final isSelected = category['id'] == _selectedCategoryId;
+                        final category = _mainCategories[index];
+                        final isSelected = category['id'] == _selectedMainCategoryId;
                         final emoji = category['emoji'] as String;
                         final name = category['name'] as String;
                         final catColor = category['color'] as Color;
@@ -209,12 +335,7 @@ class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateM
                             shadowColor: primaryColor.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(16),
                             child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _selectedCategoryId = category['id'] as String;
-                                });
-                                _loadStores();
-                              },
+                              onTap: () => _selectMainCategory(category['id'] as String),
                               borderRadius: BorderRadius.circular(16),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -277,6 +398,55 @@ class _StoresPageState extends State<StoresPage> with SingleTickerProviderStateM
                       },
                     ),
                   ),
+                  
+                  // Subcategories (shown when main category selected)
+                  if (_selectedMainCategoryId != 'all' && _showSubcategories)
+                    ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 45,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: (_mainCategories
+                                  .firstWhere((c) => c['id'] == _selectedMainCategoryId)['subcategories']
+                              as List)
+                              .length,
+                          itemBuilder: (context, index) {
+                            final mainCat = _mainCategories.firstWhere(
+                              (c) => c['id'] == _selectedMainCategoryId,
+                            );
+                            final subcategories =
+                                mainCat['subcategories'] as List<dynamic>;
+                            final subcat = subcategories[index] as Map<String, dynamic>;
+                            final isSubSelected = subcat['id'] == _selectedSubcategoryId;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: FilterChip(
+                                label: Text(
+                                  subcat['name'] as String,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isSubSelected
+                                        ? Colors.white
+                                        : (isDark
+                                            ? Colors.white70
+                                            : Colors.black87),
+                                  ),
+                                ),
+                                backgroundColor: isSubSelected
+                                    ? primaryColor
+                                    : (isDark ? Colors.grey[800] : Colors.grey[200]),
+                                onSelected: (selected) {
+                                  _selectSubcategory(subcat['id'] as String);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                 ],
               ),
             ),

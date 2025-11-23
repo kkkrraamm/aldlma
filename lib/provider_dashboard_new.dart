@@ -1398,123 +1398,586 @@ class _SettingsTab extends StatelessWidget {
     final theme = ThemeConfig.instance;
     final isDark = theme.isDarkMode;
 
-    // Sample categories with emojis (will be loaded from API in production)
-    final categories = [
-      {'name': 'الملابس والأزياء', 'emoji': '👔', 'id': 'clothing'},
-      {'name': 'الإلكترونيات', 'emoji': '📱', 'id': 'electronics'},
-      {'name': 'المنزل والأثاث', 'emoji': '🏠', 'id': 'furniture'},
-      {'name': 'الغذائية والمشروبات', 'emoji': '🍔', 'id': 'food'},
-      {'name': 'الجمال والعناية', 'emoji': '💄', 'id': 'beauty'},
-      {'name': 'الرياضة واللياقة', 'emoji': '⚽', 'id': 'sports'},
-      {'name': 'الكتب والتعليم', 'emoji': '📚', 'id': 'education'},
-      {'name': 'الخدمات', 'emoji': '🛠️', 'id': 'services'},
+    // Hierarchical categories structure
+    // In production, this should be fetched from API: /api/categories/hierarchical
+    final hierarchicalCategories = [
+      {
+        'id': '1',
+        'emoji': '🍔',
+        'name': 'أكل',
+        'name_en': 'Food',
+        'subcategories': [
+          {'id': '1-1', 'name': 'برقر', 'name_en': 'Burger'},
+          {'id': '1-2', 'name': 'عربي', 'name_en': 'Arabic'},
+          {'id': '1-3', 'name': 'زر', 'name_en': 'Sushi'},
+          {'id': '1-4', 'name': 'صيني', 'name_en': 'Chinese'},
+        ],
+      },
+      {
+        'id': '2',
+        'emoji': '👔',
+        'name': 'ملابس',
+        'name_en': 'Clothing',
+        'subcategories': [
+          {'id': '2-1', 'name': 'رجالي', 'name_en': 'Mens'},
+          {'id': '2-2', 'name': 'نسائي', 'name_en': 'Womens'},
+          {'id': '2-3', 'name': 'أطفال', 'name_en': 'Kids'},
+        ],
+      },
+      {
+        'id': '3',
+        'emoji': '📱',
+        'name': 'إلكترونيات',
+        'name_en': 'Electronics',
+        'subcategories': [
+          {'id': '3-1', 'name': 'هواتف', 'name_en': 'Phones'},
+          {'id': '3-2', 'name': 'أجهزة كمبيوتر', 'name_en': 'Computers'},
+          {'id': '3-3', 'name': 'إكسسوارات', 'name_en': 'Accessories'},
+        ],
+      },
+      {
+        'id': '4',
+        'emoji': '🏠',
+        'name': 'منزل وأثاث',
+        'name_en': 'Home & Furniture',
+        'subcategories': [
+          {'id': '4-1', 'name': 'أثاث', 'name_en': 'Furniture'},
+          {'id': '4-2', 'name': 'ديكور', 'name_en': 'Decor'},
+          {'id': '4-3', 'name': 'أدوات منزلية', 'name_en': 'Tools'},
+        ],
+      },
+      {
+        'id': '5',
+        'emoji': '💄',
+        'name': 'جمال وعناية',
+        'name_en': 'Beauty & Care',
+        'subcategories': [
+          {'id': '5-1', 'name': 'مستحضرات العناية', 'name_en': 'Skincare'},
+          {'id': '5-2', 'name': 'مستحضرات التجميل', 'name_en': 'Cosmetics'},
+          {'id': '5-3', 'name': 'العناية بالشعر', 'name_en': 'Haircare'},
+        ],
+      },
+      {
+        'id': '6',
+        'emoji': '⚽',
+        'name': 'رياضة',
+        'name_en': 'Sports',
+        'subcategories': [
+          {'id': '6-1', 'name': 'معدات رياضية', 'name_en': 'Equipment'},
+          {'id': '6-2', 'name': 'ملابس رياضية', 'name_en': 'Apparel'},
+          {'id': '6-3', 'name': 'أحذية', 'name_en': 'Shoes'},
+        ],
+      },
+      {
+        'id': '7',
+        'emoji': '📚',
+        'name': 'تعليم وكتب',
+        'name_en': 'Education & Books',
+        'subcategories': [
+          {'id': '7-1', 'name': 'كتب', 'name_en': 'Books'},
+          {'id': '7-2', 'name': 'دورات تعليمية', 'name_en': 'Courses'},
+          {'id': '7-3', 'name': 'مذكرات ودفاتر', 'name_en': 'Notebooks'},
+        ],
+      },
+      {
+        'id': '8',
+        'emoji': '🛠️',
+        'name': 'خدمات',
+        'name_en': 'Services',
+        'subcategories': [
+          {'id': '8-1', 'name': 'صيانة', 'name_en': 'Maintenance'},
+          {'id': '8-2', 'name': 'تصليح', 'name_en': 'Repair'},
+          {'id': '8-3', 'name': 'استشارات', 'name_en': 'Consulting'},
+        ],
+      },
     ];
 
-    String? selectedCategory = storeData['category'] as String?;
+    String? selectedMainCategory = storeData['main_category'] as String?;
+    late String? selectedSubcategory;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: theme.cardColor,
-        title: Text(
-          'تصنيف المتجر',
-          style: GoogleFonts.cairo(fontWeight: FontWeight.w900),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(
-            'اختر التصنيف الذي ينتمي إليه متجرك',
-            style: GoogleFonts.cairo(
-              fontSize: 12,
-              color: theme.textSecondaryColor,
-            ),
-          ),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: theme.cardColor,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              ...categories.map(
-                (cat) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: InkWell(
-                    onTap: () => selectedCategory = cat['id'] as String,
-                    borderRadius: BorderRadius.circular(12),
-                    child: StatefulBuilder(
-                      builder: (context, setState) => Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: selectedCategory == cat['id']
-                              ? (isDark
-                                  ? ThemeConfig.kGoldNight
-                                  : ThemeConfig.kGreen)
-                                  .withOpacity(0.15)
-                              : theme.backgroundColor,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: selectedCategory == cat['id']
-                                ? (isDark
-                                    ? ThemeConfig.kGoldNight
-                                    : ThemeConfig.kGreen)
-                                : theme.borderColor,
-                            width: 2,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              cat['emoji'] as String,
-                              style: const TextStyle(fontSize: 28),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                cat['name'] as String,
-                                style: GoogleFonts.cairo(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.textPrimaryColor,
-                                ),
-                              ),
-                            ),
-                            if (selectedCategory == cat['id'])
-                              Icon(
-                                Icons.check_circle_rounded,
-                                color: isDark
-                                    ? ThemeConfig.kGoldNight
-                                    : ThemeConfig.kGreen,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
+              Text(
+                'تصنيف المتجر الهرمي',
+                style: GoogleFonts.cairo(fontWeight: FontWeight.w900),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'اختر التصنيف الرئيسي - الفئات الفرعية اختيارية',
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: theme.textSecondaryColor,
                   ),
                 ),
               ),
             ],
           ),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.85,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'الفئات الرئيسية',
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: theme.textPrimaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ...hierarchicalCategories.map(
+                    (mainCat) {
+                      final isSelected = selectedMainCategory == mainCat['id'];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              selectedMainCategory = mainCat['id'] as String;
+                              selectedSubcategory = null;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? (isDark
+                                      ? ThemeConfig.kGoldNight
+                                      : ThemeConfig.kGreen)
+                                      .withOpacity(0.15)
+                                  : theme.backgroundColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? (isDark
+                                        ? ThemeConfig.kGoldNight
+                                        : ThemeConfig.kGreen)
+                                    : theme.borderColor,
+                                width: isSelected ? 2 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  mainCat['emoji'] as String,
+                                  style: const TextStyle(fontSize: 28),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        mainCat['name'] as String,
+                                        style: GoogleFonts.cairo(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: theme.textPrimaryColor,
+                                        ),
+                                      ),
+                                      Text(
+                                        mainCat['name_en'] as String,
+                                        style: GoogleFonts.cairo(
+                                          fontSize: 12,
+                                          color: theme.textSecondaryColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    color: isDark
+                                        ? ThemeConfig.kGoldNight
+                                        : ThemeConfig.kGreen,
+                                    size: 24,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  if (selectedMainCategory != null) ...[
+                    const SizedBox(height: 20),
+                    Divider(color: theme.borderColor),
+                    const SizedBox(height: 16),
+                    Text(
+                      'الفئات الفرعية (اختيارية)',
+                      style: GoogleFonts.cairo(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textPrimaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ...(hierarchicalCategories
+                            .firstWhere((c) => c['id'] == selectedMainCategory)['subcategories']
+                        as List)
+                        .map(
+                      (subCat) {
+                        final isSubSelected = selectedSubcategory == subCat['id'];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                selectedSubcategory =
+                                    isSubSelected ? null : (subCat['id'] as String);
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSubSelected
+                                    ? (isDark
+                                        ? ThemeConfig.kGoldNight
+                                        : ThemeConfig.kGreen)
+                                        .withOpacity(0.1)
+                                    : theme.backgroundColor,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isSubSelected
+                                      ? (isDark
+                                          ? ThemeConfig.kGoldNight
+                                          : ThemeConfig.kGreen)
+                                      : theme.borderColor,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          subCat['name'] as String,
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 13,
+                                            fontWeight: isSubSelected ? FontWeight.w700 : FontWeight.w600,
+                                            color: theme.textPrimaryColor,
+                                          ),
+                                        ),
+                                        Text(
+                                          subCat['name_en'] as String,
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 11,
+                                            color: theme.textSecondaryColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSubSelected)
+                                    Icon(
+                                      Icons.check_circle_rounded,
+                                      color: isDark
+                                          ? ThemeConfig.kGoldNight
+                                          : ThemeConfig.kGreen,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (selectedMainCategory != null) {
+                  Navigator.pop(context);
+                  final mainCat = hierarchicalCategories
+                      .firstWhere((c) => c['id'] == selectedMainCategory);
+                  final message = selectedSubcategory != null
+                      ? '✅ تم تحديث تصنيف المتجر: ${mainCat['emoji']} ${mainCat['name']}'
+                      : '✅ تم تحديث تصنيف المتجر: ${mainCat['emoji']} ${mainCat['name']}';
+                  NotificationsService.instance.toast(message);
+                } else {
+                  NotificationsService.instance.toast(
+                    '⚠️ يرجى اختيار تصنيف رئيسي',
+                  );
+                }
+              },
+              child: const Text('حفظ'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (selectedCategory != null) {
-                Navigator.pop(context);
-                NotificationsService.instance.toast(
-                  '✅ تم تحديث تصنيف المتجر!',
-                );
-              } else {
-                NotificationsService.instance.toast(
-                  '⚠️ يرجى اختيار تصنيف',
-                );
-              }
-            },
-            child: const Text('حفظ'),
-          ),
+      ),
+    );
+  }
+
+  void _showProductSubcategoryDialog(BuildContext context, Map<String, dynamic> storeData) {
+    final theme = ThemeConfig.instance;
+    final isDark = theme.isDarkMode;
+
+    // Get the store's main category
+    final mainCategoryId = storeData['main_category'] as String?;
+    
+    if (mainCategoryId == null) {
+      NotificationsService.instance.toast(
+        '⚠️ يجب اختيار تصنيف رئيسي للمتجر أولاً',
+      );
+      return;
+    }
+
+    // Hierarchical categories structure (same as in category dialog)
+    final hierarchicalCategories = [
+      {
+        'id': '1',
+        'emoji': '🍔',
+        'name': 'أكل',
+        'name_en': 'Food',
+        'subcategories': [
+          {'id': '1-1', 'name': 'برقر', 'name_en': 'Burger'},
+          {'id': '1-2', 'name': 'عربي', 'name_en': 'Arabic'},
+          {'id': '1-3', 'name': 'زر', 'name_en': 'Sushi'},
+          {'id': '1-4', 'name': 'صيني', 'name_en': 'Chinese'},
         ],
+      },
+      {
+        'id': '2',
+        'emoji': '👔',
+        'name': 'ملابس',
+        'name_en': 'Clothing',
+        'subcategories': [
+          {'id': '2-1', 'name': 'رجالي', 'name_en': 'Mens'},
+          {'id': '2-2', 'name': 'نسائي', 'name_en': 'Womens'},
+          {'id': '2-3', 'name': 'أطفال', 'name_en': 'Kids'},
+        ],
+      },
+      {
+        'id': '3',
+        'emoji': '📱',
+        'name': 'إلكترونيات',
+        'name_en': 'Electronics',
+        'subcategories': [
+          {'id': '3-1', 'name': 'هواتف', 'name_en': 'Phones'},
+          {'id': '3-2', 'name': 'أجهزة كمبيوتر', 'name_en': 'Computers'},
+          {'id': '3-3', 'name': 'إكسسوارات', 'name_en': 'Accessories'},
+        ],
+      },
+      {
+        'id': '4',
+        'emoji': '🏠',
+        'name': 'منزل وأثاث',
+        'name_en': 'Home & Furniture',
+        'subcategories': [
+          {'id': '4-1', 'name': 'أثاث', 'name_en': 'Furniture'},
+          {'id': '4-2', 'name': 'ديكور', 'name_en': 'Decor'},
+          {'id': '4-3', 'name': 'أدوات منزلية', 'name_en': 'Tools'},
+        ],
+      },
+      {
+        'id': '5',
+        'emoji': '💄',
+        'name': 'جمال وعناية',
+        'name_en': 'Beauty & Care',
+        'subcategories': [
+          {'id': '5-1', 'name': 'مستحضرات العناية', 'name_en': 'Skincare'},
+          {'id': '5-2', 'name': 'مستحضرات التجميل', 'name_en': 'Cosmetics'},
+          {'id': '5-3', 'name': 'العناية بالشعر', 'name_en': 'Haircare'},
+        ],
+      },
+      {
+        'id': '6',
+        'emoji': '⚽',
+        'name': 'رياضة',
+        'name_en': 'Sports',
+        'subcategories': [
+          {'id': '6-1', 'name': 'معدات رياضية', 'name_en': 'Equipment'},
+          {'id': '6-2', 'name': 'ملابس رياضية', 'name_en': 'Apparel'},
+          {'id': '6-3', 'name': 'أحذية', 'name_en': 'Shoes'},
+        ],
+      },
+      {
+        'id': '7',
+        'emoji': '📚',
+        'name': 'تعليم وكتب',
+        'name_en': 'Education & Books',
+        'subcategories': [
+          {'id': '7-1', 'name': 'كتب', 'name_en': 'Books'},
+          {'id': '7-2', 'name': 'دورات تعليمية', 'name_en': 'Courses'},
+          {'id': '7-3', 'name': 'مذكرات ودفاتر', 'name_en': 'Notebooks'},
+        ],
+      },
+      {
+        'id': '8',
+        'emoji': '🛠️',
+        'name': 'خدمات',
+        'name_en': 'Services',
+        'subcategories': [
+          {'id': '8-1', 'name': 'صيانة', 'name_en': 'Maintenance'},
+          {'id': '8-2', 'name': 'تصليح', 'name_en': 'Repair'},
+          {'id': '8-3', 'name': 'استشارات', 'name_en': 'Consulting'},
+        ],
+      },
+    ];
+
+    final mainCategory = hierarchicalCategories.firstWhere(
+      (c) => c['id'] == mainCategoryId,
+      orElse: () => hierarchicalCategories.first,
+    );
+
+    String? selectedSubcategory;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: theme.cardColor,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'تحديد فئة المنتج',
+                style: GoogleFonts.cairo(fontWeight: FontWeight.w900),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '${mainCategory['emoji']} ${mainCategory['name']} - اختر فئة فرعية',
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: theme.textSecondaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ...(mainCategory['subcategories'] as List)
+                      .map(
+                        (subCat) {
+                          final isSelected = selectedSubcategory == subCat['id'];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  selectedSubcategory =
+                                      isSelected ? null : (subCat['id'] as String);
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? (isDark
+                                          ? ThemeConfig.kGoldNight
+                                          : ThemeConfig.kGreen)
+                                          .withOpacity(0.15)
+                                      : theme.backgroundColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? (isDark
+                                            ? ThemeConfig.kGoldNight
+                                            : ThemeConfig.kGreen)
+                                        : theme.borderColor,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            subCat['name'] as String,
+                                            style: GoogleFonts.cairo(
+                                              fontSize: 14,
+                                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                              color: theme.textPrimaryColor,
+                                            ),
+                                          ),
+                                          Text(
+                                            subCat['name_en'] as String,
+                                            style: GoogleFonts.cairo(
+                                              fontSize: 12,
+                                              color: theme.textSecondaryColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(
+                                        Icons.check_circle_rounded,
+                                        color: isDark
+                                            ? ThemeConfig.kGoldNight
+                                            : ThemeConfig.kGreen,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                      .toList(),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                if (selectedSubcategory != null) {
+                  final subCat = (mainCategory['subcategories'] as List)
+                      .firstWhere((s) => s['id'] == selectedSubcategory);
+                  NotificationsService.instance.toast(
+                    '✅ تم تحديد الفئة الفرعية: ${subCat['name']}',
+                  );
+                }
+              },
+              child: const Text('حفظ'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -3393,6 +3856,24 @@ class _ProductCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (product['subcategory'] != null) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: ThemeConfig.kGoldNight.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            product['subcategory'],
+                            style: GoogleFonts.cairo(
+                              fontSize: 11,
+                              color: ThemeConfig.kGoldNight,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Row(
                         children: [
