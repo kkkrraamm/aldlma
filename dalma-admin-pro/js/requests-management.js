@@ -277,45 +277,78 @@ function renderProviderRequests() {
                 </div>
                 
                 <div class="request-details">
+                    <!-- معلومات المالك -->
                     <div class="detail-item">
                         <i class="fas fa-user"></i>
-                        <span><strong>المالك:</strong> ${request.user_name || 'غير محدد'}</span>
+                        <span><strong>👤 المالك:</strong> ${request.user_name || 'غير محدد'}</span>
                     </div>
+                    
+                    <!-- بيانات الاتصال -->
                     <div class="detail-item">
                         <i class="fas fa-envelope"></i>
-                        <span>${request.email || 'غير محدد'}</span>
+                        <span><strong>📧 البريد:</strong> ${request.email || 'غير محدد'}</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-phone"></i>
-                        <span>${request.whatsapp_number || 'غير محدد'}</span>
+                        <span><strong>📱 الواتس:</strong> ${request.whatsapp_number || 'غير محدد'}</span>
                     </div>
+                    
+                    <!-- معلومات العمل -->
                     <div class="detail-item">
                         <i class="fas fa-briefcase"></i>
-                        <span><strong>النوع:</strong> ${request.business_category || locationData.category || 'غير محدد'}</span>
+                        <span><strong>🏢 نوع الخدمة:</strong> ${request.business_category || locationData.category || 'غير محدد'}</span>
                     </div>
                     <div class="detail-item">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span><strong>الموقع:</strong> ${request.location_address && typeof request.location_address !== 'string' ? request.location_address : locationData.location || 'غير محدد'}</span>
+                        <span><strong>📍 الموقع:</strong> ${request.location_address && typeof request.location_address !== 'string' ? request.location_address : locationData.location || 'غير محدد'}</span>
                     </div>
+                    
+                    <!-- معلومات الرخصة -->
                     <div class="detail-item">
-                        <i class="fas fa-${locationData.has_commercial_license || request.has_commercial_license ? 'check-circle text-success' : 'times-circle text-danger'}"></i>
-                        <span>${locationData.has_commercial_license || request.has_commercial_license ? '✅ لديه رخصة تجارية' : '❌ بدون رخصة'}</span>
+                        <i class="fas fa-${locationData.has_commercial_license || request.has_commercial_license ? 'check-circle' : 'times-circle'}"></i>
+                        <span><strong>📋 الرخصة التجارية:</strong> ${locationData.has_commercial_license || request.has_commercial_license ? '✅ موجودة' : '❌ غير موجودة'}</span>
                     </div>
+                    
                     ${locationData.license_number || request.license_number ? `
                         <div class="detail-item">
-                            <i class="fas fa-certificate"></i>
-                            <span><strong>رقم الرخصة:</strong> ${locationData.license_number || request.license_number}</span>
+                            <i class="fas fa-id-card"></i>
+                            <span><strong>🔢 رقم الرخصة:</strong> <code>${locationData.license_number || request.license_number}</code></span>
                         </div>
                     ` : ''}
+                    
+                    <!-- التواريخ -->
                     <div class="detail-item">
                         <i class="fas fa-calendar"></i>
-                        <span>${formatDate(request.created_at)}</span>
+                        <span><strong>📅 تاريخ الطلب:</strong> ${formatDate(request.created_at)}</span>
                     </div>
+                    
+                    ${request.reviewed_at ? `
+                        <div class="detail-item">
+                            <i class="fas fa-clock"></i>
+                            <span><strong>⏰ تاريخ المراجعة:</strong> ${formatDate(request.reviewed_at)}</span>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- ملاحظات الادمن -->
+                    ${request.admin_notes ? `
+                        <div class="detail-item">
+                            <i class="fas fa-sticky-note"></i>
+                            <span><strong>📝 ملاحظات الإدارة:</strong> ${request.admin_notes}</span>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- سبب الرفض -->
+                    ${request.rejected_reason ? `
+                        <div class="detail-item">
+                            <i class="fas fa-ban"></i>
+                            <span><strong>❌ سبب الرفض:</strong> ${request.rejected_reason}</span>
+                        </div>
+                    ` : ''}
                 </div>
                 
                 ${locationData.description ? `
                     <div class="request-bio">
-                        <strong>الوصف:</strong><br>
+                        <strong>📝 وصف العمل والخدمات:</strong><br>
                         ${locationData.description}
                     </div>
                 ` : ''}
