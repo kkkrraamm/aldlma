@@ -275,7 +275,7 @@
             }
         }
 
-        /* Tables Styles */
+        /* Categories Table View */
         .categories-table-container {
             background: var(--bg-secondary);
             border-radius: 15px;
@@ -283,6 +283,8 @@
             box-shadow: 0 2px 8px var(--shadow);
             border: 1px solid var(--border);
             margin-top: 30px;
+            display: block !important;
+            width: 100%;
         }
 
         .table-header {
@@ -310,12 +312,16 @@
             overflow-x: auto;
             max-height: 600px;
             overflow-y: auto;
+            display: block;
+            width: 100%;
         }
 
         .categories-table {
             width: 100%;
             border-collapse: collapse;
             min-width: 800px;
+            table-layout: fixed;
+            display: table;
         }
 
         .categories-table thead {
@@ -326,7 +332,7 @@
         }
 
         .categories-table th {
-            padding: 15px 20px;
+            padding: 15px 12px;
             text-align: right;
             font-size: 13px;
             font-weight: 700;
@@ -334,11 +340,17 @@
             text-transform: uppercase;
             border-bottom: 2px solid var(--border);
             white-space: nowrap;
+            background: var(--bg-primary);
+        }
+
+        .categories-table tbody {
+            display: table-row-group;
         }
 
         .categories-table tbody tr {
             border-bottom: 1px solid var(--border);
             transition: all 0.2s ease;
+            display: table-row;
         }
 
         .categories-table tbody tr:hover {
@@ -346,10 +358,11 @@
         }
 
         .categories-table td {
-            padding: 18px 20px;
+            padding: 15px 12px;
             color: var(--text-primary);
             font-size: 14px;
             vertical-align: top;
+            display: table-cell;
         }
 
         .category-cell {
@@ -369,6 +382,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .table-category-info {
@@ -412,6 +426,7 @@
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
+            display: inline-block;
         }
 
         .status-active {
@@ -428,6 +443,12 @@
             white-space: nowrap;
         }
 
+        .category-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
         .btn-edit, .btn-delete {
             padding: 6px 12px;
             border: none;
@@ -436,10 +457,13 @@
             font-size: 12px;
             font-weight: 600;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .btn-edit {
-            background: var(--warning);
+            background: #f59e0b;
             color: white;
         }
 
@@ -448,7 +472,7 @@
         }
 
         .btn-delete {
-            background: var(--danger);
+            background: #ef4444;
             color: white;
         }
 
@@ -1307,13 +1331,6 @@
             populateCategoriesTable();
         }
 
-        // Override renderMainCategories to also populate table
-        const originalRenderMainCategories = renderMainCategories;
-        renderMainCategories = function() {
-            originalRenderMainCategories();
-            populateCategoriesTable();
-        };
-
         // Toggle sidebar for mobile
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -1338,8 +1355,11 @@
             }
         }
 
-        // Add mobile sidebar toggle
+        // Override renderMainCategories to also populate table
         document.addEventListener('DOMContentLoaded', function() {
+            // Load data and render both cards and table
+            loadCategoriesData();
+            
             // Create mobile toggle button if needed
             const pageTitle = document.querySelector('.page-title');
             if (pageTitle && window.innerWidth <= 768) {
@@ -1349,6 +1369,11 @@
                 toggleBtn.onclick = toggleSidebar;
                 pageTitle.parentElement.insertBefore(toggleBtn, pageTitle);
             }
+            
+            // Initial table population
+            setTimeout(() => {
+                populateCategoriesTable();
+            }, 1000);
         });
     </script>
 </body>
