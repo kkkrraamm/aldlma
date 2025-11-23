@@ -275,16 +275,182 @@
             }
         }
 
-        /* Categories Table View */
+        /* Force table visibility */
         .categories-table-container {
-            background: var(--bg-secondary);
+            background: var(--bg-secondary) !important;
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 2px 8px var(--shadow);
             border: 1px solid var(--border);
             margin-top: 30px;
             display: block !important;
+            width: 100% !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+            display: block !important;
             width: 100%;
+        }
+
+        .categories-table {
+            width: 100% !important;
+            border-collapse: collapse;
+            min-width: 800px;
+            table-layout: fixed;
+            display: table !important;
+            visibility: visible !important;
+        }
+
+        .categories-table thead {
+            background: var(--bg-primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: table-header-group !important;
+        }
+
+        .categories-table tbody {
+            display: table-row-group !important;
+        }
+
+        .categories-table tr {
+            display: table-row !important;
+        }
+
+        .categories-table th,
+        .categories-table td {
+            display: table-cell !important;
+        }
+
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .pagination-info {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-pagination {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-pagination:hover:not(:disabled) {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-pagination:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-numbers {
+            display: flex;
+            gap: 5px;
+            margin: 0 10px;
+        }
+
+        .page-number {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .page-number:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .page-number.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            font-weight: 700;
+        }
+
+        .pagination-size {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .pagination-size select {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .pagination-size select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .pagination-container {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .pagination-controls {
+                order: 2;
+            }
+            
+            .pagination-info {
+                order: 1;
+            }
+            
+            .pagination-size {
+                order: 3;
+            }
         }
 
         .table-header {
@@ -1314,6 +1480,40 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination Controls -->
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        <span id="paginationInfo">عرض 1 - 5 من أصل 20 عنصر</span>
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="btn-pagination" id="firstPage" onclick="goToPage(1)">
+                            <i class="fas fa-angle-double-right"></i>
+                        </button>
+                        <button class="btn-pagination" id="prevPage" onclick="previousPage()">
+                            <i class="fas fa-angle-right"></i>
+                        </button>
+                        <div class="pagination-numbers" id="paginationNumbers">
+                            <!-- Page numbers will be generated here -->
+                        </div>
+                        <button class="btn-pagination" id="nextPage" onclick="nextPage()">
+                            <i class="fas fa-angle-left"></i>
+                        </button>
+                        <button class="btn-pagination" id="lastPage" onclick="goToLastPage()">
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
+                    </div>
+                    <div class="pagination-size">
+                        <label for="pageSize">عرض:</label>
+                        <select id="pageSize" onchange="changePageSize(this.value)">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>عنصر لكل صفحة</span>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -1426,7 +1626,12 @@
             }
         }
 
-        // Populate categories table
+        // Pagination variables
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalItems = 0;
+
+        // Populate categories table with pagination
         function populateCategoriesTable() {
             const tableBody = document.getElementById('categoriesTableBody');
             if (!tableBody) {
@@ -1442,9 +1647,16 @@
             }
 
             console.log('🔄 Populating table with', categoriesData.mainCategories.length, 'categories');
+            
+            // Calculate pagination
+            totalItems = categoriesData.mainCategories.length;
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const currentItems = categoriesData.mainCategories.slice(startIndex, endIndex);
+            
             tableBody.innerHTML = '';
             
-            categoriesData.mainCategories.forEach((category, index) => {
+            currentItems.forEach((category, index) => {
                 const subcategories = categoriesData.subcategories[category.id] || [];
                 
                 const row = document.createElement('tr');
@@ -1489,7 +1701,87 @@
                 tableBody.appendChild(row);
             });
             
+            // Update pagination controls
+            updatePaginationControls();
             console.log('✅ Table populated successfully');
+        }
+
+        // Update pagination controls
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(totalItems / pageSize);
+            const startItem = (currentPage - 1) * pageSize + 1;
+            const endItem = Math.min(currentPage * pageSize, totalItems);
+            
+            // Update info
+            document.getElementById('paginationInfo').textContent = 
+                `عرض ${startItem} - ${endItem} من أصل ${totalItems} عنصر`;
+            
+            // Update buttons
+            document.getElementById('firstPage').disabled = currentPage === 1;
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages;
+            document.getElementById('lastPage').disabled = currentPage === totalPages;
+            
+            // Update page numbers
+            generatePageNumbers(totalPages);
+        }
+
+        // Generate page numbers
+        function generatePageNumbers(totalPages) {
+            const numbersContainer = document.getElementById('paginationNumbers');
+            numbersContainer.innerHTML = '';
+            
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            // Adjust if we're near the end
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('div');
+                pageBtn.className = `page-number ${i === currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => goToPage(i);
+                numbersContainer.appendChild(pageBtn);
+            }
+        }
+
+        // Pagination functions
+        function goToPage(page) {
+            const totalPages = Math.ceil(totalItems / pageSize);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                populateCategoriesTable();
+            }
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                populateCategoriesTable();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(totalItems / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                populateCategoriesTable();
+            }
+        }
+
+        function goToLastPage() {
+            const totalPages = Math.ceil(totalItems / pageSize);
+            goToPage(totalPages);
+        }
+
+        function changePageSize(newSize) {
+            pageSize = parseInt(newSize);
+            currentPage = 1; // Reset to first page
+            populateCategoriesTable();
         }
 
         // Refresh table function
@@ -1532,29 +1824,86 @@
             }
         }
 
+        // Initialize with sample data for testing
+        let categoriesData = {
+            mainCategories: [
+                {
+                    id: '1',
+                    emoji: '🍔',
+                    name_ar: 'الطعام والمشروبات',
+                    name_en: 'Food & Drinks',
+                    description: 'جميع أنواع المأكولات والمشروبات'
+                },
+                {
+                    id: '2',
+                    emoji: '👔',
+                    name_ar: 'الملابس والأزياء',
+                    name_en: 'Clothes & Fashion',
+                    description: 'ملابس رجالية ونسائية وإكسسوارات'
+                },
+                {
+                    id: '3',
+                    emoji: '🏠',
+                    name_ar: 'المنزل والحديقة',
+                    name_en: 'Home & Garden',
+                    description: 'أثاث ومعدات منزلية'
+                },
+                {
+                    id: '4',
+                    emoji: '💄',
+                    name_ar: 'الجمال والعناية',
+                    name_en: 'Beauty & Care',
+                    description: 'منتجات التجميل والعناية الشخصية'
+                },
+                {
+                    id: '5',
+                    emoji: '⚽',
+                    name_ar: 'الرياضة واللياقة',
+                    name_en: 'Sports & Fitness',
+                    description: 'معدات رياضية ولياقة بدنية'
+                }
+            ],
+            subcategories: {
+                '1': [
+                    { id: 's1', name_ar: 'برجر', name_en: 'Burger', description: 'برجر بأنواعه' },
+                    { id: 's2', name_ar: 'بيتزا', name_en: 'Pizza', description: 'بيتزا إيطالية' }
+                ],
+                '2': [
+                    { id: 's3', name_ar: 'قمصان', name_en: 'Shirts', description: 'قمصان رجالية ونسائية' },
+                    { id: 's4', name_ar: 'أحذية', name_en: 'Shoes', description: 'أحذية بأنواعها' }
+                ],
+                '3': [
+                    { id: 's5', name_ar: 'أثاث', name_en: 'Furniture', description: 'أثاث منزلي' }
+                ],
+                '4': [
+                    { id: 's6', name_ar: 'مكياج', name_en: 'Makeup', description: 'أدوات التجميل' }
+                ],
+                '5': [
+                    { id: 's7', name_ar: 'كرة قدم', name_en: 'Football', description: 'معدات كرة القدم' }
+                ]
+            }
+        };
+
         // Load categories data function
         async function loadCategoriesData() {
             try {
-                // Use the existing loadCategories function from categories-hierarchical.js
+                // Try to load from API first
                 if (typeof loadCategories === 'function') {
                     await loadCategories();
-                } else {
-                    // Fallback to direct API call
+                } else if (typeof fetchCategoriesFromAPI === 'function') {
                     const data = await fetchCategoriesFromAPI();
-                    categoriesData = data;
+                    if (data && data.mainCategories && data.mainCategories.length > 0) {
+                        categoriesData = data;
+                    }
                 }
-                renderMainCategories();
-                populateCategoriesTable();
             } catch (error) {
-                console.error('خطأ في تحميل البيانات:', error);
-                // Use fallback data if API fails
-                if (typeof categoriesData === 'undefined' || !categoriesData.mainCategories) {
-                    // Initialize with empty data
-                    categoriesData = { mainCategories: [], subcategories: {} };
-                    renderMainCategories();
-                    populateCategoriesTable();
-                }
+                console.log('⚠️ Using sample data due to API error:', error);
+                // Sample data is already initialized above
             }
+            
+            // Always render both views
+            renderMainCategories();
+            populateCategoriesTable();
         }
 
         // Override renderMainCategories to also populate table
