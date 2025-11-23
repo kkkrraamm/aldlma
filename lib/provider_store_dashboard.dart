@@ -6,6 +6,7 @@
 
 import 'dart:ui';
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -67,7 +68,7 @@ class _ProviderStoreDashboardState extends State<ProviderStoreDashboard>
       _token = prefs.getString('token');
 
       if (_token == null) {
-        setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
 
@@ -78,10 +79,17 @@ class _ProviderStoreDashboardState extends State<ProviderStoreDashboard>
           'Authorization': 'Bearer $_token',
           'Content-Type': 'application/json',
         },
-      );
+      ).timeout(const Duration(seconds: 10), onTimeout: () {
+        throw TimeoutException('انقطع الاتصال بالسيرفر');
+      });
+
+      print('✅ [Provider Store] Response Status: ${response.statusCode}');
+      print('✅ [Provider Store] Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        
+        print('✅ [Provider Store] Store Data: ${data['store']}');
         
         if (mounted) {
           setState(() {
@@ -92,12 +100,26 @@ class _ProviderStoreDashboardState extends State<ProviderStoreDashboard>
           });
           _fadeController.forward();
         }
+      } else if (response.statusCode == 404) {
+        print('⚠️ [Provider Store] المتجر لم ينشأ بعد - Status 404');
+        if (mounted) setState(() => _isLoading = false);
+        // الرسالة "المتجر لم ينشأ بعد" ستظهر من _NoStoreScreen
       } else {
+        print('❌ [Provider Store] خطأ: ${response.statusCode} - ${response.body}');
+        if (mounted) setState(() => _isLoading = false);
+      }
+    } on TimeoutException catch (e) {
+      print('❌ خطأ في الاتصال: $e');
+      if (mounted) {
         setState(() => _isLoading = false);
+        NotificationsService.instance.toast('انقطع الاتصال بالسيرفر');
       }
     } catch (e) {
       print('❌ خطأ في تحميل بيانات المتجر: $e');
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        NotificationsService.instance.toast('حدث خطأ أثناء تحميل البيانات');
+      }
     }
   }
 
